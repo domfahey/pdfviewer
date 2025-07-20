@@ -35,7 +35,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     setError(null);
@@ -66,12 +66,12 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
       console.log('📤 [FileUpload] Calling API service...');
       const response = await ApiService.uploadPDF(file);
-      
+
       console.log('✅ [FileUpload] Upload successful:', {
         fileId: response.file_id,
         filename: response.filename,
         fileSize: response.file_size,
-        metadata: response.metadata
+        metadata: response.metadata,
       });
 
       clearInterval(progressInterval);
@@ -88,7 +88,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
       console.error('❌ [FileUpload] Upload failed:', {
         error: err,
         message: err instanceof Error ? err.message : 'Upload failed',
-        stack: err instanceof Error ? err.stack : undefined
+        stack: err instanceof Error ? err.stack : undefined,
       });
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploading(false);

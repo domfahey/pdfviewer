@@ -1,11 +1,17 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
 
 // Configure PDF.js worker - use local worker for reliability
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url
 ).toString();
+
+// Extended canvas interface for PDF rendering state
+interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {
+  _isRendering?: boolean;
+  _pdfRenderTask?: RenderTask | null;
+}
 
 export class PDFService {
   private static loadedDocuments = new Map<string, PDFDocumentProxy>();
@@ -15,7 +21,7 @@ export class PDFService {
       console.log('🔗 [PDFService] Loading document from URL:', {
         url,
         workerSrc: pdfjsLib.GlobalWorkerOptions.workerSrc,
-        version: pdfjsLib.version
+        version: pdfjsLib.version,
       });
 
       // Check if document is already loaded
@@ -34,10 +40,10 @@ export class PDFService {
 
       console.log('⏳ [PDFService] Waiting for document to load...');
       const document = await loadingTask.promise;
-      
+
       console.log('✅ [PDFService] Document loaded successfully:', {
         numPages: document.numPages,
-        fingerprint: document.fingerprints?.[0] || 'unknown'
+        fingerprint: document.fingerprints?.[0] || 'unknown',
       });
 
       this.loadedDocuments.set(url, document);
@@ -48,7 +54,7 @@ export class PDFService {
         url,
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw new Error('Failed to load PDF document');
     }
@@ -59,23 +65,23 @@ export class PDFService {
       console.log('📄 [PDFService] Getting page from document:', {
         pageNumber,
         totalPages: document.numPages,
-        documentFingerprint: document.fingerprints?.[0] || 'unknown'
+        documentFingerprint: document.fingerprints?.[0] || 'unknown',
       });
-      
+
       const page = await document.getPage(pageNumber);
-      
+
       console.log('✅ [PDFService] Page retrieved successfully:', {
         pageNumber: page.pageNumber,
-        hasViewport: typeof page.getViewport === 'function'
+        hasViewport: typeof page.getViewport === 'function',
       });
-      
+
       return page;
     } catch (error) {
       console.error(`❌ [PDFService] Error loading page ${pageNumber}:`, {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         pageNumber,
-        totalPages: document.numPages
+        totalPages: document.numPages,
       });
       throw new Error(`Failed to load page ${pageNumber}`);
     }
@@ -88,13 +94,14 @@ export class PDFService {
   ): Promise<void> {
     try {
       // Check if canvas is already being rendered
-      if ((canvas as any)._isRendering) {
+      const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
+      if (extendedCanvas._isRendering) {
         console.log('⏭️ [PDFService] Canvas already rendering, skipping duplicate request');
         return;
       }
 
       // Mark canvas as being rendered
-      (canvas as any)._isRendering = true;
+      extendedCanvas._isRendering = true;
 
       const viewport = page.getViewport({ scale });
       const context = canvas.getContext('2d');
@@ -104,7 +111,7 @@ export class PDFService {
       }
 
       // Cancel any ongoing render operations on this canvas
-      const existingTask = (canvas as any)._pdfRenderTask;
+      const existingTask = extendedCanvas._pdfRenderTask;
       if (existingTask) {
         console.log('🔄 [PDFService] Cancelling existing render task');
         await existingTask.cancel();
@@ -122,28 +129,33 @@ export class PDFService {
       };
 
       const renderTask = page.render(renderContext);
-      (canvas as any)._pdfRenderTask = renderTask;
+      extendedCanvas._pdfRenderTask = renderTask;
 
       await renderTask.promise;
-      
+
       // Successfully completed
-      (canvas as any)._pdfRenderTask = null;
-      (canvas as any)._isRendering = false;
-      
+      extendedCanvas._pdfRenderTask = null;
+      extendedCanvas._isRendering = false;
     } catch (error) {
       // Always clean up state
-      (canvas as any)._pdfRenderTask = null;
-      (canvas as any)._isRendering = false;
-      
+      extendedCanvas._pdfRenderTask = null;
+      extendedCanvas._isRendering = false;
+
       // Handle cancellation gracefully - this is expected in React 18 Strict Mode
-      if (error && typeof error === 'object' && 'name' in error && error.name === 'RenderingCancelledException') {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'name' in error &&
+        error.name === 'RenderingCancelledException'
+      ) {
+        const errorObj = error as { message?: string };
         console.log('ℹ️ [PDFService] Render cancelled (expected in development):', {
-          message: (error as any).message,
-          pageNumber: (error as any).message?.match(/page (\d+)/)?.[1] || 'unknown'
+          message: errorObj.message,
+          pageNumber: errorObj.message?.match(/page (\d+)/)?.[1] || 'unknown',
         });
         return; // Don't throw error for cancellations
       }
-      
+
       console.error('❌ [PDFService] Error rendering page to canvas:', error);
       throw new Error('Failed to render page');
     }
@@ -196,7 +208,9 @@ export class PDFService {
   ): Promise<void> {
     try {
       if (!annotationLayerDiv) {
-        console.warn('⚠️ [PDFService] Annotation layer div is null, skipping annotation layer rendering');
+        console.warn(
+          '⚠️ [PDFService] Annotation layer div is null, skipping annotation layer rendering'
+        );
         return;
       }
 

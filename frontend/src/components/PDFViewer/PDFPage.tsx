@@ -21,14 +21,14 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   const textLayerRef = useRef<HTMLDivElement>(null);
   const annotationLayerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Track mounting state - MUST be declared before using in renderPage
   const isMountedRef = useRef(true);
 
   const renderPage = useCallback(async () => {
     // Wait a tiny bit to handle React 18 Strict Mode double effects
     await new Promise(resolve => setTimeout(resolve, 0));
-    
+
     // Skip render if component is not mounted
     if (!isMountedRef.current) {
       console.log('⏭️ [PDFPage] Skipping render, component not mounted');
@@ -47,7 +47,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
         canvasExists: !!canvasRef.current,
         textLayerExists: !!textLayerRef.current,
         annotationLayerExists: !!annotationLayerRef.current,
-        isMounted: isMountedRef.current
+        isMounted: isMountedRef.current,
       });
 
       // Render canvas layer (required)
@@ -80,7 +80,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
         onPageError?.(error instanceof Error ? error.message : 'Failed to render page');
       }
     }
-  }, [page.pageNumber, scale]); // Stable dependencies only
+  }, [scale, onPageError, onPageRender, page]); // Exclude page.pageNumber as it's redundant with page
 
   useEffect(() => {
     renderPage();
@@ -89,23 +89,31 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   // Clean up on unmount
   useEffect(() => {
     isMountedRef.current = true;
-    
+
+    // Capture current ref values when effect runs
+    const canvas = canvasRef.current;
+    const textLayer = textLayerRef.current;
+    const annotationLayer = annotationLayerRef.current;
+
     return () => {
       console.log('🧹 [PDFPage] Component unmounting, cleaning up');
       isMountedRef.current = false;
-      
-      const canvas = canvasRef.current;
-      const textLayer = textLayerRef.current;
-      const annotationLayer = annotationLayerRef.current;
-      
+
       // Cancel any ongoing render tasks
-      if (canvas && (canvas as any)._pdfRenderTask) {
-        console.log('🛑 [PDFPage] Cancelling render task on unmount');
-        (canvas as any)._pdfRenderTask.cancel();
-        (canvas as any)._pdfRenderTask = null;
-        (canvas as any)._isRendering = false;
+      interface ExtendedCanvas extends HTMLCanvasElement {
+        _pdfRenderTask?: { cancel: () => void } | null;
+        _isRendering?: boolean;
       }
-      
+      if (canvas) {
+        const extendedCanvas = canvas as ExtendedCanvas;
+        if (extendedCanvas._pdfRenderTask) {
+          console.log('🛑 [PDFPage] Cancelling render task on unmount');
+          extendedCanvas._pdfRenderTask.cancel();
+          extendedCanvas._pdfRenderTask = null;
+          extendedCanvas._isRendering = false;
+        }
+      }
+
       // Clear canvas
       if (canvas) {
         const context = canvas.getContext('2d');
@@ -113,13 +121,13 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           context.clearRect(0, 0, canvas.width, canvas.height);
         }
       }
-      
+
       // Clear text layer
       if (textLayer) {
         textLayer.innerHTML = '';
       }
-      
-      // Clear annotation layer  
+
+      // Clear annotation layer
       if (annotationLayer) {
         annotationLayer.innerHTML = '';
       }
