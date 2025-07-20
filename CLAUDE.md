@@ -1,89 +1,80 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working with this PDF Viewer POC.
+
+Author: Dominic Fahey (domfahey@gmail.com)  
+License: MIT
 
 ## Project Overview
 
-This is a modern PDF viewer proof of concept featuring a React 18+ frontend with FastAPI backend. The application uses PDF.js for document rendering and focuses on performance optimization for large documents.
+PDF viewer POC with React/PDF.js frontend and FastAPI backend. Focus on performance with virtual page rendering and structured logging.
 
-## Architecture
+## Tech Stack
 
-**Frontend Stack:**
-- React 18+ with TypeScript and Vite build system
-- PDF.js integration with web workers for performance
-- Virtual page rendering (only visible pages loaded)
-- Tailwind CSS for styling
+**Frontend:**
+- React 18, TypeScript, Vite
+- PDF.js with web workers
+- Tailwind CSS
 
-**Backend Stack:**
-- FastAPI with Python 3.9+ and UV dependency management
-- Async file upload and processing
-- PDF metadata extraction
-- Auto-generated OpenAPI documentation
+**Backend:**
+- FastAPI, Python 3.9+, UV
+- Structured logging (structlog)
+- Correlation ID tracking
 
-## Development Commands
+## Commands
 
-Since this is a new project, standard commands will be:
-
-**Frontend (when implemented):**
 ```bash
-npm install                 # Install dependencies
-npm run dev                # Start development server
-npm run build              # Build for production
-npm run lint               # Run ESLint
-npm run typecheck          # TypeScript checking
+# Backend
+uv pip install -e ".[dev]"
+cd backend && uvicorn app.main:app --reload
+
+# Frontend
+cd frontend && npm install && npm run dev
+
+# Docker
+docker-compose up -d
+
+# Tests
+pytest && npm test
+
+# Logging
+LOG_LEVEL=DEBUG LOG_FORMAT=console  # Development
+LOG_FORMAT=json                     # Production
 ```
 
-**Backend (when implemented):**
-```bash
-uv venv                    # Create virtual environment
-uv pip install -r requirements.txt  # Install dependencies
-uvicorn main:app --reload  # Start development server
-pytest                    # Run tests
-ruff check . && ruff format .  # Linting and formatting
-black .                    # Code formatting
-```
+## Key Requirements
 
-## Key Implementation Requirements
+- Virtual scrolling (render only visible pages)
+- Web workers mandatory for PDF.js
+- 50MB file size limit
+- UUID-based file IDs
+- Correlation ID propagation
 
-**PDF.js Integration:**
-- Use exact version matching between pdf.js and pdf.worker.js
-- Implement virtual scrolling to render only visible pages
-- Configure web workers for performance (mandatory)
-- Use HTTP Range Requests for partial PDF loading
-- Implement proper page cleanup when scrolling
-
-**Performance Considerations:**
-- Limit concurrent page renders to 3-5 pages maximum
-- Use `page.cleanup()` method for non-visible pages
-- Clear browser cache when updating PDF.js versions
-- Support web-optimized PDFs (150 DPI, JPEG encoding)
-
-**Cross-Domain and Security:**
-- Configure CORS headers for external PDF URLs
-- Implement PDF URL validation and sanitization
-- Use Content Security Policy (CSP) headers
-- Validate PDF file signatures before processing
-
-## Project Structure (Planned)
+## Project Structure
 
 ```
-frontend/
-├── src/
-│   ├── components/PDFViewer/    # Main PDF rendering components
-│   ├── hooks/                  # PDF document and upload hooks
-│   └── services/api.ts         # Backend API communication
+backend/app/
+├── api/              # Endpoints
+├── models/           # Pydantic models  
+├── services/         # Business logic
+├── utils/            # Logging decorators
+└── middleware/       # Request correlation
 
-backend/
-├── app/
-│   ├── api/                    # FastAPI route handlers
-│   ├── models/                 # Pydantic models
-│   └── services/               # PDF processing services
+frontend/src/
+├── components/       # React components
+└── services/        # API client
+```
+
+## API Decorators
+
+```python
+@log_api_call("operation")      # General API logging
+@log_file_operation("upload")   # File-specific logging
 ```
 
 ## Development Notes
 
-- Follow test-driven development (TDD) practices
-- Implement error boundaries for PDF rendering failures
-- Monitor memory usage during development
-- Test across all target browsers with cache clearing
-- Store prompts in YAML files in `/prompts` directory (as per global config)
+- Follow TDD practices
+- Use error boundaries for PDF rendering
+- Clear cache when updating PDF.js
+- Test with real PDF samples in tests/
