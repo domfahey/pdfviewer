@@ -29,11 +29,24 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
   const [metadata, setMetadata] = useState<PDFMetadata | null>(null);
 
   const loadDocument = useCallback(async (url: string, docMetadata?: PDFMetadata) => {
+    console.log('📖 [usePDFDocument] Starting document load:', {
+      url,
+      metadata: docMetadata,
+      timestamp: new Date().toISOString()
+    });
+
     setLoading(true);
     setError(null);
 
     try {
+      console.log('📚 [usePDFDocument] Calling PDFService.loadDocument...');
       const pdfDocument = await PDFService.loadDocument(url);
+      
+      console.log('✅ [usePDFDocument] Document loaded successfully:', {
+        numPages: pdfDocument.numPages,
+        fingerprint: pdfDocument.fingerprints?.[0] || 'unknown'
+      });
+
       setDocument(pdfDocument);
       setTotalPages(pdfDocument.numPages);
       setCurrentPageState(1);
@@ -42,6 +55,11 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
         setMetadata(docMetadata);
       }
     } catch (err) {
+      console.error('❌ [usePDFDocument] Document load failed:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Failed to load document',
+        url
+      });
       setError(err instanceof Error ? err.message : 'Failed to load document');
       setDocument(null);
       setTotalPages(0);
@@ -86,8 +104,13 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
 
   // Cleanup on unmount
   useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+    return () => {
+      console.log('🧹 [usePDFDocument] Hook unmounting, cleaning up document');
+      if (document) {
+        PDFService.cleanup(document);
+      }
+    };
+  }, []); // Empty dependency array - only run on unmount
 
   return {
     document,
