@@ -8,9 +8,11 @@ router = APIRouter()
 # Global service instance variable
 _pdf_service = None
 
+
 def init_pdf_service(service: PDFService) -> None:
     global _pdf_service
     _pdf_service = service
+
 
 # Dependency to get PDF service
 def get_pdf_service() -> PDFService:
@@ -34,7 +36,7 @@ async def upload_pdf(
     """
     if not file:
         raise HTTPException(status_code=400, detail="No file provided")
-    
+
     if not file.filename or file.filename.strip() == "":
         raise HTTPException(status_code=400, detail="No filename provided")
 

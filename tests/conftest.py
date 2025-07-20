@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 
@@ -38,10 +37,10 @@ endobj
 endobj
 xref
 0 4
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
 trailer
 << /Size 4 /Root 1 0 R >>
 startxref
@@ -125,7 +124,9 @@ def princexml_sample_pdf_url():
 def princexml_sample_pdf_content(princexml_sample_pdf_url):
     """Download PrinceXML large essay PDF content for testing."""
     try:
-        response = requests.get(princexml_sample_pdf_url, timeout=60)  # Longer timeout for large file
+        response = requests.get(
+            princexml_sample_pdf_url, timeout=60
+        )  # Longer timeout for large file
         response.raise_for_status()
         return response.content
     except Exception as e:
@@ -150,7 +151,9 @@ def anyline_sample_pdf_url():
 def anyline_sample_pdf_content(anyline_sample_pdf_url):
     """Download Anyline sample scan book PDF content for testing."""
     try:
-        response = requests.get(anyline_sample_pdf_url, timeout=60)  # Longer timeout for potentially large file
+        response = requests.get(
+            anyline_sample_pdf_url, timeout=60
+        )  # Longer timeout for potentially large file
         response.raise_for_status()
         return response.content
     except Exception as e:
@@ -175,7 +178,9 @@ def nhtsa_form_pdf_url():
 def nhtsa_form_pdf_content(nhtsa_form_pdf_url):
     """Download NHTSA PDF form content for testing."""
     try:
-        response = requests.get(nhtsa_form_pdf_url, timeout=60)  # Longer timeout for potentially large file
+        response = requests.get(
+            nhtsa_form_pdf_url, timeout=60
+        )  # Longer timeout for potentially large file
         response.raise_for_status()
         return response.content
     except Exception as e:
