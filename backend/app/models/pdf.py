@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -26,7 +26,7 @@ class PDFUploadResponse(BaseModel):
     filename: str = Field(..., description="Original filename")
     file_size: int = Field(..., gt=0, description="File size in bytes")
     mime_type: str = Field(..., description="MIME type of the file")
-    upload_time: datetime = Field(default_factory=datetime.utcnow)
+    upload_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Optional[PDFMetadata] = None
 
 

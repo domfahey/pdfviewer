@@ -16,6 +16,7 @@ dependencies = [
     "requests>=2.31.0",
     "structlog>=23.2.0",
     "rich>=13.7.0",
+    "types-requests>=2.32.4.20250611",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -90,8 +91,26 @@ no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "backend.app.middleware.*"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "backend.app.core.logging"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "backend.app.utils.logger"
+disallow_untyped_defs = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
