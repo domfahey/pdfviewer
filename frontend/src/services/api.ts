@@ -4,20 +4,55 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 export class ApiService {
   static async uploadPDF(file: File): Promise<PDFUploadResponse> {
+    console.log('🌐 [ApiService] Preparing upload request:', {
+      url: `${API_BASE_URL}/upload`,
+      fileName: file.name,
+      fileSize: file.size
+    });
+
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      console.log('📡 [ApiService] Sending POST request to backend...');
+      const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Upload failed');
+      console.log('📥 [ApiService] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [ApiService] Upload failed with error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorText
+        });
+        
+        try {
+          const error = JSON.parse(errorText);
+          throw new Error(error.detail || 'Upload failed');
+        } catch {
+          throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+        }
+      }
+
+      const responseData = await response.json();
+      console.log('✅ [ApiService] Upload completed successfully:', responseData);
+      return responseData;
+    } catch (error) {
+      console.error('🚨 [ApiService] Network or parsing error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
     }
-
-    return response.json();
   }
 
   static async getPDFMetadata(fileId: string): Promise<PDFMetadata> {

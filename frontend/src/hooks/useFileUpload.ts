@@ -31,16 +31,25 @@ export const useFileUpload = (): UseFileUploadReturn => {
   };
 
   const uploadFile = useCallback(async (file: File): Promise<PDFUploadResponse | null> => {
+    console.log('🚀 [FileUpload] Starting upload process:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      timestamp: new Date().toISOString()
+    });
+
     setError(null);
     setUploadProgress(0);
 
     // Validate file
     const validationError = validateFile(file);
     if (validationError) {
+      console.error('❌ [FileUpload] Validation failed:', validationError);
       setError(validationError);
       return null;
     }
 
+    console.log('✅ [FileUpload] File validation passed');
     setUploading(true);
 
     try {
@@ -55,7 +64,15 @@ export const useFileUpload = (): UseFileUploadReturn => {
         });
       }, 100);
 
+      console.log('📤 [FileUpload] Calling API service...');
       const response = await ApiService.uploadPDF(file);
+      
+      console.log('✅ [FileUpload] Upload successful:', {
+        fileId: response.file_id,
+        filename: response.filename,
+        fileSize: response.file_size,
+        metadata: response.metadata
+      });
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -68,6 +85,11 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
       return response;
     } catch (err) {
+      console.error('❌ [FileUpload] Upload failed:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Upload failed',
+        stack: err instanceof Error ? err.stack : undefined
+      });
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploading(false);
       setUploadProgress(0);

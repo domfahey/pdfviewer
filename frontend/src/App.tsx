@@ -9,6 +9,11 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const handleUploadSuccess = (response: PDFUploadResponse) => {
+    console.log('🎉 [App] Upload success callback triggered:', {
+      fileId: response.file_id,
+      filename: response.filename,
+      timestamp: new Date().toISOString()
+    });
     setUploadedFile(response);
     setError(null);
   };

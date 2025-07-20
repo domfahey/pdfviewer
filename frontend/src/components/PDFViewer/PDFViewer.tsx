@@ -55,22 +55,47 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // Load the PDF document
   useEffect(() => {
     if (fileUrl) {
+      console.log('📄 [PDFViewer] Loading document:', {
+        fileUrl,
+        metadata,
+        timestamp: new Date().toISOString()
+      });
       loadDocument(fileUrl, metadata);
+    } else {
+      console.log('⚠️ [PDFViewer] No fileUrl provided');
     }
   }, [fileUrl, metadata, loadDocument]);
 
   // Load the current page
   useEffect(() => {
     const loadPage = async () => {
-      if (!document) return;
+      if (!document) {
+        console.log('⏭️ [PDFViewer] No document available for page loading');
+        return;
+      }
+
+      console.log('📄 [PDFViewer] Loading page:', {
+        currentPage,
+        totalPages,
+        documentExists: !!document
+      });
 
       setPageLoading(true);
       setPageError(null);
 
       try {
         const page = await PDFService.getPage(document, currentPage);
+        console.log('✅ [PDFViewer] Page loaded successfully:', {
+          pageNumber: page.pageNumber,
+          pageExists: !!page
+        });
         setCurrentPageObj(page);
       } catch (err) {
+        console.error('❌ [PDFViewer] Failed to load page:', {
+          currentPage,
+          error: err,
+          message: err instanceof Error ? err.message : 'Failed to load page'
+        });
         setPageError(err instanceof Error ? err.message : 'Failed to load page');
         setCurrentPageObj(null);
       } finally {
