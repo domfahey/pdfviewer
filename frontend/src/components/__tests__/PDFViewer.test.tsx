@@ -1,11 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import PDFViewer from '../PDFViewer';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { PDFViewer } from '../PDFViewer/PDFViewer';
 
 // Mock PDF.js
 vi.mock('../../services/pdfService', () => ({
-  loadPDF: vi.fn(),
-  renderPage: vi.fn(),
+  PDFService: {
+    loadDocument: vi.fn(),
+    getPage: vi.fn(),
+    cleanup: vi.fn(),
+  },
 }));
 
 describe('PDFViewer', () => {
@@ -14,12 +17,12 @@ describe('PDFViewer', () => {
   });
 
   it('renders loading state initially', () => {
-    render(<PDFViewer fileId="test-id" />);
+    render(<PDFViewer fileUrl="/api/files/test-id" />);
     expect(screen.getByText('Loading PDF...')).toBeInTheDocument();
   });
 
   it('renders error state when file ID is not provided', () => {
-    render(<PDFViewer fileId="" />);
+    render(<PDFViewer fileUrl="" />);
     expect(screen.getByText('No file selected')).toBeInTheDocument();
   });
 
@@ -28,14 +31,14 @@ describe('PDFViewer', () => {
       numPages: 5,
       getPage: vi.fn().mockResolvedValue({}),
     });
-    
-    const mockRenderPage = vi.fn().mockResolvedValue('mock-canvas');
-    
-    const { loadPDF, renderPage } = await import('../../services/pdfService');
-    (loadPDF as any).mockImplementation(mockLoadPDF);
-    (renderPage as any).mockImplementation(mockRenderPage);
 
-    render(<PDFViewer fileId="test-id" />);
+    const mockRenderPage = vi.fn().mockResolvedValue('mock-canvas');
+
+    const { PDFService } = await import('../../services/pdfService');
+    (PDFService.loadDocument as Mock).mockImplementation(mockLoadPDF);
+    (PDFService.getPage as Mock).mockImplementation(mockRenderPage);
+
+    render(<PDFViewer fileUrl="/api/files/test-id" />);
 
     await waitFor(() => {
       expect(screen.getByText('Page 1 of 5')).toBeInTheDocument();
@@ -50,11 +53,11 @@ describe('PDFViewer', () => {
       numPages: 1,
       getPage: vi.fn().mockResolvedValue({}),
     });
-    
-    const { loadPDF } = await import('../../services/pdfService');
-    (loadPDF as any).mockImplementation(mockLoadPDF);
 
-    render(<PDFViewer fileId="test-id" />);
+    const { PDFService } = await import('../../services/pdfService');
+    (PDFService.loadDocument as Mock).mockImplementation(mockLoadPDF);
+
+    render(<PDFViewer fileUrl="/api/files/test-id" />);
 
     await waitFor(() => {
       expect(screen.getByText('Zoom In')).toBeInTheDocument();
