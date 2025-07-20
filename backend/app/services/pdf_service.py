@@ -111,22 +111,40 @@ class PDFService:
                         author=getattr(info, "author", None) if info else None,
                     )
 
-                    metadata = PDFMetadata(
-                        title=getattr(info, "title", None) if info else None,
-                        author=getattr(info, "author", None) if info else None,
-                        subject=getattr(info, "subject", None) if info else None,
-                        creator=getattr(info, "creator", None) if info else None,
-                        producer=getattr(info, "producer", None) if info else None,
-                        creation_date=(
-                            getattr(info, "creation_date", None) if info else None
-                        ),
-                        modification_date=(
-                            getattr(info, "modification_date", None) if info else None
-                        ),
-                        page_count=page_count,
-                        file_size=file_size,
-                        encrypted=encrypted,
-                    )
+                    # Create metadata with enhanced validation
+                    try:
+                        metadata = PDFMetadata(
+                            title=getattr(info, "title", None) if info else None,
+                            author=getattr(info, "author", None) if info else None,
+                            subject=getattr(info, "subject", None) if info else None,
+                            creator=getattr(info, "creator", None) if info else None,
+                            producer=getattr(info, "producer", None) if info else None,
+                            creation_date=(
+                                getattr(info, "creation_date", None) if info else None
+                            ),
+                            modification_date=(
+                                getattr(info, "modification_date", None)
+                                if info
+                                else None
+                            ),
+                            page_count=page_count,
+                            file_size=file_size,
+                            encrypted=encrypted,
+                        )
+                    except Exception as metadata_error:
+                        self.logger.warning(
+                            "PDF metadata validation failed, using fallback",
+                            file_path=str(file_path),
+                            metadata_error=str(metadata_error),
+                            page_count=page_count,
+                            file_size=file_size,
+                        )
+                        # Use minimal fallback metadata
+                        metadata = PDFMetadata(
+                            page_count=max(1, page_count),  # Ensure positive
+                            file_size=file_size,
+                            encrypted=False,  # Safe default
+                        )
 
                     return metadata
 
@@ -141,11 +159,24 @@ class PDFService:
                 )
 
                 # Return basic metadata if extraction fails
-                fallback_metadata = PDFMetadata(
-                    page_count=1,  # Default fallback
-                    file_size=file_path.stat().st_size,
-                    encrypted=False,
-                )
+                try:
+                    fallback_metadata = PDFMetadata(
+                        page_count=1,  # Default fallback
+                        file_size=file_path.stat().st_size,
+                        encrypted=False,
+                    )
+                except Exception as fallback_error:
+                    # If even fallback fails, use absolute minimal metadata
+                    self.logger.error(
+                        "Fallback metadata creation failed",
+                        file_path=str(file_path),
+                        fallback_error=str(fallback_error),
+                    )
+                    fallback_metadata = PDFMetadata(
+                        page_count=1,
+                        file_size=max(1, file_path.stat().st_size),  # Ensure positive
+                        encrypted=False,
+                    )
 
                 self.logger.warning(
                     "Using fallback metadata due to extraction failure",
@@ -263,6 +294,7 @@ class PDFService:
                     filename=file.filename,
                     file_size=file_path.stat().st_size,
                     mime_type=mime_type,
+                    upload_time=datetime.now(timezone.utc),
                     metadata=metadata,
                 )
 
