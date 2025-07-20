@@ -25,7 +25,7 @@ cd frontend && npm install && npm run dev
 ```
 
 ### URLs
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5173 (or 5174-5175 if port conflicts)
 - Backend: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
@@ -33,12 +33,16 @@ cd frontend && npm install && npm run dev
 
 ```bash
 # Tests
-pytest                    # Backend
-cd frontend && npm test   # Frontend
+pytest                    # Backend (no tests currently)
+cd frontend && npm test   # Frontend (39 tests passing)
 
-# Code quality
-ruff check . && black .   # Python
-npm run lint             # TypeScript
+# Code quality (zero errors/warnings)
+cd backend && ruff check . && ruff format .  # Python
+cd frontend && npm run lint && npm run format # TypeScript
+
+# Type checking
+cd backend && mypy .      # Python types
+cd frontend && npx tsc --noEmit  # TypeScript
 ```
 
 ## Docker Deployment
@@ -53,12 +57,15 @@ docker-compose up -d
 
 ```env
 # Backend
-LOG_LEVEL=INFO
-LOG_FORMAT=json         # For production
-MAX_FILE_SIZE=52428800
+LOG_LEVEL=DEBUG         # Default for development (DEBUG/INFO/WARNING/ERROR)
+JSON_LOGS=false         # true for production JSON format
+MAX_FILE_SIZE=52428800  # 50MB file upload limit
 
-# Frontend
+# Frontend 
 VITE_API_BASE_URL=http://localhost:8000/api
+
+# CORS (automatically configured for dev ports)
+# Production: Set specific allowed origins
 ```
 
 ### Commands
@@ -69,18 +76,26 @@ docker-compose down          # Stop
 docker-compose build         # Rebuild
 ```
 
-## Logging Configuration
+## Enhanced Logging System
 
 ### Features
-- **Correlation IDs**: Track requests via `X-Correlation-ID`
-- **Performance Timing**: Automatic operation metrics
-- **Structured Output**: JSON (prod) or console (dev)
+- **Correlation IDs**: Auto-generated UUIDs for request tracing
+- **Performance Timing**: Microsecond precision for all operations
+- **Structured Output**: Rich console (dev) or JSON (production)
+- **Debug Mode**: Enabled by default for development troubleshooting
+- **API Logging**: Comprehensive request/response/error tracking
 
-### Decorators
+### Decorators & Utilities
 
 ```python
-@log_api_call("operation_name")      # API operations
-@log_file_operation("file_upload")   # File operations
+# API endpoint logging
+@log_api_call("pdf_upload", log_params=True, log_response=True, log_timing=True)
+@log_file_operation("pdf_upload", file_param="file", log_file_details=True)
+
+# Manual logging
+api_logger = APILogger("operation_name")
+api_logger.log_request_received(...)
+api_logger.log_processing_success(...)
 ```
 
 ### Output Examples
@@ -107,15 +122,18 @@ docker-compose build         # Rebuild
 ```
 backend/
 ├── app/
-│   ├── api/         # Endpoints
-│   ├── models/      # Pydantic models
-│   ├── services/    # Business logic
-│   ├── utils/       # Logging utilities
-│   └── middleware/  # Request middleware
+│   ├── api/         # FastAPI endpoints with enhanced logging
+│   ├── models/      # Pydantic v2 models with validation
+│   ├── services/    # Business logic with performance tracking
+│   ├── utils/       # Logging utilities & API decorators
+│   ├── middleware/  # Request middleware & CORS
+│   └── core/        # Configuration & logging setup
 frontend/
 └── src/
-    ├── components/  # React components
-    └── services/    # API client
+    ├── components/  # React components (TypeScript)
+    ├── services/    # API client with error handling
+    ├── hooks/       # Custom React hooks
+    └── types/       # TypeScript type definitions
 ```
 
 ## Key Commands Reference
@@ -126,13 +144,28 @@ frontend/
 | Run backend | `uvicorn app.main:app --reload` |
 | Run frontend | `npm run dev` |
 | Test all | `pytest && npm test` |
-| Format | `black . && npm run format` |
+| Lint | `ruff check . && npm run lint` |
+| Format | `ruff format . && npm run format` |
+| Type check | `mypy . && npx tsc --noEmit` |
 | Deploy | `docker-compose up -d` |
 
 ## Production Notes
 
-- Enable JSON logging: `LOG_FORMAT=json`
-- Configure persistent storage for uploads
-- Set up reverse proxy with SSL
-- Monitor logs for correlation IDs
-- File size limit: 50MB (configurable)
+### Configuration
+- **Logging**: Set `JSON_LOGS=true` and `LOG_LEVEL=INFO` 
+- **CORS**: Configure specific allowed origins (not localhost)
+- **Storage**: Persistent volume for uploads directory
+- **Proxy**: Reverse proxy with SSL termination
+- **Limits**: Configure `MAX_FILE_SIZE` as needed (default 50MB)
+
+### Monitoring & Debugging
+- **Correlation IDs**: Track requests across services
+- **Performance metrics**: Monitor upload/processing times
+- **Error tracking**: Enhanced error responses with debug context
+- **Health checks**: `/api/health` endpoint for load balancer probes
+
+### Security Considerations
+- **Input validation**: Pydantic v2 with enhanced security checks
+- **File scanning**: Consider adding antivirus scanning for uploads
+- **Rate limiting**: Implement in production environment
+- **Authentication**: Add user auth for production use

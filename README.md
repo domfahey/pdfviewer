@@ -22,11 +22,13 @@ docker-compose up -d
 
 ## Features
 
-- PDF rendering with virtual page loading
-- File upload/download (50MB limit)
-- Metadata extraction
-- Structured logging with correlation IDs
-- OpenAPI documentation
+- **PDF Rendering**: High-performance viewer with React 18 compatibility
+- **Enhanced Upload**: 50MB limit with Pydantic v2 validation
+- **Smart Metadata**: Extraction with complexity scoring and categorization  
+- **Comprehensive Logging**: Correlation IDs, performance metrics, debug mode
+- **Type Safety**: Full TypeScript coverage with zero linting errors
+- **CORS Support**: Multi-port development environment support
+- **OpenAPI Documentation**: Auto-generated with enhanced response models
 
 ## API
 
@@ -62,18 +64,19 @@ frontend/
 
 ```bash
 # Tests
-pytest              # Backend
-npm test           # Frontend
+pytest              # Backend (0 tests)
+npm test           # Frontend (39 tests passing)
 
-# Code quality
-ruff check . && black .
-npm run lint
+# Code quality (zero errors/warnings)
+ruff check . && ruff format .  # Python
+npm run lint && npm run format # TypeScript
+mypy . && npx tsc --noEmit     # Type checking
 ```
 
 ## Documentation
 
-- [API Reference](docs/API.md) - Endpoint details
-- [Technical Guide](docs/TECHNICAL.md) - Setup, deployment, logging
+- [API Reference](docs/API.md) - Enhanced endpoints with Pydantic v2 validation
+- [Technical Guide](docs/TECHNICAL.md) - Setup, deployment, logging, and CORS configuration
 
 ## Limitations
 
