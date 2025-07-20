@@ -1,12 +1,13 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PDFMetadataPanel } from '../PDFViewer/PDFMetadataPanel';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 // Mock PDF.js
 const mockPDFDocument = {
   numPages: 5,
   getMetadata: vi.fn(),
-};
+} as unknown as PDFDocumentProxy;
 
 describe('PDFMetadataPanel', () => {
   const defaultFileMetadata = {
@@ -33,11 +34,7 @@ describe('PDFMetadataPanel', () => {
 
   it('renders nothing when not visible', () => {
     const { container } = render(
-      <PDFMetadataPanel
-        pdfDocument={null}
-        fileMetadata={defaultFileMetadata}
-        isVisible={false}
-      />
+      <PDFMetadataPanel pdfDocument={null} fileMetadata={defaultFileMetadata} isVisible={false} />
     );
 
     expect(container.firstChild).toBeNull();
@@ -46,17 +43,23 @@ describe('PDFMetadataPanel', () => {
   it('shows loading state initially', async () => {
     // Mock a slow getMetadata call to catch loading state
     mockPDFDocument.getMetadata.mockReturnValue(
-      new Promise(resolve => setTimeout(() => resolve({
-        info: {
-          Title: 'Test Document',
-          Author: 'Test Author',
-        },
-      }), 100))
+      new Promise(resolve =>
+        setTimeout(
+          () =>
+            resolve({
+              info: {
+                Title: 'Test Document',
+                Author: 'Test Author',
+              },
+            }),
+          100
+        )
+      )
     );
 
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />
@@ -64,18 +67,21 @@ describe('PDFMetadataPanel', () => {
 
     // Check for loading state immediately after render
     expect(screen.getByText('Loading metadata...')).toBeInTheDocument();
-    
+
     // Wait for loading to complete
-    await waitFor(() => {
-      expect(screen.getByText('Document Information')).toBeInTheDocument();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Document Information')).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('displays file information when metadata is loaded', async () => {
     await act(async () => {
       render(
         <PDFMetadataPanel
-          pdfDocument={mockPDFDocument as any}
+          pdfDocument={mockPDFDocument}
           fileMetadata={defaultFileMetadata}
           isVisible={true}
         />
@@ -94,7 +100,7 @@ describe('PDFMetadataPanel', () => {
   it('displays document properties when available', async () => {
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />
@@ -113,7 +119,7 @@ describe('PDFMetadataPanel', () => {
   it('shows security information', async () => {
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />
@@ -129,7 +135,7 @@ describe('PDFMetadataPanel', () => {
   it('shows performance metrics', async () => {
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />
@@ -150,7 +156,7 @@ describe('PDFMetadataPanel', () => {
 
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />
@@ -171,7 +177,7 @@ describe('PDFMetadataPanel', () => {
     await act(async () => {
       render(
         <PDFMetadataPanel
-          pdfDocument={mockPDFDocument as any}
+          pdfDocument={mockPDFDocument}
           fileMetadata={defaultFileMetadata}
           isVisible={true}
         />
@@ -191,7 +197,7 @@ describe('PDFMetadataPanel', () => {
 
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={largeFileMetadata}
         isVisible={true}
       />
@@ -213,7 +219,7 @@ describe('PDFMetadataPanel', () => {
 
     render(
       <PDFMetadataPanel
-        pdfDocument={mockPDFDocument as any}
+        pdfDocument={mockPDFDocument}
         fileMetadata={defaultFileMetadata}
         isVisible={true}
       />

@@ -1,5 +1,5 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PDFViewer } from '../PDFViewer/PDFViewer';
 
 // Mock PDF.js service
@@ -24,7 +24,7 @@ const mockPDFService = vi.mocked(PDFService);
 
 // Mock all the new PDF components
 vi.mock('../PDFViewer/PDFThumbnails', () => ({
-  PDFThumbnails: ({ isVisible }: { isVisible: boolean }) => 
+  PDFThumbnails: ({ isVisible }: { isVisible: boolean }) =>
     isVisible ? <div data-testid="pdf-thumbnails">Thumbnails</div> : null,
 }));
 
@@ -33,7 +33,7 @@ vi.mock('../PDFViewer/VirtualPDFViewer', () => ({
 }));
 
 vi.mock('../PDFViewer/PDFMetadataPanel', () => ({
-  PDFMetadataPanel: ({ isVisible }: { isVisible: boolean }) => 
+  PDFMetadataPanel: ({ isVisible }: { isVisible: boolean }) =>
     isVisible ? <div data-testid="pdf-metadata">Metadata Panel</div> : null,
 }));
 
@@ -44,17 +44,17 @@ vi.mock('../PDFViewer/PDFPage', () => ({
 describe('PDFViewer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock PDF page object
     const mockPageObj = {
       pageNumber: 1,
       getViewport: vi.fn(() => ({ width: 800, height: 600 })),
       render: vi.fn(() => ({ promise: Promise.resolve() })),
     };
-    
+
     // Mock PDFService.getPage to return a page object
     mockPDFService.getPage.mockResolvedValue(mockPageObj);
-    
+
     // Mock the usePDFDocument hook with default values
     mockUsePDFDocument.mockReturnValue({
       document: null,
@@ -140,7 +140,7 @@ describe('PDFViewer', () => {
 
   it('shows page navigation controls when PDF is loaded', async () => {
     const mockDocument = { numPages: 5 };
-    
+
     mockUsePDFDocument.mockReturnValue({
       document: mockDocument,
       currentPage: 1,
@@ -164,7 +164,7 @@ describe('PDFViewer', () => {
     await waitFor(() => {
       expect(screen.getByText('Page')).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('of 5')).toBeInTheDocument();
     expect(screen.getByDisplayValue('1')).toBeInTheDocument();
   });
@@ -172,7 +172,7 @@ describe('PDFViewer', () => {
   it('handles zoom controls', async () => {
     const mockDocument = { numPages: 1 };
     const mockSetScale = vi.fn();
-    
+
     mockUsePDFDocument.mockReturnValue({
       document: mockDocument,
       currentPage: 1,
@@ -196,14 +196,14 @@ describe('PDFViewer', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Zoom in')).toBeInTheDocument();
     });
-    
+
     expect(screen.getByLabelText('Zoom out')).toBeInTheDocument();
     expect(screen.getByDisplayValue('1')).toBeInTheDocument(); // Scale selector
   });
 
   it('shows advanced controls when enabled', async () => {
     const mockDocument = { numPages: 5 };
-    
+
     mockUsePDFDocument.mockReturnValue({
       document: mockDocument,
       currentPage: 1,
@@ -227,14 +227,14 @@ describe('PDFViewer', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Toggle search')).toBeInTheDocument();
     });
-    
+
     expect(screen.getByLabelText('Toggle thumbnails')).toBeInTheDocument();
     expect(screen.getByLabelText('Rotate 90 degrees')).toBeInTheDocument();
   });
 
   it('renders with virtual scrolling when enabled', async () => {
     const mockDocument = { numPages: 5 };
-    
+
     mockUsePDFDocument.mockReturnValue({
       document: mockDocument,
       currentPage: 1,
@@ -267,7 +267,7 @@ describe('PDFViewer', () => {
       page_count: 5,
       file_size: 1024000,
     };
-    
+
     mockUsePDFDocument.mockReturnValue({
       document: mockDocument,
       currentPage: 1,
@@ -291,7 +291,7 @@ describe('PDFViewer', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Document')).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText(/5 pages/)).toBeInTheDocument();
     expect(screen.getByText(/1.0 MB/)).toBeInTheDocument();
   });

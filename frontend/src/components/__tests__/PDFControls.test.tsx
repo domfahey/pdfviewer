@@ -78,7 +78,7 @@ describe('PDFControls', () => {
     render(<PDFControls {...defaultProps} onPageChange={onPageChange} />);
 
     const pageInput = screen.getByDisplayValue('1');
-    
+
     await act(async () => {
       fireEvent.change(pageInput, { target: { value: '3' } });
     });
@@ -89,13 +89,15 @@ describe('PDFControls', () => {
   it('calls navigation handlers when buttons are clicked', async () => {
     const onPreviousPage = vi.fn();
     const onNextPage = vi.fn();
-    
-    render(<PDFControls 
-      {...defaultProps} 
-      currentPage={2}
-      onPreviousPage={onPreviousPage}
-      onNextPage={onNextPage}
-    />);
+
+    render(
+      <PDFControls
+        {...defaultProps}
+        currentPage={2}
+        onPreviousPage={onPreviousPage}
+        onNextPage={onNextPage}
+      />
+    );
 
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Previous page'));

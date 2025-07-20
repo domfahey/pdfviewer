@@ -199,7 +199,7 @@ def log_dict_safely(data: dict[str, Any], max_length: int = 1000) -> dict[str, A
         elif isinstance(value, (bytes, bytearray)):
             safe_dict[key] = f"<binary data: {len(value)} bytes>"
         elif isinstance(value, dict):
-            safe_dict[key] = log_dict_safely(value, max_length)
+            safe_dict[key] = log_dict_safely(value, max_length)  # type: ignore[assignment]
         else:
             safe_dict[key] = value
     return safe_dict
