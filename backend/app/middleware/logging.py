@@ -5,10 +5,12 @@ This module provides middleware to add correlation IDs to requests and
 enhance logging with request context throughout the application lifecycle.
 """
 
+import json
+import os
 import time
 import uuid
 from contextvars import ContextVar
-from typing import Callable, Optional
+from typing import Optional
 
 import structlog
 from fastapi import Request, Response
@@ -24,21 +26,58 @@ logger = structlog.get_logger(__name__)
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """
-    Middleware to add correlation IDs and log HTTP requests/responses.
+    Enhanced middleware for comprehensive request/response logging.
 
     This middleware:
     1. Generates or extracts correlation IDs from headers
-    2. Logs incoming requests with context
+    2. Logs incoming requests with context and optional body
     3. Measures request duration
-    4. Logs responses with status and timing
+    4. Logs responses with status, timing, and optional body
     5. Handles exceptions with proper logging
+    6. Configurable request/response body logging for debugging
     """
 
-    def __init__(self, app, correlation_header: str = "X-Correlation-ID"):
+    def __init__(
+        self,
+        app,
+        correlation_header: str = "X-Correlation-ID",
+        log_request_bodies: Optional[bool] = None,
+        log_response_bodies: Optional[bool] = None,
+        max_body_size: int = 4096,  # 4KB default limit
+    ):  # type: ignore[misc]
         super().__init__(app)
         self.correlation_header = correlation_header
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Use environment variables with defaults
+        self.log_request_bodies = (
+            log_request_bodies
+            if log_request_bodies is not None
+            else (
+                os.getenv("LOG_REQUEST_BODIES", "true").lower()
+                == "true"  # Debug mode default
+            )
+        )
+        self.log_response_bodies = (
+            log_response_bodies
+            if log_response_bodies is not None
+            else (
+                os.getenv("LOG_RESPONSE_BODIES", "true").lower()
+                == "true"  # Debug mode default
+            )
+        )
+        self.max_body_size = int(os.getenv("MAX_BODY_LOG_SIZE", str(max_body_size)))
+
+        # Define sensitive headers to filter
+        self.sensitive_headers = {
+            "authorization",
+            "cookie",
+            "x-api-key",
+            "x-auth-token",
+            "authentication",
+            "proxy-authorization",
+        }
+
+    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[misc]
         # Generate or extract correlation ID
         correlation_id = request.headers.get(self.correlation_header) or str(
             uuid.uuid4()
@@ -57,7 +96,22 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "user_agent": request.headers.get("user-agent"),
             "remote_addr": self._get_client_ip(request),
             "correlation_id": correlation_id,
+            "content_type": request.headers.get("content-type"),
+            "content_length": request.headers.get("content-length"),
         }
+
+        # Add filtered headers for debugging
+        if os.getenv("LOG_LEVEL", "INFO").upper() == "DEBUG":
+            request_info["headers"] = self._filter_headers(dict(request.headers))
+
+        # Log request body if enabled and size is reasonable
+        request_body = None
+        if self.log_request_bodies and self._should_log_body(request):
+            request_body = await self._safe_read_body(request)
+            if request_body:
+                request_info["request_body"] = self._sanitize_body(
+                    request_body, request.headers.get("content-type")
+                )
 
         # Log incoming request
         request_logger = logger.bind(**request_info)
@@ -75,7 +129,22 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "status_code": response.status_code,
                 "duration_ms": round(duration * 1000, 2),
                 "response_size": response.headers.get("content-length"),
+                "response_content_type": response.headers.get("content-type"),
             }
+
+            # Add response headers for debugging
+            if os.getenv("LOG_LEVEL", "INFO").upper() == "DEBUG":
+                response_info["response_headers"] = self._filter_headers(
+                    dict(response.headers)
+                )
+
+            # Log response body if enabled and appropriate
+            if self.log_response_bodies and self._should_log_response_body(response):
+                response_body = await self._safe_read_response_body(response)
+                if response_body:
+                    response_info["response_body"] = self._sanitize_body(
+                        response_body, response.headers.get("content-type")
+                    )
 
             request_logger.bind(**response_info).info("Request completed")
 
@@ -112,6 +181,140 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # Fallback to direct connection IP
         return request.client.host if request.client else "unknown"
+
+    def _filter_headers(self, headers: dict) -> dict:
+        """Filter sensitive headers for logging."""
+        filtered = {}
+        for key, value in headers.items():
+            if key.lower() in self.sensitive_headers:
+                filtered[key] = "[REDACTED]"
+            else:
+                filtered[key] = value
+        return filtered
+
+    def _should_log_body(self, request: Request) -> bool:
+        """Determine if request body should be logged."""
+        content_type = request.headers.get("content-type", "")
+        content_length = request.headers.get("content-length")
+
+        # Don't log large files
+        if content_length and int(content_length) > self.max_body_size:
+            return False
+
+        # Don't log binary content
+        if any(
+            binary_type in content_type.lower()
+            for binary_type in [
+                "image/",
+                "video/",
+                "audio/",
+                "application/pdf",
+                "application/octet-stream",
+            ]
+        ):
+            return False
+
+        return True
+
+    def _should_log_response_body(self, response: Response) -> bool:
+        """Determine if response body should be logged."""
+        content_type = response.headers.get("content-type", "")
+        content_length = response.headers.get("content-length")
+
+        # Don't log large responses
+        if content_length and int(content_length) > self.max_body_size:
+            return False
+
+        # Don't log binary content or file downloads
+        if any(
+            binary_type in content_type.lower()
+            for binary_type in [
+                "image/",
+                "video/",
+                "audio/",
+                "application/pdf",
+                "application/octet-stream",
+            ]
+        ):
+            return False
+
+        return True
+
+    async def _safe_read_body(self, request: Request) -> Optional[str]:
+        """Safely read request body with size limits."""
+        try:
+            body = await request.body()
+            if len(body) > self.max_body_size:
+                return f"[BODY TOO LARGE: {len(body)} bytes]"
+
+            # Try to decode as text
+            try:
+                return body.decode("utf-8")
+            except UnicodeDecodeError:
+                return f"[BINARY CONTENT: {len(body)} bytes]"
+
+        except Exception as e:
+            return f"[ERROR READING BODY: {str(e)}]"
+
+    async def _safe_read_response_body(self, response: Response) -> Optional[str]:
+        """Safely read response body with size limits."""
+        try:
+            # For StreamingResponse or FileResponse, we can't read the body
+            if hasattr(response, "body_iterator") or hasattr(response, "path"):
+                return "[STREAMING/FILE RESPONSE]"
+
+            if hasattr(response, "body"):
+                body = response.body
+                if isinstance(body, bytes):
+                    if len(body) > self.max_body_size:
+                        return f"[BODY TOO LARGE: {len(body)} bytes]"
+
+                    try:
+                        return body.decode("utf-8")
+                    except UnicodeDecodeError:
+                        return f"[BINARY CONTENT: {len(body)} bytes]"
+
+        except Exception as e:
+            return f"[ERROR READING RESPONSE: {str(e)}]"
+
+        return None
+
+    def _sanitize_body(self, body: str, content_type: Optional[str]) -> str:
+        """Sanitize body content for logging."""
+        if not body:
+            return body
+
+        # Handle JSON content
+        if content_type and "application/json" in content_type:
+            try:
+                data = json.loads(body)
+                return json.dumps(self._sanitize_json_data(data), indent=2)
+            except json.JSONDecodeError:
+                pass
+
+        # For other content types, truncate if too long
+        if len(body) > self.max_body_size:
+            return body[: self.max_body_size] + "...[TRUNCATED]"
+
+        return body
+
+    def _sanitize_json_data(self, data):
+        """Recursively sanitize JSON data."""
+        if isinstance(data, dict):
+            sanitized = {}
+            for key, value in data.items():
+                if any(
+                    sensitive in key.lower()
+                    for sensitive in ["password", "token", "secret", "key", "auth"]
+                ):
+                    sanitized[key] = "[REDACTED]"
+                else:
+                    sanitized[key] = self._sanitize_json_data(value)
+            return sanitized
+        elif isinstance(data, list):
+            return [self._sanitize_json_data(item) for item in data]
+        else:
+            return data
 
 
 def add_correlation_id(logger, method_name, event_dict):

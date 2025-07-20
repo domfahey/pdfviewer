@@ -2,6 +2,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Union
 
 import aiofiles
 import magic
@@ -163,7 +164,6 @@ class PDFService:
             filename=file.filename,
             file_size=file.size,
         ) as upload_tracker:
-
             # Log upload start
             self.file_logger.upload_started(
                 file.filename or "unknown",
@@ -273,7 +273,9 @@ class PDFService:
                         "file_id": response.file_id,
                         "filename": response.filename,
                         "file_size": response.file_size,
-                        "page_count": response.metadata.page_count,
+                        "page_count": (
+                            response.metadata.page_count if response.metadata else 0
+                        ),
                     },
                 )
 
@@ -366,7 +368,6 @@ class PDFService:
             self.logger,
             file_id=file_id,
         ) as delete_tracker:
-
             self.logger.info("Starting PDF file deletion", file_id=file_id)
 
             if file_id not in self._file_metadata:
@@ -453,11 +454,12 @@ class PDFService:
 
         return self._file_metadata.copy()
 
-    def get_service_stats(self) -> dict:
+    def get_service_stats(self) -> dict[str, Union[int, float, str]]:
         """Get service statistics for monitoring and debugging"""
         files = list(self._file_metadata.values())
         total_size = sum(f.file_size for f in files)
-        total_pages = sum(f.metadata.page_count for f in files)
+        page_counts = [f.metadata.page_count if f.metadata else 0 for f in files]
+        total_pages = sum(page_counts)
 
         stats = {
             "total_files": len(files),

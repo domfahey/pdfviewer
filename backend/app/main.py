@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -10,9 +11,9 @@ from .core.logging import configure_logging, get_logger
 from .middleware.logging import LoggingMiddleware
 from .services.pdf_service import PDFService
 
-# Configure logging first thing
+# Configure logging first thing - default to DEBUG for development
 configure_logging(
-    level=os.getenv("LOG_LEVEL", "INFO"),
+    level=os.getenv("LOG_LEVEL", "DEBUG"),  # Debug mode by default
     json_logs=os.getenv("JSON_LOGS", "false").lower() == "true",
     enable_correlation_id=True,
 )
@@ -28,10 +29,28 @@ logger.info("Upload directory initialized", upload_dir=str(UPLOAD_DIR))
 pdf_service = PDFService()
 logger.info("PDF service initialized")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup and shutdown events."""
+    # Startup
+    logger.info(
+        "PDF Viewer API starting up",
+        version="0.1.0",
+        upload_dir=str(UPLOAD_DIR),
+        environment=os.getenv("ENVIRONMENT", "development"),
+        log_level=os.getenv("LOG_LEVEL", "INFO"),
+    )
+    yield
+    # Shutdown
+    logger.info("PDF Viewer API shutting down")
+
+
 app = FastAPI(
     title="PDF Viewer API",
     description="Backend API for PDF viewer POC",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Add logging middleware first (before CORS)
@@ -68,21 +87,3 @@ if os.path.exists("uploads"):
 async def root() -> dict[str, str]:
     logger.info("Root endpoint accessed")
     return {"message": "PDF Viewer API is running"}
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Log application startup."""
-    logger.info(
-        "PDF Viewer API starting up",
-        version="0.1.0",
-        upload_dir=str(UPLOAD_DIR),
-        environment=os.getenv("ENVIRONMENT", "development"),
-        log_level=os.getenv("LOG_LEVEL", "INFO"),
-    )
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Log application shutdown."""
-    logger.info("PDF Viewer API shutting down")
