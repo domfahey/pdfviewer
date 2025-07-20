@@ -12,7 +12,7 @@ function App() {
     console.log('🎉 [App] Upload success callback triggered:', {
       fileId: response.file_id,
       filename: response.filename,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     setUploadedFile(response);
     setError(null);

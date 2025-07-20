@@ -58,7 +58,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       console.log('📄 [PDFViewer] Loading document:', {
         fileUrl,
         metadata,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       loadDocument(fileUrl, metadata);
     } else {
@@ -77,7 +77,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       console.log('📄 [PDFViewer] Loading page:', {
         currentPage,
         totalPages,
-        documentExists: !!document
+        documentExists: !!document,
       });
 
       setPageLoading(true);
@@ -87,14 +87,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         const page = await PDFService.getPage(document, currentPage);
         console.log('✅ [PDFViewer] Page loaded successfully:', {
           pageNumber: page.pageNumber,
-          pageExists: !!page
+          pageExists: !!page,
         });
         setCurrentPageObj(page);
       } catch (err) {
         console.error('❌ [PDFViewer] Failed to load page:', {
           currentPage,
           error: err,
-          message: err instanceof Error ? err.message : 'Failed to load page'
+          message: err instanceof Error ? err.message : 'Failed to load page',
         });
         setPageError(err instanceof Error ? err.message : 'Failed to load page');
         setCurrentPageObj(null);
@@ -104,7 +104,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     };
 
     loadPage();
-  }, [document, currentPage]);
+  }, [document, currentPage, totalPages]);
 
   const handlePageRender = useCallback(() => {
     // Page rendered successfully

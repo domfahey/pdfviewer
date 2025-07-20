@@ -7,7 +7,7 @@ export class ApiService {
     console.log('🌐 [ApiService] Preparing upload request:', {
       url: `${API_BASE_URL}/upload`,
       fileName: file.name,
-      fileSize: file.size
+      fileSize: file.size,
     });
 
     const formData = new FormData();
@@ -23,7 +23,7 @@ export class ApiService {
       console.log('📥 [ApiService] Response received:', {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
 
       if (!response.ok) {
@@ -31,9 +31,9 @@ export class ApiService {
         console.error('❌ [ApiService] Upload failed with error response:', {
           status: response.status,
           statusText: response.statusText,
-          errorBody: errorText
+          errorBody: errorText,
         });
-        
+
         try {
           const error = JSON.parse(errorText);
           throw new Error(error.detail || 'Upload failed');
@@ -49,7 +49,7 @@ export class ApiService {
       console.error('🚨 [ApiService] Network or parsing error:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
