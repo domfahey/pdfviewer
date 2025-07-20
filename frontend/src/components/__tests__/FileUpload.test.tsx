@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import FileUpload from '../FileUpload';
+import { FileUpload } from '../Upload/FileUpload';
 
 // Mock the upload API
-const mockOnUpload = vi.fn();
+const mockOnUploadSuccess = vi.fn();
 
 describe('FileUpload', () => {
   beforeEach(() => {
@@ -12,90 +12,106 @@ describe('FileUpload', () => {
   });
 
   it('renders upload interface', () => {
-    render(<FileUpload onUpload={mockOnUpload} />);
-    
-    expect(screen.getByText('Choose PDF file')).toBeInTheDocument();
-    expect(screen.getByText('or drag and drop')).toBeInTheDocument();
-    expect(screen.getByText('PDF files only, max 50MB')).toBeInTheDocument();
+    render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
+
+    expect(screen.getByText('Drop your PDF here')).toBeInTheDocument();
+    expect(screen.getByText('or click to browse files')).toBeInTheDocument();
+    expect(screen.getByText('Maximum file size: 50MB')).toBeInTheDocument();
   });
 
   it('handles file selection', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        file_id: 'test-id',
-        filename: 'test.pdf',
-        file_size: 1000,
-      }),
+      json: () =>
+        Promise.resolve({
+          file_id: 'test-id',
+          filename: 'test.pdf',
+          file_size: 1000,
+        }),
     });
     global.fetch = mockFetch;
 
-    render(<FileUpload onUpload={mockOnUpload} />);
-    
-    const fileInput = screen.getByLabelText(/choose pdf file/i);
+    render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
+
+    const fileInput = screen.getByRole('button');
     const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
-    
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    
+
+    // Since the input is hidden, we need to trigger the file selection differently
+    const hiddenInput = fileInput.querySelector('input[type="file"]') as HTMLInputElement;
+    if (hiddenInput) {
+      fireEvent.change(hiddenInput, { target: { files: [file] } });
+    }
+
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/upload', expect.any(Object));
     });
   });
 
   it('shows error for non-PDF files', () => {
-    render(<FileUpload onUpload={mockOnUpload} />);
-    
-    const fileInput = screen.getByLabelText(/choose pdf file/i);
+    render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
+
+    const fileInput = screen.getByRole('button');
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-    
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    
-    expect(screen.getByText('Please select a PDF file')).toBeInTheDocument();
+
+    const hiddenInput = fileInput.querySelector('input[type="file"]') as HTMLInputElement;
+    if (hiddenInput) {
+      fireEvent.change(hiddenInput, { target: { files: [file] } });
+    }
+
+    expect(screen.getByText('Invalid file type')).toBeInTheDocument();
   });
 
   it('shows error for files too large', () => {
-    render(<FileUpload onUpload={mockOnUpload} />);
-    
-    const fileInput = screen.getByLabelText(/choose pdf file/i);
-    const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.pdf', { 
-      type: 'application/pdf' 
+    render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
+
+    const fileInput = screen.getByRole('button');
+    const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.pdf', {
+      type: 'application/pdf',
     });
-    
+
     Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
-    
-    fireEvent.change(fileInput, { target: { files: [largeFile] } });
-    
-    expect(screen.getByText('File size must be less than 50MB')).toBeInTheDocument();
+
+    const hiddenInput = fileInput.querySelector('input[type="file"]') as HTMLInputElement;
+    if (hiddenInput) {
+      fireEvent.change(hiddenInput, { target: { files: [largeFile] } });
+    }
+
+    expect(screen.getByText('File too large')).toBeInTheDocument();
   });
 
   it('handles upload progress', async () => {
-    const mockFetch = vi.fn().mockImplementation(() => 
-      new Promise(resolve => {
-        setTimeout(() => {
-          resolve({
-            ok: true,
-            json: () => Promise.resolve({
-              file_id: 'test-id',
-              filename: 'test.pdf',
-              file_size: 1000,
-            }),
-          });
-        }, 100);
-      })
+    const mockFetch = vi.fn().mockImplementation(
+      () =>
+        new Promise(resolve => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              json: () =>
+                Promise.resolve({
+                  file_id: 'test-id',
+                  filename: 'test.pdf',
+                  file_size: 1000,
+                }),
+            });
+          }, 100);
+        })
     );
     global.fetch = mockFetch;
 
-    render(<FileUpload onUpload={mockOnUpload} />);
-    
-    const fileInput = screen.getByLabelText(/choose pdf file/i);
+    render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
+
+    const fileInput = screen.getByRole('button');
     const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
-    
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    
+
+    const hiddenInput = fileInput.querySelector('input[type="file"]') as HTMLInputElement;
+    if (hiddenInput) {
+      fireEvent.change(hiddenInput, { target: { files: [file] } });
+    }
+
     expect(screen.getByText('Uploading...')).toBeInTheDocument();
-    
+
     await waitFor(() => {
-      expect(mockOnUpload).toHaveBeenCalledWith({
+      expect(mockOnUploadSuccess).toHaveBeenCalledWith({
         file_id: 'test-id',
         filename: 'test.pdf',
         file_size: 1000,
