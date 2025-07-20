@@ -9,9 +9,11 @@ router = APIRouter()
 # Global service instance variable
 _pdf_service = None
 
+
 def init_pdf_service(service: PDFService) -> None:
     global _pdf_service
     _pdf_service = service
+
 
 # Dependency to get PDF service
 def get_pdf_service() -> PDFService:
