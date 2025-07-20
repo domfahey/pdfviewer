@@ -18,7 +18,7 @@ describe('FileUpload', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     mockUseFileUpload.mockReturnValue({
       uploading: false,
       uploadProgress: 0,
@@ -137,7 +137,7 @@ describe('FileUpload', () => {
     render(<FileUpload onUploadSuccess={mockOnUploadSuccess} />);
 
     const clearButton = screen.getByRole('button');
-    
+
     await act(async () => {
       fireEvent.click(clearButton);
     });
