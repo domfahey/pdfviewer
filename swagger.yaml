@@ -1,0 +1,452 @@
+openapi: 3.0.0
+info:
+  title: PDF Viewer API
+  description: |
+    Backend API for PDF viewer POC with comprehensive logging and monitoring.
+    
+    ## Features
+    - PDF file upload and management
+    - Metadata extraction
+    - Correlation ID tracking
+    - Structured logging
+    - File size validation (50MB limit)
+  version: 0.1.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+tags:
+  - name: health
+    description: Health check endpoints
+  - name: upload
+    description: File upload operations
+  - name: pdf
+    description: PDF file operations
+
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Basic API status check
+      operationId: getRoot
+      responses:
+        '200':
+          description: API is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "PDF Viewer API is running"
+
+  /api/health:
+    get:
+      tags:
+        - health
+      summary: Health check
+      description: Check API health status and storage availability
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Health status
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                timestamp: "2025-07-20T13:32:47.123456Z"
+                version: "0.1.0"
+                uptime: "N/A"
+                storage_available: true
+
+  /api/upload:
+    post:
+      tags:
+        - upload
+      summary: Upload PDF file
+      description: |
+        Upload a PDF file for viewing.
+        
+        - Maximum file size: 50MB
+        - Supported formats: application/pdf
+        - Returns unique file ID and metadata
+      operationId: uploadPDF
+      parameters:
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to upload (max 50MB)
+      responses:
+        '200':
+          description: File uploaded successfully
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PDFUploadResponse'
+              example:
+                file_id: "550e8400-e29b-41d4-a716-446655440000"
+                filename: "document.pdf"
+                file_size: 1048576
+                mime_type: "application/pdf"
+                upload_time: "2025-07-20T13:32:47.123456Z"
+                metadata:
+                  title: "Sample Document"
+                  author: "John Doe"
+                  page_count: 10
+                  file_size: 1048576
+                  encrypted: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/pdf/{file_id}:
+    get:
+      tags:
+        - pdf
+      summary: Retrieve PDF file
+      description: Download a PDF file by its unique identifier
+      operationId: getPDFFile
+      parameters:
+        - $ref: '#/components/parameters/FileId'
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+      responses:
+        '200':
+          description: PDF file
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      tags:
+        - pdf
+      summary: Delete PDF file
+      description: Permanently delete a PDF file
+      operationId: deletePDFFile
+      parameters:
+        - $ref: '#/components/parameters/FileId'
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+      responses:
+        '200':
+          description: File deleted successfully
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "File 550e8400-e29b-41d4-a716-446655440000 deleted successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/metadata/{file_id}:
+    get:
+      tags:
+        - pdf
+      summary: Get PDF metadata
+      description: Retrieve metadata for a PDF file including page count and document properties
+      operationId: getPDFMetadata
+      parameters:
+        - $ref: '#/components/parameters/FileId'
+        - $ref: '#/components/parameters/CorrelationIdHeader'
+      responses:
+        '200':
+          description: PDF metadata
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PDFMetadata'
+              example:
+                title: "Sample Document"
+                author: "John Doe"
+                subject: "PDF Viewer POC"
+                creator: "Microsoft Word"
+                producer: "Adobe PDF Library"
+                creation_date: "2025-07-19T10:30:00Z"
+                modification_date: "2025-07-20T13:00:00Z"
+                page_count: 10
+                file_size: 1048576
+                encrypted: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    FileId:
+      name: file_id
+      in: path
+      required: true
+      description: Unique identifier of the PDF file (UUID format)
+      schema:
+        type: string
+        format: uuid
+        pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    
+    CorrelationIdHeader:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: Optional correlation ID for request tracing
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+        - storage_available
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+          description: Overall health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp
+        version:
+          type: string
+          description: API version
+        uptime:
+          type: string
+          description: Service uptime (placeholder in POC)
+        storage_available:
+          type: boolean
+          description: Whether file storage is accessible
+
+    PDFUploadResponse:
+      type: object
+      required:
+        - file_id
+        - filename
+        - file_size
+        - mime_type
+        - upload_time
+      properties:
+        file_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the uploaded file
+        filename:
+          type: string
+          description: Original filename
+        file_size:
+          type: integer
+          minimum: 1
+          description: File size in bytes
+        mime_type:
+          type: string
+          description: MIME type of the file
+        upload_time:
+          type: string
+          format: date-time
+          description: Upload timestamp
+        metadata:
+          $ref: '#/components/schemas/PDFMetadata'
+
+    PDFMetadata:
+      type: object
+      required:
+        - page_count
+        - file_size
+        - encrypted
+      properties:
+        title:
+          type: string
+          nullable: true
+          description: Document title
+        author:
+          type: string
+          nullable: true
+          description: Document author
+        subject:
+          type: string
+          nullable: true
+          description: Document subject
+        creator:
+          type: string
+          nullable: true
+          description: Software that created the original document
+        producer:
+          type: string
+          nullable: true
+          description: Software that produced the PDF
+        creation_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Document creation date
+        modification_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Document modification date
+        page_count:
+          type: integer
+          minimum: 1
+          description: Number of pages in the PDF
+        file_size:
+          type: integer
+          minimum: 1
+          description: File size in bytes
+        encrypted:
+          type: boolean
+          description: Whether the PDF is encrypted
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error description
+        status_code:
+          type: integer
+          description: HTTP status code
+        error_code:
+          type: string
+          description: Application-specific error code
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "No file provided"
+            status_code: 400
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "File not found"
+            status_code: 404
+
+    PayloadTooLarge:
+      description: File size exceeds limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "File size exceeds 50MB limit"
+            status_code: 413
+
+    UnprocessableEntity:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Invalid PDF file"
+            status_code: 422
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Failed to process file: Internal error"
+            status_code: 500
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication (future implementation)
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication (future implementation)
+
+# Security can be applied globally or per-endpoint
+# Currently disabled for POC
+# security:
+#   - ApiKeyAuth: []
+#   - BearerAuth: []
