@@ -17,6 +17,11 @@ from ..middleware.logging import get_correlation_id
 logger = structlog.get_logger(__name__)
 
 
+def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
+    """Get a structured logger instance."""
+    return structlog.get_logger(name)
+
+
 def log_api_call(
     operation: str,
     log_params: bool = True,
@@ -265,8 +270,11 @@ class APILogger:
             correlation_id: Optional correlation ID (auto-detected if not provided)
         """
         self.operation = operation
+        self.operation_name = operation  # For test compatibility
         self.correlation_id = correlation_id or get_correlation_id()
-        self.logger = logger.bind(
+        self.start_time = time.perf_counter()
+        self.context: dict[str, Any] = {}
+        self.logger = get_logger(__name__).bind(
             operation=operation,
             correlation_id=self.correlation_id,
         )
@@ -306,3 +314,27 @@ class APILogger:
     def log_response_prepared(self, **context):
         """Log that response has been prepared."""
         self.logger.bind(**context).info(f"Response prepared for {self.operation}")
+
+    def log_api_completed(
+        self, status_code: int = 200, response_size: int = 0, **context
+    ):
+        """Log that API operation has completed."""
+        duration_ms = (time.perf_counter() - self.start_time) * 1000
+        self.logger.bind(
+            status_code=status_code,
+            response_size=response_size,
+            duration_ms=duration_ms,
+            **context,
+        ).info(f"API operation completed for {self.operation}")
+
+    def log_file_received(self, filename: Optional[str] = None, file_size: int = 0, **context):
+        """Log that a file has been received."""
+        self.logger.bind(filename=filename, file_size=file_size, **context).info(
+            f"File received for {self.operation}"
+        )
+
+    def log_file_processed(self, filename: Optional[str] = None, **context):
+        """Log that a file has been processed."""
+        self.logger.bind(filename=filename, **context).info(
+            f"File processed for {self.operation}"
+        )

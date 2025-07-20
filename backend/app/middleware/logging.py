@@ -332,7 +332,24 @@ def add_correlation_id(logger, method_name, event_dict):
 
 def get_correlation_id() -> Optional[str]:
     """Get the current correlation ID from context."""
-    return correlation_id_var.get()
+    correlation_id = correlation_id_var.get()
+    if correlation_id is None:
+        # Generate a new correlation ID if none exists
+        import uuid
+
+        correlation_id = str(uuid.uuid4())
+        correlation_id_var.set(correlation_id)
+    return correlation_id
+
+
+def set_correlation_id(correlation_id: Optional[str]) -> None:
+    """Set the correlation ID in the current context."""
+    correlation_id_var.set(correlation_id)
+
+
+def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
+    """Get a structured logger instance."""
+    return structlog.get_logger(name)
 
 
 def log_with_correlation(
