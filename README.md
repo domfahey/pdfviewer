@@ -75,6 +75,25 @@ make test-coverage
 
 See [Test Documentation](tests/README.md) for details.
 
+## Security
+
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run security scan
+detect-secrets scan
+
+# Scan for secrets in git history
+gitleaks detect
+```
+
+This project uses:
+- Pre-commit hooks to prevent secrets
+- Environment variables for configuration
+- Automatic log sanitization
+- No hardcoded credentials
+
 ## Documentation
 
 - [API Reference](docs/API.md)

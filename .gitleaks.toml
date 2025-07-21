@@ -1,0 +1,40 @@
+# Gitleaks configuration for additional secret detection
+# https://github.com/gitleaks/gitleaks
+
+[extend]
+useDefault = true
+
+# Custom rules for this project
+[[rules]]
+id = "api-base-url"
+description = "API Base URL with potential credentials"
+regex = '''https?://[^/\s]+:[^/\s]+@[^/\s]+'''
+tags = ["url", "credentials"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret Key"
+regex = '''(?i)(jwt[_-]?secret|jwt[_-]?key|secret[_-]?key)\s*[:=]\s*["']?[a-zA-Z0-9+/=]{32,}["']?'''
+tags = ["jwt", "secret"]
+
+# Allowlist for false positives
+[allowlist]
+paths = [
+    '''tests/.*''',
+    '''.*\.test\..*''',
+    '''.*\.spec\..*''',
+    '''fixtures/.*''',
+]
+
+# Allow example/test values
+[[allowlist.regexes]]
+regex = '''test[_-]?api[_-]?key'''
+description = "Test API keys"
+
+[[allowlist.regexes]]
+regex = '''example\.com'''
+description = "Example domains"
+
+[[allowlist.regexes]]
+regex = '''localhost'''
+description = "Localhost URLs"

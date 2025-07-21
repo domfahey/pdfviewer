@@ -93,6 +93,15 @@ logs/
 ehthumbs.db
 Thumbs.db
 
+# Security
+.secrets.baseline
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
 # Project specific
 uploads/
 backend/uploads/
@@ -103,6 +112,16 @@ backend.log
 server.log
 api_test.log
 debug_api_test.log
+test-results/
+frontend/coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
 
 # Keep test fixtures
 !tests/**/fixtures/*.pdf
