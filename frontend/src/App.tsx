@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { FileUpload } from './components/Upload/FileUpload';
 import { PDFViewer } from './components/PDFViewer/PDFViewer';
+import { TestPDFLoader } from './components/TestPDFLoader';
 import { ApiService } from './services/api';
 import type { PDFUploadResponse } from './types/pdf.types';
 
@@ -63,6 +64,11 @@ function App() {
             </Box>
 
             <FileUpload onUploadSuccess={handleUploadSuccess} />
+            
+            {/* Test PDF Loader */}
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+              <TestPDFLoader onLoadSuccess={handleUploadSuccess} />
+            </Box>
 
             {/* Features Cards */}
             <Box mt={8}>
