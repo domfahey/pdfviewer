@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sticky PDF controls toolbar
 - Fit mode functionality (width, height, page)
 - View mode toggle (Original PDF / Digital Markdown)
-- Extracted fields panel for form data display
+- Extracted fields panel for form data display (preview UI)
 - Author attribution and MIT licensing
 
 ### Changed
@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upload progress UI race conditions
 - PDF rendering cleanup on component unmount
 - Browser compatibility issues
+- Restored PDFExtractedFields panel that was accidentally removed
 
 ## [0.1.0] - 2025-01-20
 
