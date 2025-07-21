@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { PDFPageProxy } from 'pdfjs-dist';
+import {
+  Box,
+  Paper,
+  Typography,
+  CircularProgress,
+  Alert,
+  AlertTitle,
+  IconButton,
+  Chip,
+  Skeleton,
+} from '@mui/material';
+import { Error as ErrorIcon, Info as InfoIcon } from '@mui/icons-material';
 import { usePDFDocument } from '../../hooks/usePDFDocument';
 import { PDFService } from '../../services/pdfService';
 import { PDFPage } from './PDFPage';
@@ -115,14 +127,101 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     setPageError(errorMessage);
   }, []);
 
+  const calculateFitScale = useCallback(
+    (mode: 'width' | 'height' | 'page', pageObj: PDFPageProxy | null) => {
+      if (!pageObj) return 1;
+
+      // Get the PDF page's natural dimensions at scale 1
+      const viewport = pageObj.getViewport({ scale: 1 });
+      const pageWidth = viewport.width;
+      const pageHeight = viewport.height;
+
+      // Get the available container dimensions
+      // Account for thumbnails panel width when visible
+      const thumbnailsWidth = showThumbnails ? 300 : 0;
+      const metadataWidth = showMetadata ? 300 : 0;
+      const containerWidth = window.innerWidth - thumbnailsWidth - metadataWidth - 40; // 40px for padding
+      const containerHeight = window.innerHeight - 200; // Account for header and controls
+
+      let scale = 1;
+
+      switch (mode) {
+        case 'width':
+          // Fit to container width with some padding
+          scale = (containerWidth - 60) / pageWidth; // 60px for padding
+          break;
+        case 'height':
+          // Fit to container height with some padding
+          scale = (containerHeight - 60) / pageHeight; // 60px for padding
+          break;
+        case 'page': {
+          // Fit to both width and height, using the smaller scale
+          const widthScale = (containerWidth - 60) / pageWidth;
+          const heightScale = (containerHeight - 60) / pageHeight;
+          scale = Math.min(widthScale, heightScale);
+          break;
+        }
+      }
+
+      // Clamp scale to reasonable bounds
+      return Math.max(0.1, Math.min(5.0, scale));
+    },
+    [showThumbnails, showMetadata]
+  );
+
+  // Recalculate fit mode when page loads or window resizes
+  useEffect(() => {
+    if (currentPageObj && fitMode.mode !== 'custom') {
+      const newScale = calculateFitScale(
+        fitMode.mode as 'width' | 'height' | 'page',
+        currentPageObj
+      );
+      setScale(newScale);
+    }
+  }, [currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+
+  // Recalculate fit mode when panels are toggled
+  useEffect(() => {
+    if (currentPageObj && fitMode.mode !== 'custom') {
+      const newScale = calculateFitScale(
+        fitMode.mode as 'width' | 'height' | 'page',
+        currentPageObj
+      );
+      setScale(newScale);
+    }
+  }, [showThumbnails, showMetadata, currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+
+  // Handle window resize for fit modes
+  useEffect(() => {
+    const handleResize = () => {
+      if (currentPageObj && fitMode.mode !== 'custom') {
+        const newScale = calculateFitScale(
+          fitMode.mode as 'width' | 'height' | 'page',
+          currentPageObj
+        );
+        setScale(newScale);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+
   const handleFitModeChange = useCallback(
     (newFitMode: FitMode) => {
       setFitMode(newFitMode);
+
       if (newFitMode.mode === 'custom' && newFitMode.scale) {
         setScale(newFitMode.scale);
+      } else if (['width', 'height', 'page'].includes(newFitMode.mode)) {
+        const newScale = calculateFitScale(
+          newFitMode.mode as 'width' | 'height' | 'page',
+          currentPageObj
+        );
+        setScale(newScale);
       }
     },
-    [setScale]
+    [setScale, calculateFitScale, currentPageObj]
   );
 
   const handleToggleThumbnails = useCallback(() => {
@@ -196,54 +295,76 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center h-64 ${className}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-gray-600">Loading PDF...</div>
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 256,
+          bgcolor: 'background.default',
+        }}
+        className={className}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={48} sx={{ mb: 2 }} />
+          <Typography variant="body1" color="text.secondary">
+            Loading PDF...
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center h-64 ${className}`}>
-        <div className="text-center">
-          <div className="text-red-600 mb-2">
-            <svg
-              className="w-12 h-12 mx-auto mb-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <div className="text-gray-900 font-medium">Failed to load PDF</div>
-          <div className="text-gray-600 text-sm mt-1">{error}</div>
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 256,
+          p: 3,
+        }}
+        className={className}
+      >
+        <Alert severity="error" sx={{ maxWidth: 400 }} icon={<ErrorIcon fontSize="large" />}>
+          <AlertTitle sx={{ fontWeight: 600 }}>Failed to load PDF</AlertTitle>
+          <Typography variant="body2">{error}</Typography>
+        </Alert>
+      </Box>
     );
   }
 
   if (!document || !currentPageObj) {
     return (
-      <div className={`flex items-center justify-center h-64 ${className}`}>
-        <div className="text-center">
-          <div className="text-gray-600">No PDF loaded</div>
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 256,
+          bgcolor: 'background.default',
+        }}
+        className={className}
+      >
+        <Alert severity="info" icon={<InfoIcon />}>
+          <Typography variant="body1">No PDF loaded</Typography>
+        </Alert>
+      </Box>
     );
   }
 
   return (
-    <div className={`flex flex-col h-full bg-gray-50 ${className}`}>
-      {/* Enhanced Controls */}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100%',
+        bgcolor: 'background.default',
+      }}
+      className={className}
+    >
+      {/* Material PDF Controls */}
       <PDFControls
         currentPage={currentPage}
         totalPages={totalPages}
@@ -261,9 +382,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         showAdvanced={true}
       />
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Thumbnails Panel */}
+      {/* Main Content Area with Material Layout */}
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        {/* Material Thumbnails Panel */}
         <PDFThumbnails
           pdfDocument={document}
           currentPage={currentPage}
@@ -271,31 +392,43 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           isVisible={showThumbnails}
         />
 
-        {/* Document Viewer */}
-        <div className="flex-1 flex flex-col">
-          {/* Document Info */}
+        {/* Material Document Viewer */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {/* Material Document Info Bar */}
           {metadata && (
-            <div className="px-4 py-2 bg-white border-b text-sm text-gray-600">
-              <div className="flex items-center justify-between">
-                <span>{metadata.title || 'Untitled Document'}</span>
-                <div className="flex items-center space-x-4">
-                  <span>
-                    {metadata.page_count} pages • {(metadata.file_size / (1024 * 1024)).toFixed(1)}{' '}
-                    MB
-                  </span>
-                  <button
-                    onClick={handleToggleMetadata}
-                    className="text-blue-600 hover:text-blue-800 text-xs underline"
-                  >
-                    {showMetadata ? 'Hide' : 'Show'} Details
-                  </button>
-                </div>
-              </div>
-            </div>
+            <Paper
+              elevation={0}
+              sx={{
+                px: 3,
+                py: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {metadata.title || 'Untitled Document'}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label={`${metadata.page_count} pages`} size="small" variant="outlined" />
+                    <Chip
+                      label={`${(metadata.file_size / (1024 * 1024)).toFixed(1)} MB`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </Box>
+                  <IconButton onClick={handleToggleMetadata} size="small" color="primary">
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Paper>
           )}
 
-          {/* Page Content */}
-          <div className="flex-1 overflow-hidden">
+          {/* Material Page Content Area */}
+          <Box sx={{ flex: 1 }}>
             {useVirtualScrolling && document ? (
               <VirtualPDFViewer
                 pdfDocument={document}
@@ -305,40 +438,47 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 className="h-full"
               />
             ) : (
-              <div className="flex-1 overflow-auto p-4">
-                <div className="flex justify-center">
+              <Box sx={{ p: 3, minHeight: 'calc(100vh - 200px)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                   {pageLoading ? (
-                    <div className="flex items-center justify-center h-96 w-full bg-white rounded shadow">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <div className="text-gray-600 text-sm">Loading page {currentPage}...</div>
-                      </div>
-                    </div>
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 384,
+                        width: '100%',
+                        bgcolor: 'background.paper',
+                      }}
+                    >
+                      <Box sx={{ textAlign: 'center' }}>
+                        <CircularProgress size={32} sx={{ mb: 2 }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Loading page {currentPage}...
+                        </Typography>
+                      </Box>
+                    </Paper>
                   ) : pageError ? (
-                    <div className="flex items-center justify-center h-96 w-full bg-white rounded shadow">
-                      <div className="text-center">
-                        <div className="text-red-600 mb-2">
-                          <svg
-                            className="w-8 h-8 mx-auto mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <div className="text-gray-900 font-medium">Failed to load page</div>
-                        <div className="text-gray-600 text-sm mt-1">{pageError}</div>
-                      </div>
-                    </div>
+                    <Paper
+                      elevation={2}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 384,
+                        width: '100%',
+                        p: 3,
+                      }}
+                    >
+                      <Alert severity="error" icon={<ErrorIcon />} sx={{ maxWidth: 400 }}>
+                        <AlertTitle>Failed to load page</AlertTitle>
+                        <Typography variant="body2">{pageError}</Typography>
+                      </Alert>
+                    </Paper>
                   ) : currentPageObj ? (
-                    <div
-                      style={{
+                    <Box
+                      sx={{
                         transform: `rotate(${rotation}deg)`,
                         transition: 'transform 0.3s ease',
                       }}
@@ -349,15 +489,22 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                         onPageRender={handlePageRender}
                         onPageError={handlePageError}
                       />
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+                    </Box>
+                  ) : (
+                    <Skeleton
+                      variant="rectangular"
+                      width="100%"
+                      height={400}
+                      sx={{ borderRadius: 1 }}
+                    />
+                  )}
+                </Box>
+              </Box>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        {/* Metadata Panel */}
+        {/* Material Metadata Panel */}
         <PDFMetadataPanel
           pdfDocument={document}
           fileMetadata={
@@ -372,7 +519,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           }
           isVisible={showMetadata}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };

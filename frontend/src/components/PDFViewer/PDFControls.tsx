@@ -1,4 +1,35 @@
 import React, { useState } from 'react';
+import {
+  Toolbar,
+  Box,
+  IconButton,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  ToggleButton,
+  ToggleButtonGroup,
+  Divider,
+  Collapse,
+  InputAdornment,
+  Paper,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import {
+  NavigateBefore as NavigateBeforeIcon,
+  NavigateNext as NavigateNextIcon,
+  ZoomIn as ZoomInIcon,
+  ZoomOut as ZoomOutIcon,
+  Search as SearchIcon,
+  ViewList as ViewListIcon,
+  Bookmark as BookmarkIcon,
+  RotateRight as RotateRightIcon,
+  Close as CloseIcon,
+  FitScreen as FitScreenIcon,
+  AspectRatio as AspectRatioIcon,
+  CropLandscape as CropLandscapeIcon,
+} from '@mui/icons-material';
 
 interface FitMode {
   mode: 'width' | 'height' | 'page' | 'custom';
@@ -37,7 +68,6 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
   onToggleBookmarks,
   onSearch,
   onRotate,
-  className = '',
   showAdvanced = true,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,251 +122,184 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
   ];
 
   return (
-    <div className={`bg-gray-100 border-b ${className}`}>
-      {/* Main Toolbar */}
-      <div className="flex items-center justify-between p-4">
+    <Paper elevation={1} sx={{ borderRadius: 0 }}>
+      {/* Main Material Toolbar */}
+      <Toolbar sx={{ gap: 2, flexWrap: 'wrap', minHeight: 64 }}>
         {/* Page Navigation */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={onPreviousPage}
-            disabled={currentPage <= 1}
-            className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Previous page"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Tooltip title="Previous page">
+            <span>
+              <IconButton onClick={onPreviousPage} disabled={currentPage <= 1} size="small">
+                <NavigateBeforeIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
 
-          <div className="flex items-center space-x-1">
-            <span className="text-sm text-gray-600">Page</span>
-            <input
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Page
+            </Typography>
+            <TextField
               type="number"
-              min="1"
-              max={totalPages}
               value={currentPage}
               onChange={handlePageInputChange}
               onKeyPress={handlePageInputKeyPress}
-              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              size="small"
+              sx={{ width: 80 }}
+              inputProps={{
+                min: 1,
+                max: totalPages,
+                style: { textAlign: 'center' },
+              }}
             />
-            <span className="text-sm text-gray-600">of {totalPages}</span>
-          </div>
+            <Typography variant="body2" color="text.secondary">
+              of {totalPages}
+            </Typography>
+          </Box>
 
-          <button
-            onClick={onNextPage}
-            disabled={currentPage >= totalPages}
-            className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Next page"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+          <Tooltip title="Next page">
+            <span>
+              <IconButton onClick={onNextPage} disabled={currentPage >= totalPages} size="small">
+                <NavigateNextIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+
+        <Divider orientation="vertical" flexItem />
 
         {/* Zoom Controls */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleScaleChange(Math.max(0.25, scale - 0.25))}
-            className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-            aria-label="Zoom out"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-            </svg>
-          </button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Tooltip title="Zoom out">
+            <IconButton
+              onClick={() => handleScaleChange(Math.max(0.25, scale - 0.25))}
+              size="small"
+            >
+              <ZoomOutIcon />
+            </IconButton>
+          </Tooltip>
 
-          <select
-            value={scale}
-            onChange={e => handleScaleChange(parseFloat(e.target.value))}
-            className="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {scaleOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <FormControl size="small" sx={{ minWidth: 90 }}>
+            <Select
+              value={scale}
+              onChange={e => handleScaleChange(Number(e.target.value))}
+              displayEmpty
+              renderValue={value => {
+                const option = scaleOptions.find(opt => opt.value === value);
+                return option ? option.label : `${Math.round(value * 100)}%`;
+              }}
+            >
+              {scaleOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <button
-            onClick={() => handleScaleChange(Math.min(5.0, scale + 0.25))}
-            className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-            aria-label="Zoom in"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          </button>
-        </div>
+          <Tooltip title="Zoom in">
+            <IconButton onClick={() => handleScaleChange(Math.min(5.0, scale + 0.25))} size="small">
+              <ZoomInIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
 
-        {/* Fit Options */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleFitModeChange('width')}
-            className={`px-3 py-1 text-sm border rounded-md ${
-              fitMode.mode === 'width'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Fit Width
-          </button>
-          <button
-            onClick={() => handleFitModeChange('height')}
-            className={`px-3 py-1 text-sm border rounded-md ${
-              fitMode.mode === 'height'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Fit Height
-          </button>
-          <button
-            onClick={() => handleFitModeChange('page')}
-            className={`px-3 py-1 text-sm border rounded-md ${
-              fitMode.mode === 'page'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Fit Page
-          </button>
-        </div>
+        <Divider orientation="vertical" flexItem />
+
+        {/* Fit Mode Toggle Buttons */}
+        <ToggleButtonGroup
+          value={fitMode.mode}
+          exclusive
+          onChange={(_, value) => value && handleFitModeChange(value)}
+          size="small"
+        >
+          <ToggleButton value="width" aria-label="fit width">
+            <Tooltip title="Fit to width">
+              <CropLandscapeIcon />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="height" aria-label="fit height">
+            <Tooltip title="Fit to height">
+              <AspectRatioIcon />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="page" aria-label="fit page">
+            <Tooltip title="Fit to page">
+              <FitScreenIcon />
+            </Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <Box sx={{ flexGrow: 1 }} />
 
         {/* Advanced Tools */}
         {showAdvanced && (
-          <div className="flex items-center space-x-2">
-            {/* Search Toggle */}
-            <button
-              onClick={() => setShowSearchBar(!showSearchBar)}
-              className={`p-2 rounded-md border ${
-                showSearchBar
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-              aria-label="Toggle search"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title="Search in document">
+              <IconButton
+                onClick={() => setShowSearchBar(!showSearchBar)}
+                color={showSearchBar ? 'primary' : 'default'}
+                size="small"
+              >
+                <SearchIcon />
+              </IconButton>
+            </Tooltip>
 
-            {/* Thumbnails Toggle */}
             {onToggleThumbnails && (
-              <button
-                onClick={onToggleThumbnails}
-                className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                aria-label="Toggle thumbnails"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14-7H5m14 14H5"
-                  />
-                </svg>
-              </button>
+              <Tooltip title="Toggle thumbnails">
+                <IconButton onClick={onToggleThumbnails} size="small">
+                  <ViewListIcon />
+                </IconButton>
+              </Tooltip>
             )}
 
-            {/* Bookmarks Toggle */}
             {onToggleBookmarks && (
-              <button
-                onClick={onToggleBookmarks}
-                className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                aria-label="Toggle bookmarks"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                  />
-                </svg>
-              </button>
+              <Tooltip title="Toggle bookmarks">
+                <IconButton onClick={onToggleBookmarks} size="small">
+                  <BookmarkIcon />
+                </IconButton>
+              </Tooltip>
             )}
 
-            {/* Rotate */}
             {onRotate && (
-              <button
-                onClick={() => onRotate(90)}
-                className="p-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                aria-label="Rotate 90 degrees"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </button>
+              <Tooltip title="Rotate 90 degrees">
+                <IconButton onClick={() => onRotate(90)} size="small">
+                  <RotateRightIcon />
+                </IconButton>
+              </Tooltip>
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Toolbar>
 
-      {/* Search Bar */}
-      {showSearchBar && onSearch && (
-        <div className="px-4 pb-4">
-          <form onSubmit={handleSearch} className="flex items-center space-x-2">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchInputChange}
-                placeholder="Search in document..."
-                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowSearchBar(false)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-              aria-label="Close search"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+      {/* Material Search Bar */}
+      <Collapse in={showSearchBar && !!onSearch}>
+        <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              placeholder="Search in document..."
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton type="submit" size="small" edge="end">
+                      <SearchIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Tooltip title="Close search">
+              <IconButton onClick={() => setShowSearchBar(false)} size="small">
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Collapse>
+    </Paper>
   );
 };
