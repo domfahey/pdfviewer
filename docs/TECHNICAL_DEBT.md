@@ -84,3 +84,4 @@ def validate_pdf_header(file_path: Path) -> bool:
 - ✅ Type safety improvements
 - ✅ Security enhancements and git cleanup
 - ✅ Documentation consolidation
+- ✅ Ground truth comparison UI for extracted fields

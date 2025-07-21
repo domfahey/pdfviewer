@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fit mode functionality (width, height, page)
 - View mode toggle (Original PDF / Digital Markdown)
 - Extracted fields panel for form data display (preview UI)
+- Ground truth comparison mode with accuracy metrics
 - Author attribution and MIT licensing
 
 ### Changed
