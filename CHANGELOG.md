@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded from React 18 to React 19.1
 - Updated performance test thresholds for real-world PDFs (60s for image-heavy, 30s for standard)
 - **BREAKING**: Rewritten git history to remove sensitive files (collaborators must re-clone)
+- Added automatic `python-magic-bin` installation for Windows compatibility
 
 ### Fixed
 - React double-rendering issues in Strict Mode

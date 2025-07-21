@@ -6,6 +6,24 @@
 - Python 3.9+ with UV
 - Node.js 18+
 - Docker (optional)
+- libmagic (for file type detection)
+
+### System Dependencies
+
+```bash
+# Install libmagic (required for PDF validation)
+
+# macOS
+brew install libmagic
+
+# Ubuntu/Debian
+sudo apt-get install libmagic1
+
+# RHEL/CentOS/Fedora
+sudo yum install file-devel
+
+# Windows - automatically handled by python-magic-bin
+```
 
 ### Install & Run
 

@@ -2,6 +2,28 @@
 
 Modern PDF viewer with React frontend and FastAPI backend, featuring comprehensive testing infrastructure and developer tooling.
 
+## Prerequisites
+
+### System Dependencies
+
+The backend requires `libmagic` for file type detection:
+
+```bash
+# macOS
+brew install libmagic
+
+# Ubuntu/Debian
+sudo apt-get install libmagic1
+
+# RHEL/CentOS/Fedora
+sudo yum install file-devel
+# or
+sudo dnf install file-devel
+
+# Windows
+# python-magic-bin will be installed automatically
+```
+
 ## Quick Start
 
 ```bash
