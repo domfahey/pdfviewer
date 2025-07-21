@@ -2,79 +2,50 @@
 
 Guidance for Claude Code when working with this PDF Viewer POC.
 
-Author: Dominic Fahey (domfahey@gmail.com)  
-License: MIT
-
 ## Project Overview
 
-PDF viewer POC with React/PDF.js frontend and FastAPI backend. Focus on performance with virtual page rendering and structured logging.
+PDF viewer POC with React/FastAPI. Features include full-text search, URL loading, and form extraction.
 
 ## Tech Stack
 
-**Frontend:**
-- React 18, TypeScript, Vite
-- PDF.js with web workers
-- Tailwind CSS
-
-**Backend:**
-- FastAPI, Python 3.9+, UV
-- Structured logging (structlog)
-- Correlation ID tracking
-
-## Commands
-
-```bash
-# Backend
-uv pip install -e ".[dev]"
-cd backend && uvicorn app.main:app --reload
-
-# Frontend
-cd frontend && npm install && npm run dev
-
-# Docker
-docker-compose up -d
-
-# Tests
-pytest && npm test
-
-# Logging
-LOG_LEVEL=DEBUG LOG_FORMAT=console  # Development
-LOG_FORMAT=json                     # Production
-```
+**Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
+**Backend:** FastAPI, Python 3.9+, UV, Pydantic v2
 
 ## Key Requirements
 
-- Virtual scrolling (render only visible pages)
-- Web workers mandatory for PDF.js
+- Full-text PDF search with highlighting
+- URL loading support for remote PDFs
 - 50MB file size limit
-- UUID-based file IDs
 - Correlation ID propagation
+- Zero linting/type errors
 
-## Project Structure
+## Quick Reference
 
-```
-backend/app/
-├── api/              # Endpoints
-├── models/           # Pydantic models  
-├── services/         # Business logic
-├── utils/            # Logging decorators
-└── middleware/       # Request correlation
-
-frontend/src/
-├── components/       # React components
-└── services/        # API client
-```
+See [Technical Guide](docs/TECHNICAL.md) for:
+- Setup commands
+- Testing & quality checks
+- Project structure
+- Environment variables
 
 ## API Decorators
 
 ```python
-@log_api_call("operation")      # General API logging
-@log_file_operation("upload")   # File-specific logging
+@log_api_call("operation", log_params=True, log_response=True)
+@log_file_operation("upload", file_param="file")
 ```
 
 ## Development Notes
 
-- Follow TDD practices
-- Use error boundaries for PDF rendering
-- Clear cache when updating PDF.js
-- Test with real PDF samples in tests/
+- React 19 Strict Mode compatibility
+- Pydantic v2 computed fields and validators
+- Debug logging enabled by default
+- CORS configured for ports 5173-5176
+
+## Important Files
+
+- `backend/app/api/load_url.py` - URL loading endpoint
+- `frontend/src/hooks/usePDFSearch.ts` - Search functionality
+- `frontend/src/components/TestPDFLoader.tsx` - Test PDF loader
+
+Author: Dominic Fahey (domfahey@gmail.com)  
+License: MIT
