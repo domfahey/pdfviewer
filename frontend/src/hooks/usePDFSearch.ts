@@ -56,17 +56,17 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
       try {
         const normalizedQuery = query.toLowerCase();
-        
+
         for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
           if (signal.aborted) break;
 
           const page = await document.getPage(pageNum);
           const textContent = await page.getTextContent();
-          
+
           // Combine all text items into a single string for searching
           let pageText = '';
           const textItems = textContent.items;
-          
+
           for (const item of textItems) {
             if ('str' in item) {
               pageText += item.str + ' ';
@@ -76,7 +76,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
           // Search for matches in the page text
           const normalizedPageText = pageText.toLowerCase();
           let searchIndex = 0;
-          
+
           while ((searchIndex = normalizedPageText.indexOf(normalizedQuery, searchIndex)) !== -1) {
             matches.push({
               pageIndex: pageNum - 1, // Convert to 0-based index
@@ -112,9 +112,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     setSearchState(prev => ({
       ...prev,
       currentMatchIndex:
-        prev.matches.length > 0
-          ? (prev.currentMatchIndex + 1) % prev.matches.length
-          : -1,
+        prev.matches.length > 0 ? (prev.currentMatchIndex + 1) % prev.matches.length : -1,
     }));
   }, []);
 

@@ -1,10 +1,11 @@
 """
 Shared fixtures and configuration for integration tests.
 """
+
 import asyncio
 import os
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,7 +36,7 @@ def test_client() -> Generator[TestClient, None, None]:
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client for async tests."""
     from httpx import ASGITransport
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
@@ -65,13 +66,13 @@ def test_upload_dir(tmp_path) -> Path:
     """Create a temporary upload directory for tests."""
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir()
-    
+
     # Set environment variable for upload directory
     original_upload_dir = os.environ.get("UPLOAD_DIR")
     os.environ["UPLOAD_DIR"] = str(upload_dir)
-    
+
     yield upload_dir
-    
+
     # Restore original upload directory
     if original_upload_dir:
         os.environ["UPLOAD_DIR"] = original_upload_dir
@@ -92,19 +93,16 @@ def mock_pdf_response():
             "personal_info": {
                 "name": "John Doe",
                 "email": "john@example.com",
-                "phone": "(555) 123-4567"
+                "phone": "(555) 123-4567",
             },
             "document_info": {
                 "type": "Contract",
                 "date": "2024-01-15",
-                "reference": "REF-12345"
-            }
+                "reference": "REF-12345",
+            },
         },
-        "confidence_scores": {
-            "personal_info": 0.95,
-            "document_info": 0.87
-        },
-        "processing_time_ms": 1250
+        "confidence_scores": {"personal_info": 0.95, "document_info": 0.87},
+        "processing_time_ms": 1250,
     }
 
 
@@ -114,5 +112,5 @@ def mock_error_response():
     return {
         "detail": "Failed to process PDF",
         "error_code": "PDF_PROCESSING_ERROR",
-        "correlation_id": "test-correlation-id"
+        "correlation_id": "test-correlation-id",
     }

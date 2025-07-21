@@ -8,9 +8,11 @@ describe('PDFControls', () => {
     totalPages: 5,
     scale: 1.0,
     fitMode: { mode: 'width' as const },
+    viewMode: 'original' as const,
     onPageChange: vi.fn(),
     onScaleChange: vi.fn(),
     onFitModeChange: vi.fn(),
+    onViewModeChange: vi.fn(),
     onPreviousPage: vi.fn(),
     onNextPage: vi.fn(),
   };
@@ -24,7 +26,7 @@ describe('PDFControls', () => {
 
     expect(screen.getByText('Page')).toBeInTheDocument();
     expect(screen.getByText('of 5')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('1')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton')).toBeInTheDocument();
     expect(screen.getByLabelText('Previous page')).toBeInTheDocument();
     expect(screen.getByLabelText('Next page')).toBeInTheDocument();
   });
@@ -34,27 +36,27 @@ describe('PDFControls', () => {
 
     expect(screen.getByLabelText('Zoom out')).toBeInTheDocument();
     expect(screen.getByLabelText('Zoom in')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('1')).toBeInTheDocument(); // Scale select
+    expect(screen.getByRole('combobox')).toBeInTheDocument(); // Scale select
   });
 
   it('renders fit mode buttons', () => {
     render(<PDFControls {...defaultProps} />);
 
-    expect(screen.getByText('Fit Width')).toBeInTheDocument();
-    expect(screen.getByText('Fit Height')).toBeInTheDocument();
-    expect(screen.getByText('Fit Page')).toBeInTheDocument();
+    expect(screen.getByLabelText('fit width')).toBeInTheDocument();
+    expect(screen.getByLabelText('fit height')).toBeInTheDocument();
+    expect(screen.getByLabelText('fit page')).toBeInTheDocument();
   });
 
   it('shows advanced controls when enabled', () => {
     render(<PDFControls {...defaultProps} showAdvanced={true} />);
 
-    expect(screen.getByLabelText('Toggle search')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search in document')).toBeInTheDocument();
   });
 
   it('hides advanced controls when disabled', () => {
     render(<PDFControls {...defaultProps} showAdvanced={false} />);
 
-    expect(screen.queryByLabelText('Toggle search')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Search in document')).not.toBeInTheDocument();
   });
 
   it('shows additional controls when handlers are provided', () => {
@@ -62,6 +64,7 @@ describe('PDFControls', () => {
       ...defaultProps,
       onToggleThumbnails: vi.fn(),
       onToggleBookmarks: vi.fn(),
+      onToggleExtractedFields: vi.fn(),
       onRotate: vi.fn(),
       onSearch: vi.fn(),
     };
@@ -69,7 +72,8 @@ describe('PDFControls', () => {
     render(<PDFControls {...props} />);
 
     expect(screen.getByLabelText('Toggle thumbnails')).toBeInTheDocument();
-    expect(screen.getByLabelText('Toggle bookmarks')).toBeInTheDocument();
+    expect(screen.getByLabelText('Document info')).toBeInTheDocument();
+    expect(screen.getByLabelText('Extracted fields')).toBeInTheDocument();
     expect(screen.getByLabelText('Rotate 90 degrees')).toBeInTheDocument();
   });
 
@@ -77,7 +81,7 @@ describe('PDFControls', () => {
     const onPageChange = vi.fn();
     render(<PDFControls {...defaultProps} onPageChange={onPageChange} />);
 
-    const pageInput = screen.getByDisplayValue('1');
+    const pageInput = screen.getByRole('spinbutton');
 
     await act(async () => {
       fireEvent.change(pageInput, { target: { value: '3' } });
@@ -100,12 +104,14 @@ describe('PDFControls', () => {
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByLabelText('Previous page'));
+      const prevButton = screen.getByLabelText('Previous page').querySelector('button');
+      fireEvent.click(prevButton!);
     });
     expect(onPreviousPage).toHaveBeenCalled();
 
     await act(async () => {
-      fireEvent.click(screen.getByLabelText('Next page'));
+      const nextButton = screen.getByLabelText('Next page').querySelector('button');
+      fireEvent.click(nextButton!);
     });
     expect(onNextPage).toHaveBeenCalled();
   });
@@ -113,13 +119,15 @@ describe('PDFControls', () => {
   it('disables previous button on first page', () => {
     render(<PDFControls {...defaultProps} currentPage={1} />);
 
-    expect(screen.getByLabelText('Previous page')).toBeDisabled();
+    const prevButton = screen.getByLabelText('Previous page').querySelector('button');
+    expect(prevButton).toBeDisabled();
   });
 
   it('disables next button on last page', () => {
     render(<PDFControls {...defaultProps} currentPage={5} totalPages={5} />);
 
-    expect(screen.getByLabelText('Next page')).toBeDisabled();
+    const nextButton = screen.getByLabelText('Next page').querySelector('button');
+    expect(nextButton).toBeDisabled();
   });
 
   it('calls onScaleChange when zoom controls are used', async () => {
@@ -139,20 +147,25 @@ describe('PDFControls', () => {
 
   it('calls onFitModeChange when fit buttons are clicked', async () => {
     const onFitModeChange = vi.fn();
-    render(<PDFControls {...defaultProps} onFitModeChange={onFitModeChange} />);
+    render(
+      <PDFControls
+        {...defaultProps}
+        fitMode={{ mode: 'custom' }}
+        onFitModeChange={onFitModeChange}
+      />
+    );
+
+    const fitButtons = screen.getAllByRole('button');
+    const heightButton = fitButtons.find(button => button.getAttribute('value') === 'height');
+    const pageButton = fitButtons.find(button => button.getAttribute('value') === 'page');
 
     await act(async () => {
-      fireEvent.click(screen.getByText('Fit Width'));
-    });
-    expect(onFitModeChange).toHaveBeenCalledWith({ mode: 'width' });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText('Fit Height'));
+      fireEvent.click(heightButton!);
     });
     expect(onFitModeChange).toHaveBeenCalledWith({ mode: 'height' });
 
     await act(async () => {
-      fireEvent.click(screen.getByText('Fit Page'));
+      fireEvent.click(pageButton!);
     });
     expect(onFitModeChange).toHaveBeenCalledWith({ mode: 'page' });
   });
@@ -161,16 +174,28 @@ describe('PDFControls', () => {
     render(<PDFControls {...defaultProps} onSearch={vi.fn()} />);
 
     await act(async () => {
-      fireEvent.click(screen.getByLabelText('Toggle search'));
+      fireEvent.click(screen.getByLabelText('Search in document'));
     });
 
     expect(screen.getByPlaceholderText('Search in document...')).toBeInTheDocument();
   });
 
-  it('highlights active fit mode', () => {
-    render(<PDFControls {...defaultProps} fitMode={{ mode: 'height' }} />);
+  it('renders view mode toggle', () => {
+    render(<PDFControls {...defaultProps} />);
 
-    const fitHeightButton = screen.getByText('Fit Height');
-    expect(fitHeightButton).toHaveClass('bg-blue-500');
+    expect(screen.getByLabelText('original pdf view')).toBeInTheDocument();
+    expect(screen.getByLabelText('digital markdown view')).toBeInTheDocument();
+    expect(screen.getByText('Original')).toBeInTheDocument();
+    expect(screen.getByText('Digital')).toBeInTheDocument();
+  });
+
+  it('calls onViewModeChange when view mode buttons are clicked', async () => {
+    const onViewModeChange = vi.fn();
+    render(<PDFControls {...defaultProps} onViewModeChange={onViewModeChange} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('digital markdown view'));
+    });
+    expect(onViewModeChange).toHaveBeenCalledWith('digital');
   });
 });

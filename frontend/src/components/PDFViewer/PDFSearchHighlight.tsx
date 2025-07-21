@@ -32,14 +32,14 @@ export const PDFSearchHighlight: React.FC<PDFSearchHighlightProps> = ({
     textElements.forEach(span => {
       const text = span.textContent || '';
       const normalizedText = text.toLowerCase();
-      
+
       if (normalizedText.includes(normalizedQuery)) {
         const regex = new RegExp(`(${searchQuery})`, 'gi');
         const parts = text.split(regex);
-        
+
         const highlightedContent = document.createElement('span');
-        
-        parts.forEach((part) => {
+
+        parts.forEach(part => {
           if (part.toLowerCase() === normalizedQuery) {
             const mark = document.createElement('mark');
             mark.textContent = part;
@@ -52,7 +52,7 @@ export const PDFSearchHighlight: React.FC<PDFSearchHighlightProps> = ({
             highlightedContent.appendChild(document.createTextNode(part));
           }
         });
-        
+
         span.innerHTML = '';
         span.appendChild(highlightedContent);
       }

@@ -7,6 +7,7 @@ interface VirtualPDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   className?: string;
+  showPageNumbers?: boolean;
 }
 
 interface PageRenderData {
@@ -28,6 +29,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
   currentPage,
   onPageChange,
   className = '',
+  showPageNumbers = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageData, setPageData] = useState<PageRenderData[]>([]);
@@ -328,9 +330,11 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
               )}
 
               {/* Page Number Overlay */}
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                {page.pageNumber}
-              </div>
+              {showPageNumbers && (
+                <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                  {page.pageNumber}
+                </div>
+              )}
             </div>
           );
         })}

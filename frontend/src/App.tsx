@@ -64,7 +64,7 @@ function App() {
             </Box>
 
             <FileUpload onUploadSuccess={handleUploadSuccess} />
-            
+
             {/* Test PDF Loader */}
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
               <TestPDFLoader onLoadSuccess={handleUploadSuccess} />
