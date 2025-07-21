@@ -66,7 +66,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [showExtractedFields, setShowExtractedFields] = useState(false);
   const [extractedFieldsWidth, setExtractedFieldsWidth] = useState(400);
   const [rotation, setRotation] = useState(0);
-  
+
   // Search functionality
   const {
     searchQuery,
@@ -463,9 +463,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         />
 
         {/* Material Document Viewer */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
           {/* Material Page Content Area */}
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
             {viewMode === 'original' ? (
               // Original PDF View
               useVirtualScrolling && document ? (
@@ -477,7 +477,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                   className="h-full"
                 />
               ) : (
-                <Box sx={{ p: 3, minHeight: 'calc(100vh - 120px)' }}>
+                <Box sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     {pageLoading ? (
                       <Paper
@@ -544,7 +544,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               )
             ) : (
               // Digital Markdown View (Placeholder)
-              <Box sx={{ p: 3, minHeight: 'calc(100vh - 120px)' }}>
+              <Box sx={{ p: 3 }}>
                 <Paper
                   elevation={2}
                   sx={{

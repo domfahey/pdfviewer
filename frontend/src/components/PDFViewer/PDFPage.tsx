@@ -142,7 +142,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-block bg-white shadow-lg ${className}`}
+      className={`relative inline-block bg-white shadow-md ${className}`}
       style={{
         marginBottom: '20px',
       }}
@@ -176,7 +176,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           pointerEvents: 'auto',
         }}
       />
-      
+
       {/* Search highlight layer */}
       <PDFSearchHighlight
         searchQuery={searchQuery}

@@ -4,29 +4,31 @@ import { VirtualPDFViewer } from '../PDFViewer/VirtualPDFViewer';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 
 // Mock PDF.js types and functions
-const createMockPage = (pageNumber: number): PDFPageProxy => ({
-  pageNumber,
-  getViewport: vi.fn(() => ({
-    width: 600,
-    height: 800,
-    scale: 1.0,
-  })),
-  render: vi.fn(() => ({
-    promise: Promise.resolve(),
-    cancel: vi.fn(),
-  })),
-  cleanup: vi.fn(),
-  getTextContent: vi.fn(() => Promise.resolve({ items: [] })),
-  getAnnotations: vi.fn(() => Promise.resolve([])),
-} as unknown as PDFPageProxy);
+const createMockPage = (pageNumber: number): PDFPageProxy =>
+  ({
+    pageNumber,
+    getViewport: vi.fn(() => ({
+      width: 600,
+      height: 800,
+      scale: 1.0,
+    })),
+    render: vi.fn(() => ({
+      promise: Promise.resolve(),
+      cancel: vi.fn(),
+    })),
+    cleanup: vi.fn(),
+    getTextContent: vi.fn(() => Promise.resolve({ items: [] })),
+    getAnnotations: vi.fn(() => Promise.resolve([])),
+  }) as unknown as PDFPageProxy;
 
-const createMockDocument = (numPages: number): PDFDocumentProxy => ({
-  numPages,
-  getPage: vi.fn((pageNum: number) => Promise.resolve(createMockPage(pageNum))),
-  destroy: vi.fn(),
-  getMetadata: vi.fn(() => Promise.resolve({ info: {} })),
-  getDownloadInfo: vi.fn(() => Promise.resolve({ length: 1000 })),
-} as unknown as PDFDocumentProxy);
+const createMockDocument = (numPages: number): PDFDocumentProxy =>
+  ({
+    numPages,
+    getPage: vi.fn((pageNum: number) => Promise.resolve(createMockPage(pageNum))),
+    destroy: vi.fn(),
+    getMetadata: vi.fn(() => Promise.resolve({ info: {} })),
+    getDownloadInfo: vi.fn(() => Promise.resolve({ length: 1000 })),
+  }) as unknown as PDFDocumentProxy;
 
 describe('VirtualPDFViewer', () => {
   let mockDocument: PDFDocumentProxy;
@@ -320,10 +322,7 @@ describe('VirtualPDFViewer', () => {
     });
 
     // Error should be logged
-    expect(console.error).toHaveBeenCalledWith(
-      'Error loading page 3:',
-      expect.any(Error)
-    );
+    expect(console.error).toHaveBeenCalledWith('Error loading page 3:', expect.any(Error));
 
     // Should still show placeholder for failed page
     expect(screen.getByText('Page 3')).toBeInTheDocument();
@@ -361,17 +360,14 @@ describe('VirtualPDFViewer', () => {
 
     // Should log render error
     await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith(
-        'Error rendering page 1:',
-        expect.any(Error)
-      );
+      expect(console.error).toHaveBeenCalledWith('Error rendering page 1:', expect.any(Error));
     });
   });
 
   it('shows loading state for visible pages that are rendering', async () => {
     // Make page rendering take time
     let resolveRender: () => void;
-    const renderPromise = new Promise<void>((resolve) => {
+    const renderPromise = new Promise<void>(resolve => {
       resolveRender = resolve;
     });
 
@@ -512,7 +508,7 @@ describe('VirtualPDFViewer', () => {
     });
 
     const container = document.querySelector('[class*="overflow-auto"]');
-    
+
     if (container) {
       Object.defineProperty(container, 'clientHeight', {
         value: 800,

@@ -1,0 +1,27 @@
+{
+  "name": "pdf-viewer",
+  "version": "1.0.0",
+  "description": "PDF Viewer POC with React and FastAPI",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "cd frontend && npm run test:run && cd ../backend && pytest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "test:coverage": "npm run test:coverage:backend && npm run test:coverage:frontend",
+    "test:coverage:backend": "cd backend && pytest --cov=app --cov-report=html --cov-report=term",
+    "test:coverage:frontend": "cd frontend && npm run test:coverage",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && uv pip install -e '.[dev]'"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["pdf", "viewer", "react", "fastapi", "python"],
+  "author": "Dominic Fahey",
+  "license": "MIT"
+}

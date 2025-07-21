@@ -1,6 +1,7 @@
 """
 Test configuration settings for integration tests.
 """
+
 import os
 from pathlib import Path
 
@@ -44,7 +45,9 @@ TEST_LOG_LEVEL = os.getenv("TEST_LOG_LEVEL", "INFO")
 CAPTURE_LOGS = os.getenv("CAPTURE_LOGS", "false").lower() == "true"
 
 # Feature flags for tests
-ENABLE_PERFORMANCE_TESTS = os.getenv("ENABLE_PERFORMANCE_TESTS", "true").lower() == "true"
+ENABLE_PERFORMANCE_TESTS = (
+    os.getenv("ENABLE_PERFORMANCE_TESTS", "true").lower() == "true"
+)
 ENABLE_STRESS_TESTS = os.getenv("ENABLE_STRESS_TESTS", "false").lower() == "true"
 ENABLE_CONTRACT_TESTS = os.getenv("ENABLE_CONTRACT_TESTS", "true").lower() == "true"
 
@@ -54,4 +57,6 @@ API_VERSION = "v1"
 
 # Clean up settings
 CLEANUP_AFTER_TESTS = os.getenv("CLEANUP_AFTER_TESTS", "true").lower() == "true"
-PRESERVE_FAILED_TEST_DATA = os.getenv("PRESERVE_FAILED_TEST_DATA", "true").lower() == "true"
+PRESERVE_FAILED_TEST_DATA = (
+    os.getenv("PRESERVE_FAILED_TEST_DATA", "true").lower() == "true"
+)

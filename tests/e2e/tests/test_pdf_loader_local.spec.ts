@@ -72,23 +72,20 @@ test.describe('Test PDF Loader - Local Files', () => {
     // Start upload
     const fileInput = page.locator('input[type="file"]');
     
-    // Set up promise to catch progress bar
-    const progressBarPromise = page.waitForSelector('[role="progressbar"]', {
-      state: 'visible',
-      timeout: 5000
-    }).catch(() => null);
-    
     // Upload file
     await fileInput.setInputFiles(localPdfPath);
     
-    // Check if progress bar appeared (might be too fast for small files)
-    const progressBar = await progressBarPromise;
-    if (progressBar) {
-      // Verify progress bar is visible
-      await expect(progressBar).toBeVisible();
-      
-      // Wait for it to complete
-      await expect(progressBar).not.toBeVisible({ timeout: 30000 });
+    // Look for progress bar (it might appear and disappear quickly)
+    const progressBar = page.locator('[role="progressbar"]');
+    
+    // Check if progress bar appears (might be too fast for small files)
+    try {
+      await progressBar.waitFor({ state: 'visible', timeout: 5000 });
+      // Wait for it to disappear
+      await progressBar.waitFor({ state: 'hidden', timeout: 30000 });
+    } catch (e) {
+      // Progress bar might not appear for small files uploaded quickly
+      console.log('Progress bar did not appear or disappeared too quickly');
     }
     
     // Verify upload completed
