@@ -14,9 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Search navigation controls** with next/previous buttons and keyboard shortcuts (F3/Shift+F3)
 - **PDFSearchHighlight** component for visual search results
 - **usePDFSearch** hook for managing search functionality
-- **Playwright E2E testing** support (`@playwright/test`)
-- **Test coverage reporting** with Vitest coverage
-- Extended CORS support to port 5176
+- **Comprehensive test infrastructure**:
+  - Unit, integration, and E2E test suites
+  - Test documentation and best practices guide
+  - Performance and load testing capabilities
+  - Test coverage reporting with 80% threshold
+  - Smoke tests for quick validation
+- **Makefile** with developer commands:
+  - `make lint`, `make format`, `make type` for code quality
+  - `make test-*` commands for different test categories
+  - `make qa` for full quality assurance
+  - `make help` for command documentation
+- **Type safety improvements**:
+  - Fixed Python 3.10 union syntax for 3.9 compatibility
+  - Added type annotations to critical functions
+  - Configured mypy with appropriate overrides
+- **Test PDF fixtures** and sample files
+- Extended CORS support to ports 5173-5176
 - Search match counter showing "X of Y" results
 - Comprehensive Pydantic v2 validation with computed fields
 - Enhanced metadata with complexity scoring and document categorization
@@ -50,6 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React double-rendering issues in Strict Mode
 - CORS configuration for frontend development
 - Type checking errors in TypeScript and mypy
+- Python 3.10 union syntax incompatibility with Python 3.9
+- All backend type errors (139 → 0)
+- Failing tests in PDFThumbnails component
+- Integration test failures for PDF workflows
+- Coverage reporting configuration
 - Upload progress UI race conditions
 - PDF rendering cleanup on component unmount
 - Browser compatibility issues

@@ -1,30 +1,47 @@
 # PDF Viewer POC
 
-Modern PDF viewer with React frontend and FastAPI backend.
+Modern PDF viewer with React frontend and FastAPI backend, featuring comprehensive testing infrastructure and developer tooling.
 
 ## Quick Start
 
 ```bash
-# Backend
-uv pip install -e ".[dev]"
-cd backend && uvicorn app.main:app --reload
+# Install dependencies
+make install
 
-# Frontend  
-cd frontend && npm install && npm run dev
+# Run development servers
+make dev-backend   # Backend on http://localhost:8000
+make dev-frontend  # Frontend on http://localhost:5173
+
+# Or use Docker
+docker-compose up -d
 ```
 
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
+## Development Commands
+
+```bash
+make lint     # Run linters (ruff, eslint)
+make format   # Format code (ruff, black, prettier)
+make type     # Type check (mypy, tsc)
+make test     # Run test suite
+make qa       # Full quality checks
+```
+
+See all commands: `make help`
+
 ## Features
 
 - PDF rendering with virtual scrolling
 - Full-text search with highlighting
-- Load PDFs from URLs
-- Form field extraction
+- Load PDFs from URLs or local files
+- Test PDF loader for quick demos
+- Form field extraction (preview)
 - Enhanced metadata and validation
 - Material Design UI
+- Comprehensive test coverage
 
 ## API Endpoints
 
@@ -38,10 +55,50 @@ cd frontend && npm install && npm run dev
 
 See [API Documentation](docs/API.md) for details.
 
+## Testing
+
+```bash
+# Quick smoke tests
+make test-smoke
+
+# Full test suite
+make test-all
+
+# Specific test categories
+make test-unit        # Unit tests
+make test-integration # Integration tests
+make test-e2e        # End-to-end tests
+
+# With coverage
+make test-coverage
+```
+
+See [Test Documentation](tests/README.md) for details.
+
+## Security
+
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run security scan
+detect-secrets scan
+
+# Scan for secrets in git history
+gitleaks detect
+```
+
+This project uses:
+- Pre-commit hooks to prevent secrets
+- Environment variables for configuration
+- Automatic log sanitization
+- No hardcoded credentials
+
 ## Documentation
 
 - [API Reference](docs/API.md)
 - [Technical Guide](docs/TECHNICAL.md)
+- [Test Guide](tests/README.md)
 
 ## Limitations
 

@@ -10,13 +10,15 @@
 ### Install & Run
 
 ```bash
-# Backend
+# Quick setup
+make install          # Install all dependencies
+make dev-backend      # Start backend
+make dev-frontend     # Start frontend
+
+# Manual setup
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 cd backend && uvicorn app.main:app --reload
-
-# Frontend
-cd frontend && npm install && npm run dev
 
 # Docker
 docker-compose up -d
@@ -29,35 +31,67 @@ URLs:
 
 ## Development
 
+### Quality Assurance
 ```bash
-# Tests
-pytest && npm test
-npx playwright test    # E2E
+# All checks at once
+make qa
 
-# Quality
-ruff check . && ruff format .
-npm run lint && npm run format
-mypy . && npx tsc --noEmit
-
-# Coverage
-pytest --cov=backend
-npm run test:coverage
+# Individual commands
+make lint     # Linting (ruff, eslint)
+make format   # Formatting (black, prettier)
+make type     # Type checking (mypy, tsc)
+make test     # Run tests
 ```
+
+### Testing
+```bash
+# Test categories
+make test-smoke       # Quick validation
+make test-unit        # Unit tests only
+make test-integration # API integration tests
+make test-e2e        # End-to-end tests
+make test-coverage   # With coverage reports
+
+# Advanced testing
+make test-watch      # Watch mode
+make test-debug      # Debug mode
+make test-parallel   # Parallel execution
+```
+
+### Type Safety
+- Python 3.9+ compatible (no 3.10 union syntax)
+- Strict typing for business logic
+- Relaxed typing for tests and utilities
+- Pydantic v2 for runtime validation
 
 ## Project Structure
 
 ```
-backend/
-├── app/
-│   ├── api/         # Endpoints
-│   ├── models/      # Pydantic models
-│   ├── services/    # Business logic
-│   └── middleware/  # CORS, logging
-frontend/
-├── src/
-│   ├── components/  # React components
-│   ├── hooks/       # Custom hooks
-│   └── services/    # API client
+.
+├── Makefile              # Development commands
+├── backend/
+│   ├── app/
+│   │   ├── api/         # FastAPI endpoints
+│   │   ├── models/      # Pydantic v2 models
+│   │   ├── services/    # Business logic
+│   │   ├── middleware/  # CORS, logging
+│   │   └── utils/       # Helpers, decorators
+│   └── uploads/         # Temporary PDF storage
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # React 19 components
+│   │   ├── hooks/       # Custom React hooks
+│   │   ├── services/    # API client
+│   │   └── types/       # TypeScript types
+│   └── coverage/        # Test coverage reports
+├── tests/
+│   ├── test_*.py        # Unit tests
+│   ├── integration/     # API integration tests
+│   │   ├── api/         # Endpoint tests
+│   │   └── fixtures/    # Test PDFs
+│   ├── e2e/            # Playwright E2E tests
+│   └── README.md       # Test documentation
+└── docs/               # Project documentation
 ```
 
 ## Environment Variables
@@ -88,11 +122,23 @@ docker-compose build     # Rebuild
 
 ## Key Features
 
-- Full-text PDF search
-- URL loading support
-- Form field extraction
-- Virtual scrolling
-- Material UI components
+- Full-text PDF search with highlighting
+- URL and local file loading
+- Test PDF loader for demos
+- Form field extraction (preview)
+- Virtual scrolling for performance
+- Material Design UI components
+- Comprehensive test coverage
+
+## Test Infrastructure
+
+- **Unit Tests**: Component and function isolation
+- **Integration Tests**: API endpoint validation
+- **E2E Tests**: User workflow verification
+- **Performance Tests**: Load and response times
+- **Coverage**: 80% threshold (configurable)
+
+See [Test Guide](../tests/README.md) for details.
 
 ## Production Notes
 
