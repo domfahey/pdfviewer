@@ -12,13 +12,15 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend.app.middleware.logging import LoggingMiddleware
+from backend.app.middleware.logging import (
+    LoggingMiddleware,
+    get_correlation_id,
+    set_correlation_id,
+)
 from backend.app.utils.api_logging import (
     APILogger,
-    get_correlation_id,
     log_api_call,
     log_file_operation,
-    set_correlation_id,
 )
 
 
@@ -54,12 +56,14 @@ class TestLoggingMiddleware:
 
         client = TestClient(app)
         test_correlation_id = str(uuid.uuid4())
-        response = client.get("/test", headers={"X-Correlation-ID": test_correlation_id})
+        response = client.get(
+            "/test", headers={"X-Correlation-ID": test_correlation_id}
+        )
 
         assert response.status_code == 200
         assert response.headers["x-correlation-id"] == test_correlation_id
 
-    @patch('backend.app.middleware.logging.get_logger')
+    @patch("backend.app.middleware.logging.get_logger")
     def test_middleware_logs_request_start(self, mock_get_logger):
         """Test that middleware logs request start."""
         mock_logger = Mock()
@@ -90,7 +94,7 @@ class TestLoggingMiddleware:
 
         assert request_start_call is not None
 
-    @patch('backend.app.middleware.logging.get_logger')
+    @patch("backend.app.middleware.logging.get_logger")
     def test_middleware_logs_request_completion(self, mock_get_logger):
         """Test that middleware logs request completion with timing."""
         mock_logger = Mock()
@@ -124,7 +128,7 @@ class TestLoggingMiddleware:
         kwargs = completion_call[1]
         assert "duration_ms" in kwargs
 
-    @patch('backend.app.middleware.logging.get_logger')
+    @patch("backend.app.middleware.logging.get_logger")
     def test_middleware_logs_errors(self, mock_get_logger):
         """Test that middleware logs errors properly."""
         mock_logger = Mock()
@@ -157,7 +161,7 @@ class TestAPILogger:
         assert logger.start_time is not None
         assert logger.context == {}
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_request_received(self, mock_get_logger):
         """Test logging request received."""
         mock_logger = Mock()
@@ -165,16 +169,14 @@ class TestAPILogger:
 
         logger = APILogger("test_operation")
         logger.log_request_received(
-            method="POST",
-            path="/test",
-            query_params={"param": "value"}
+            method="POST", path="/test", query_params={"param": "value"}
         )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args
         assert "API request received" in call_args[0]
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_processing_start(self, mock_get_logger):
         """Test logging processing start."""
         mock_logger = Mock()
@@ -187,7 +189,7 @@ class TestAPILogger:
         call_args = mock_logger.debug.call_args
         assert "Processing started" in call_args[0]
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_processing_success(self, mock_get_logger):
         """Test logging processing success."""
         mock_logger = Mock()
@@ -200,7 +202,7 @@ class TestAPILogger:
         call_args = mock_logger.info.call_args
         assert "Processing completed successfully" in call_args[0]
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_processing_error(self, mock_get_logger):
         """Test logging processing error."""
         mock_logger = Mock()
@@ -214,7 +216,7 @@ class TestAPILogger:
         call_args = mock_logger.error.call_args
         assert "Processing failed" in call_args[0]
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_response_prepared(self, mock_get_logger):
         """Test logging response preparation."""
         mock_logger = Mock()
@@ -222,26 +224,21 @@ class TestAPILogger:
 
         logger = APILogger("test_operation")
         logger.log_response_prepared(
-            status_code=200,
-            response_size=1024,
-            metadata={"key": "value"}
+            status_code=200, response_size=1024, metadata={"key": "value"}
         )
 
         mock_logger.debug.assert_called_once()
         call_args = mock_logger.debug.call_args
         assert "Response prepared" in call_args[0]
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_log_api_completed(self, mock_get_logger):
         """Test logging API completion."""
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
 
         logger = APILogger("test_operation")
-        logger.log_api_completed(
-            status_code=200,
-            response_size=1024
-        )
+        logger.log_api_completed(status_code=200, response_size=1024)
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args
@@ -254,7 +251,7 @@ class TestAPILogger:
 class TestAPILoggingDecorators:
     """Test API logging decorators."""
 
-    @patch('backend.app.utils.api_logging.APILogger')
+    @patch("backend.app.utils.api_logging.APILogger")
     def test_log_api_call_decorator(self, mock_api_logger_class):
         """Test log_api_call decorator functionality."""
         mock_logger = Mock()
@@ -266,6 +263,7 @@ class TestAPILoggingDecorators:
 
         # Call the decorated function
         import asyncio
+
         result = asyncio.run(test_function("test_value", param2=20))
 
         # Verify the result is unchanged
@@ -280,7 +278,7 @@ class TestAPILoggingDecorators:
         mock_logger.log_processing_success.assert_called_once()
         mock_logger.log_api_completed.assert_called_once()
 
-    @patch('backend.app.utils.api_logging.APILogger')
+    @patch("backend.app.utils.api_logging.APILogger")
     def test_log_api_call_decorator_with_error(self, mock_api_logger_class):
         """Test log_api_call decorator handles errors."""
         mock_logger = Mock()
@@ -292,13 +290,14 @@ class TestAPILoggingDecorators:
 
         # Call the decorated function and expect error
         import asyncio
+
         with pytest.raises(ValueError):
             asyncio.run(failing_function())
 
         # Verify error logging was called
         mock_logger.log_processing_error.assert_called_once()
 
-    @patch('backend.app.utils.api_logging.APILogger')
+    @patch("backend.app.utils.api_logging.APILogger")
     def test_log_file_operation_decorator(self, mock_api_logger_class):
         """Test log_file_operation decorator functionality."""
         mock_logger = Mock()
@@ -316,6 +315,7 @@ class TestAPILoggingDecorators:
 
         # Call the decorated function
         import asyncio
+
         result = asyncio.run(test_file_function(mock_file, other_param="test"))
 
         # Verify the result is unchanged
@@ -379,7 +379,7 @@ class TestCorrelationIDManagement:
 class TestPerformanceTracking:
     """Test performance tracking in logging."""
 
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_api_logger_tracks_duration(self, mock_get_logger):
         """Test that APILogger tracks operation duration."""
         mock_logger = Mock()
@@ -403,7 +403,7 @@ class TestPerformanceTracking:
         # Should be at least 10ms (allowing for some variance)
         assert duration >= 10
 
-    @patch('backend.app.utils.api_logging.APILogger')
+    @patch("backend.app.utils.api_logging.APILogger")
     def test_performance_tracking_in_decorator(self, mock_api_logger_class):
         """Test that decorators properly track performance."""
         mock_logger = Mock()
@@ -412,10 +412,12 @@ class TestPerformanceTracking:
         @log_api_call("test_operation", log_timing=True)
         async def timed_function():
             import asyncio
+
             await asyncio.sleep(0.01)  # 10ms
             return {"result": "completed"}
 
         import asyncio
+
         asyncio.run(timed_function())
 
         # Verify timing was logged
@@ -428,8 +430,8 @@ class TestPerformanceTracking:
 class TestLoggingIntegration:
     """Test integration between middleware and API logging."""
 
-    @patch('backend.app.middleware.logging.get_logger')
-    @patch('backend.app.utils.api_logging.get_logger')
+    @patch("backend.app.middleware.logging.get_logger")
+    @patch("backend.app.utils.api_logging.get_logger")
     def test_correlation_id_propagation(self, mock_api_logger, mock_middleware_logger):
         """Test that correlation ID propagates from middleware to API logging."""
         mock_mw_logger = Mock()
@@ -447,7 +449,9 @@ class TestLoggingIntegration:
 
         client = TestClient(app)
         test_correlation_id = str(uuid.uuid4())
-        response = client.get("/test", headers={"X-Correlation-ID": test_correlation_id})
+        response = client.get(
+            "/test", headers={"X-Correlation-ID": test_correlation_id}
+        )
 
         assert response.status_code == 200
         assert response.headers["x-correlation-id"] == test_correlation_id
@@ -473,7 +477,7 @@ class TestLoggingIntegration:
             return {
                 "file_id": "test-id",
                 "filename": file.get("filename", "test.pdf"),
-                "status": "uploaded"
+                "status": "uploaded",
             }
 
         client = TestClient(app)

@@ -327,7 +327,9 @@ class APILogger:
             **context,
         ).info(f"API operation completed for {self.operation}")
 
-    def log_file_received(self, filename: Optional[str] = None, file_size: int = 0, **context):
+    def log_file_received(
+        self, filename: Optional[str] = None, file_size: int = 0, **context
+    ):
         """Log that a file has been received."""
         self.logger.bind(filename=filename, file_size=file_size, **context).info(
             f"File received for {self.operation}"

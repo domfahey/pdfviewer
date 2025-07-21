@@ -19,6 +19,8 @@ import {
 import {
   NavigateBefore as NavigateBeforeIcon,
   NavigateNext as NavigateNextIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   Search as SearchIcon,
@@ -31,6 +33,7 @@ import {
   CropLandscape as CropLandscapeIcon,
   PictureAsPdf as PictureAsPdfIcon,
   Article as ArticleIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 
 interface FitMode {
@@ -52,7 +55,14 @@ interface PDFControlsProps {
   onNextPage: () => void;
   onToggleThumbnails?: () => void;
   onToggleBookmarks?: () => void;
+  onToggleExtractedFields?: () => void;
   onSearch?: (query: string) => void;
+  onSearchNext?: () => void;
+  onSearchPrevious?: () => void;
+  onClearSearch?: () => void;
+  searchMatches?: number;
+  currentSearchMatch?: number;
+  isSearching?: boolean;
   onRotate?: (degrees: number) => void;
   className?: string;
   showAdvanced?: boolean;
@@ -72,7 +82,14 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
   onNextPage,
   onToggleThumbnails,
   onToggleBookmarks,
+  onToggleExtractedFields,
   onSearch,
+  onSearchNext,
+  onSearchPrevious,
+  onClearSearch,
+  searchMatches = 0,
+  currentSearchMatch = 0,
+  isSearching = false,
   onRotate,
   showAdvanced = true,
 }) => {
@@ -154,7 +171,11 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
               Original
             </Typography>
           </ToggleButton>
-          <ToggleButton value="digital" aria-label="digital markdown view" sx={{ px: 1.5, gap: 0.5 }}>
+          <ToggleButton
+            value="digital"
+            aria-label="digital markdown view"
+            sx={{ px: 1.5, gap: 0.5 }}
+          >
             <ArticleIcon fontSize="small" />
             <Typography variant="caption" sx={{ fontWeight: 500 }}>
               Digital
@@ -302,6 +323,14 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
               </Tooltip>
             )}
 
+            {onToggleExtractedFields && (
+              <Tooltip title="Extracted fields">
+                <IconButton onClick={onToggleExtractedFields} size="small">
+                  <DescriptionIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
             {onRotate && (
               <Tooltip title="Rotate 90 degrees">
                 <IconButton onClick={() => onRotate(90)} size="small">
@@ -316,25 +345,54 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
       {/* Material Search Bar */}
       <Collapse in={showSearchBar && !!onSearch}>
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1 }}>
+          <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
               fullWidth
               size="small"
               value={searchQuery}
               onChange={handleSearchInputChange}
               placeholder="Search in document..."
+              disabled={isSearching}
               InputProps={{
+                startAdornment: searchMatches > 0 && (
+                  <InputAdornment position="start">
+                    <Typography variant="caption" color="text.secondary">
+                      {currentSearchMatch + 1} of {searchMatches}
+                    </Typography>
+                  </InputAdornment>
+                ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton type="submit" size="small" edge="end">
+                    <IconButton type="submit" size="small" edge="end" disabled={isSearching}>
                       <SearchIcon />
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
-            <Tooltip title="Close search">
-              <IconButton onClick={() => setShowSearchBar(false)} size="small">
+            {searchMatches > 0 && (
+              <>
+                <Tooltip title="Previous match (Shift+F3)">
+                  <IconButton onClick={onSearchPrevious} size="small" disabled={searchMatches <= 1}>
+                    <KeyboardArrowUpIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Next match (F3)">
+                  <IconButton onClick={onSearchNext} size="small" disabled={searchMatches <= 1}>
+                    <KeyboardArrowDownIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+            <Tooltip title="Clear search">
+              <IconButton 
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchBar(false);
+                  if (onClearSearch) onClearSearch();
+                }} 
+                size="small"
+              >
                 <CloseIcon />
               </IconButton>
             </Tooltip>
