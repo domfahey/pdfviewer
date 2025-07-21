@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed Python 3.10 union syntax for 3.9 compatibility
   - Added type annotations to critical functions
   - Configured mypy with appropriate overrides
+- **Security enhancements**:
+  - Pre-commit hooks for secret detection (detect-secrets, gitleaks)
+  - Comprehensive `.gitignore` with security patterns
+  - `.env.example` template for safe configuration
+  - CONTRIBUTING.md with security checklist
+  - Removed all uploaded PDFs from git history
+  - Cleaned Python cache files from repository
 - **Test PDF fixtures** and sample files
 - Extended CORS support to ports 5173-5176
 - Search match counter showing "X of Y" results
@@ -59,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced logging with request/response tracking
 - Upgraded from React 18 to React 19.1
 - Updated performance test thresholds for real-world PDFs (60s for image-heavy, 30s for standard)
+- **BREAKING**: Rewritten git history to remove sensitive files (collaborators must re-clone)
 
 ### Fixed
 - React double-rendering issues in Strict Mode

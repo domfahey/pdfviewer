@@ -88,11 +88,16 @@ detect-secrets scan
 gitleaks detect
 ```
 
-This project uses:
-- Pre-commit hooks to prevent secrets
-- Environment variables for configuration
-- Automatic log sanitization
-- No hardcoded credentials
+This project implements:
+- Pre-commit hooks for secret detection
+- Environment variables for all configuration
+- Automatic log sanitization for sensitive data
+- No hardcoded credentials or API keys
+- Git history cleaned of uploaded files
+- Comprehensive `.gitignore` patterns
+
+⚠️ **Note**: Git history was rewritten on 2025-01-21 to remove sensitive files. 
+Collaborators should re-clone the repository.
 
 ## Documentation
 

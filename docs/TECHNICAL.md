@@ -140,8 +140,17 @@ docker-compose build     # Rebuild
 
 See [Test Guide](../tests/README.md) for details.
 
+## Security Practices
+
+- **Secret Detection**: Pre-commit hooks prevent accidental commits
+- **Environment Variables**: All configuration via `.env` files
+- **Git History**: Cleaned of all uploaded files and caches
+- **Log Sanitization**: Automatic redaction of sensitive data
+- **File Validation**: Path traversal protection
+
 ## Production Notes
 
 - Enable JSON logs: `JSON_LOGS=true`
 - Configure CORS for production domains
 - Set up persistent storage for uploads
+- Review security configuration in CONTRIBUTING.md
