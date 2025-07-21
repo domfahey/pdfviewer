@@ -105,6 +105,8 @@ Thumbs.db
 # Project specific
 uploads/
 backend/uploads/
+!uploads/README.md
+!backend/uploads/README.md
 *.pdf.tmp
 debug_*.html
 debug_*.png
