@@ -2,6 +2,11 @@
 
 Base URL: `http://localhost:8000/api`
 
+## Interactive Documentation
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
 ## Endpoints
 
 ### Upload PDF
@@ -79,6 +84,21 @@ curl http://localhost:8000/api/metadata/{file_id}
 
 ## Status Codes
 - 200: Success
-- 400: Bad request
+- 400: Bad request (invalid file type, etc.)
 - 404: Not found
-- 413: File too large
+- 413: File too large (>50MB)
+- 422: Validation error
+- 500: Server error
+
+## Headers
+
+All responses include:
+- `X-Correlation-ID`: Request tracking ID
+- `X-Request-ID`: Unique request identifier
+
+## Type Safety
+
+- Pydantic v2 models with validation
+- Comprehensive error responses
+- Python 3.9+ compatible types
+- Runtime type checking
