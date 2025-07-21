@@ -29,6 +29,8 @@ import {
   FitScreen as FitScreenIcon,
   AspectRatio as AspectRatioIcon,
   CropLandscape as CropLandscapeIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+  Article as ArticleIcon,
 } from '@mui/icons-material';
 
 interface FitMode {
@@ -41,9 +43,11 @@ interface PDFControlsProps {
   totalPages: number;
   scale: number;
   fitMode: FitMode;
+  viewMode: 'original' | 'digital';
   onPageChange: (page: number) => void;
   onScaleChange: (scale: number) => void;
   onFitModeChange: (fitMode: FitMode) => void;
+  onViewModeChange: (mode: 'original' | 'digital') => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
   onToggleThumbnails?: () => void;
@@ -59,9 +63,11 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
   totalPages,
   scale,
   fitMode,
+  viewMode,
   onPageChange,
   onScaleChange,
   onFitModeChange,
+  onViewModeChange,
   onPreviousPage,
   onNextPage,
   onToggleThumbnails,
@@ -134,6 +140,30 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
     >
       {/* Compact Material Toolbar */}
       <Toolbar variant="dense" sx={{ gap: 1, flexWrap: 'wrap', minHeight: 40, py: 0.5 }}>
+        {/* View Mode Toggle */}
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={(_, value) => value && onViewModeChange(value)}
+          size="small"
+          sx={{ height: 32 }}
+        >
+          <ToggleButton value="original" aria-label="original pdf view" sx={{ px: 1.5, gap: 0.5 }}>
+            <PictureAsPdfIcon fontSize="small" />
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+              Original
+            </Typography>
+          </ToggleButton>
+          <ToggleButton value="digital" aria-label="digital markdown view" sx={{ px: 1.5, gap: 0.5 }}>
+            <ArticleIcon fontSize="small" />
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+              Digital
+            </Typography>
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <Divider orientation="vertical" flexItem />
+
         {/* Compact Page Navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="Previous page">
