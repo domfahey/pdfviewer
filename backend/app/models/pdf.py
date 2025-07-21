@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated, Any
+from typing import Annotated, Any, Union
 
 from pydantic import (
     BaseModel,
@@ -32,25 +32,25 @@ class PDFMetadata(BaseModel):
     )
 
     title: Annotated[
-        str | None, Field(None, max_length=500, description="PDF document title")
+        Union[str, None], Field(None, max_length=500, description="PDF document title")
     ] = None
     author: Annotated[
-        str | None, Field(None, max_length=200, description="PDF document author")
+        Union[str, None], Field(None, max_length=200, description="PDF document author")
     ] = None
     subject: Annotated[
-        str | None, Field(None, max_length=500, description="PDF document subject")
+        Union[str, None], Field(None, max_length=500, description="PDF document subject")
     ] = None
     creator: Annotated[
-        str | None, Field(None, max_length=200, description="PDF creation software")
+        Union[str, None], Field(None, max_length=200, description="PDF creation software")
     ] = None
     producer: Annotated[
-        str | None, Field(None, max_length=200, description="PDF producer software")
+        Union[str, None], Field(None, max_length=200, description="PDF producer software")
     ] = None
     creation_date: Annotated[
-        datetime | None, Field(None, description="PDF creation timestamp")
+        Union[datetime, None], Field(None, description="PDF creation timestamp")
     ] = None
     modification_date: Annotated[
-        datetime | None, Field(None, description="PDF last modification timestamp")
+        Union[datetime, None], Field(None, description="PDF last modification timestamp")
     ] = None
     page_count: Annotated[
         int,
@@ -80,7 +80,7 @@ class PDFMetadata(BaseModel):
 
     @field_validator("creation_date", "modification_date")
     @classmethod
-    def validate_dates(cls, v: datetime | None) -> datetime | None:
+    def validate_dates(cls, v: Union[datetime, None]) -> Union[datetime, None]:
         """Ensure dates are timezone-aware and not in the future."""
         if v is None:
             return v
@@ -98,7 +98,7 @@ class PDFMetadata(BaseModel):
 
     @field_validator("title", "author", "subject", "creator", "producer")
     @classmethod
-    def validate_text_fields(cls, v: str | None) -> str | None:
+    def validate_text_fields(cls, v: Union[str, None]) -> Union[str, None]:
         """Validate and sanitize text metadata fields."""
         if v is None:
             return v
@@ -223,7 +223,7 @@ class PDFMetadata(BaseModel):
             return "very-long-document"
 
     @field_serializer("creation_date", "modification_date")
-    def serialize_dates(self, value: datetime | None) -> str | None:
+    def serialize_dates(self, value: Union[datetime, None]) -> Union[str, None]:
         """Serialize dates to ISO format for POC consistency."""
         if value is None:
             return None
@@ -296,7 +296,7 @@ class PDFUploadResponse(BaseModel):
         ),
     ]
     metadata: Annotated[
-        PDFMetadata | None,
+        Union[PDFMetadata, None],
         Field(None, description="Extracted PDF metadata if available"),
     ] = None
 
@@ -570,7 +570,7 @@ class ErrorResponse(BaseModel):
         ),
     ]
     detail: Annotated[
-        str | None,
+        Union[str, None],
         Field(
             None,
             max_length=1000,
@@ -579,7 +579,7 @@ class ErrorResponse(BaseModel):
         ),
     ] = None
     error_code: Annotated[
-        str | None,
+        Union[str, None],
         Field(
             None,
             pattern=r"^[A-Z_]+$",
@@ -609,7 +609,7 @@ class ErrorResponse(BaseModel):
 
     @field_validator("error_code")
     @classmethod
-    def validate_error_code(cls, v: str | None) -> str | None:
+    def validate_error_code(cls, v: Union[str, None]) -> Union[str, None]:
         """Enhanced error code validation with POC standards."""
         if v is None:
             return v
@@ -647,7 +647,7 @@ class ErrorResponse(BaseModel):
         return self
 
     @field_serializer("error", "detail")
-    def serialize_error_fields(self, value: str | None) -> str | None:
+    def serialize_error_fields(self, value: Union[str, None]) -> Union[str, None]:
         """Serialize error fields with consistent formatting."""
         if value is None:
             return None

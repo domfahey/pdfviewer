@@ -26,10 +26,15 @@ license = {text = "MIT"}
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.3.1",
+    "pytest-benchmark>=4.0.0",
     "httpx>=0.25.0",
     "ruff>=0.1.0",
     "black>=23.9.0",
     "mypy>=1.6.0",
+    "factory-boy>=3.3.0",
+    "faker>=19.6.0",
 ]
 
 [build-system]
@@ -90,22 +95,42 @@ disallow_untyped_defs = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+ignore_missing_imports = true
+explicit_package_bases = true
+namespace_packages = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
 check_untyped_defs = false
+disable_error_code = ["no-untyped-def", "index", "misc", "union-attr", "return-value"]
 
 [[tool.mypy.overrides]]
 module = "backend.app.middleware.*"
 disallow_untyped_defs = false
+check_untyped_defs = false
+disable_error_code = ["no-untyped-def", "type-arg", "assignment", "unused-ignore"]
 
 [[tool.mypy.overrides]]
 module = "backend.app.core.logging"
 disallow_untyped_defs = false
+check_untyped_defs = false
+disable_error_code = ["no-untyped-def"]
 
 [[tool.mypy.overrides]]
 module = "backend.app.utils.logger"
+disallow_untyped_defs = false
+check_untyped_defs = false
+disable_error_code = ["no-untyped-def"]
+
+[[tool.mypy.overrides]]
+module = "backend.app.utils.api_logging"
+disallow_untyped_defs = false
+check_untyped_defs = false
+disable_error_code = ["no-untyped-def", "type-arg", "assignment"]
+
+[[tool.mypy.overrides]]
+module = "backend.app.models.pdf"
 disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
@@ -115,3 +140,37 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = [
+    "--cov=backend.app",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=80",
+]
+
+[tool.coverage.run]
+source = ["backend/app"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/__init__.py",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"

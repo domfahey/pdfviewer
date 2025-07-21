@@ -1,12 +1,13 @@
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api import health, pdf, upload
+from .api import health, load_url, pdf, upload
 from .core.logging import configure_logging, get_logger
 from .middleware.logging import LoggingMiddleware
 from .services.pdf_service import PDFService
@@ -31,7 +32,7 @@ logger.info("PDF service initialized")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager for startup and shutdown events."""
     # Startup
     logger.info(
@@ -65,6 +66,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
+        "http://localhost:5176",
     ],  # Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
@@ -75,11 +77,13 @@ logger.info("CORS middleware configured")
 # Initialize shared service in routers
 upload.init_pdf_service(pdf_service)
 pdf.init_pdf_service(pdf_service)
+load_url.init_pdf_service(pdf_service)
 
 # Include API routers
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(pdf.router, prefix="/api", tags=["pdf"])
+app.include_router(load_url.router, prefix="/api", tags=["load"])
 logger.info("API routers configured")
 
 # Serve uploaded files (for development only)

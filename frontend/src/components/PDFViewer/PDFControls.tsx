@@ -345,7 +345,11 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
       {/* Material Search Bar */}
       <Collapse in={showSearchBar && !!onSearch}>
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Box
+            component="form"
+            onSubmit={handleSearch}
+            sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
+          >
             <TextField
               fullWidth
               size="small"
@@ -385,12 +389,12 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
               </>
             )}
             <Tooltip title="Clear search">
-              <IconButton 
+              <IconButton
                 onClick={() => {
                   setSearchQuery('');
                   setShowSearchBar(false);
                   if (onClearSearch) onClearSearch();
-                }} 
+                }}
                 size="small"
               >
                 <CloseIcon />

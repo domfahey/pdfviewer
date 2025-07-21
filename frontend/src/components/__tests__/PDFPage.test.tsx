@@ -385,7 +385,7 @@ describe('PDFPage', () => {
     const canvas = document.querySelector('canvas');
     const mockClearRect = vi.fn();
     const mockGetContext = vi.fn(() => ({ clearRect: mockClearRect }));
-    
+
     if (canvas) {
       canvas.getContext = mockGetContext;
     }
@@ -416,7 +416,7 @@ describe('PDFPage', () => {
 
     const canvas = document.querySelector('canvas');
     const mockCancel = vi.fn();
-    
+
     if (canvas) {
       // Simulate an active render task
       const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
@@ -438,7 +438,7 @@ describe('PDFPage', () => {
   it('skips render when component is unmounted during async operations', async () => {
     // Make canvas rendering take time
     let resolveRender: () => void;
-    const renderPromise = new Promise<void>((resolve) => {
+    const renderPromise = new Promise<void>(resolve => {
       resolveRender = resolve;
     });
     mockPDFService.renderPageToCanvas.mockReturnValue(renderPromise);
