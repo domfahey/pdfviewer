@@ -23,7 +23,7 @@ import {
   ZoomOut as ZoomOutIcon,
   Search as SearchIcon,
   ViewList as ViewListIcon,
-  Bookmark as BookmarkIcon,
+  Info as InfoIcon,
   RotateRight as RotateRightIcon,
   Close as CloseIcon,
   FitScreen as FitScreenIcon,
@@ -122,21 +122,30 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
   ];
 
   return (
-    <Paper elevation={1} sx={{ borderRadius: 0 }}>
-      {/* Main Material Toolbar */}
-      <Toolbar sx={{ gap: 2, flexWrap: 'wrap', minHeight: 64 }}>
-        {/* Page Navigation */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Paper
+      elevation={1}
+      sx={{
+        borderRadius: 0,
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        backgroundColor: 'background.paper',
+      }}
+    >
+      {/* Compact Material Toolbar */}
+      <Toolbar variant="dense" sx={{ gap: 1, flexWrap: 'wrap', minHeight: 40, py: 0.5 }}>
+        {/* Compact Page Navigation */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="Previous page">
             <span>
               <IconButton onClick={onPreviousPage} disabled={currentPage <= 1} size="small">
-                <NavigateBeforeIcon />
+                <NavigateBeforeIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography variant="caption" color="text.secondary">
               Page
             </Typography>
             <TextField
@@ -145,14 +154,14 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
               onChange={handlePageInputChange}
               onKeyPress={handlePageInputKeyPress}
               size="small"
-              sx={{ width: 80 }}
+              sx={{ width: 60 }}
               inputProps={{
                 min: 1,
                 max: totalPages,
-                style: { textAlign: 'center' },
+                style: { textAlign: 'center', fontSize: '0.75rem', padding: '4px 6px' },
               }}
             />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               of {totalPages}
             </Typography>
           </Box>
@@ -160,7 +169,7 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
           <Tooltip title="Next page">
             <span>
               <IconButton onClick={onNextPage} disabled={currentPage >= totalPages} size="small">
-                <NavigateNextIcon />
+                <NavigateNextIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
@@ -168,29 +177,30 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
 
         <Divider orientation="vertical" flexItem />
 
-        {/* Zoom Controls */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* Compact Zoom Controls */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Tooltip title="Zoom out">
             <IconButton
               onClick={() => handleScaleChange(Math.max(0.25, scale - 0.25))}
               size="small"
             >
-              <ZoomOutIcon />
+              <ZoomOutIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
-          <FormControl size="small" sx={{ minWidth: 90 }}>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
             <Select
               value={scale}
               onChange={e => handleScaleChange(Number(e.target.value))}
               displayEmpty
+              sx={{ fontSize: '0.75rem', height: 32 }}
               renderValue={value => {
                 const option = scaleOptions.find(opt => opt.value === value);
                 return option ? option.label : `${Math.round(value * 100)}%`;
               }}
             >
               {scaleOptions.map(option => (
-                <MenuItem key={option.value} value={option.value}>
+                <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.75rem' }}>
                   {option.label}
                 </MenuItem>
               ))}
@@ -199,33 +209,34 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
 
           <Tooltip title="Zoom in">
             <IconButton onClick={() => handleScaleChange(Math.min(5.0, scale + 0.25))} size="small">
-              <ZoomInIcon />
+              <ZoomInIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
 
         <Divider orientation="vertical" flexItem />
 
-        {/* Fit Mode Toggle Buttons */}
+        {/* Compact Fit Mode Toggle Buttons */}
         <ToggleButtonGroup
           value={fitMode.mode}
           exclusive
           onChange={(_, value) => value && handleFitModeChange(value)}
           size="small"
+          sx={{ height: 32 }}
         >
-          <ToggleButton value="width" aria-label="fit width">
+          <ToggleButton value="width" aria-label="fit width" sx={{ px: 1 }}>
             <Tooltip title="Fit to width">
-              <CropLandscapeIcon />
+              <CropLandscapeIcon fontSize="small" />
             </Tooltip>
           </ToggleButton>
-          <ToggleButton value="height" aria-label="fit height">
+          <ToggleButton value="height" aria-label="fit height" sx={{ px: 1 }}>
             <Tooltip title="Fit to height">
-              <AspectRatioIcon />
+              <AspectRatioIcon fontSize="small" />
             </Tooltip>
           </ToggleButton>
-          <ToggleButton value="page" aria-label="fit page">
+          <ToggleButton value="page" aria-label="fit page" sx={{ px: 1 }}>
             <Tooltip title="Fit to page">
-              <FitScreenIcon />
+              <FitScreenIcon fontSize="small" />
             </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
@@ -254,9 +265,9 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
             )}
 
             {onToggleBookmarks && (
-              <Tooltip title="Toggle bookmarks">
+              <Tooltip title="Document info">
                 <IconButton onClick={onToggleBookmarks} size="small">
-                  <BookmarkIcon />
+                  <InfoIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             )}
