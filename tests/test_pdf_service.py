@@ -7,6 +7,7 @@ performance tracking, and all public methods of the PDFService.
 
 import tempfile
 import uuid
+from datetime import UTC
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -319,7 +320,7 @@ class TestPDFServiceFileOperations:
         file_path.write_bytes(sample_pdf_content)
 
         # Add to metadata (simplified - normally done by upload_pdf)
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -329,7 +330,7 @@ class TestPDFServiceFileOperations:
             filename="test.pdf",
             file_size=len(sample_pdf_content),
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
         self.service._file_metadata[file_id] = pdf_info
@@ -351,7 +352,7 @@ class TestPDFServiceFileOperations:
         file_id = str(uuid.uuid4())
 
         # Add to metadata but don't create the actual file
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -361,7 +362,7 @@ class TestPDFServiceFileOperations:
             filename="test.pdf",
             file_size=1000,
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
         self.service._file_metadata[file_id] = pdf_info
@@ -379,7 +380,7 @@ class TestPDFServiceFileOperations:
         file_path = self.service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -389,7 +390,7 @@ class TestPDFServiceFileOperations:
             filename="test.pdf",
             file_size=len(sample_pdf_content),
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
         self.service._file_metadata[file_id] = pdf_info
@@ -421,7 +422,7 @@ class TestPDFServiceFileOperations:
         # Add a file to metadata
         file_id = str(uuid.uuid4())
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -431,7 +432,7 @@ class TestPDFServiceFileOperations:
             filename="test.pdf",
             file_size=len(sample_pdf_content),
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
         self.service._file_metadata[file_id] = pdf_info
@@ -449,7 +450,7 @@ class TestPDFServiceFileOperations:
         for i in range(3):
             file_id = str(uuid.uuid4())
 
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -459,7 +460,7 @@ class TestPDFServiceFileOperations:
                 filename=f"test{i}.pdf",
                 file_size=len(sample_pdf_content),
                 mime_type="application/pdf",
-                upload_time=datetime.now(timezone.utc),
+                upload_time=datetime.now(UTC),
                 metadata=metadata,
             )
             self.service._file_metadata[file_id] = pdf_info
@@ -492,7 +493,7 @@ class TestPDFServiceMetadataRetrieval:
         """Test successful PDF metadata retrieval."""
         file_id = str(uuid.uuid4())
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from backend.app.models.pdf import PDFInfo, PDFMetadata
 
@@ -507,7 +508,7 @@ class TestPDFServiceMetadataRetrieval:
             filename="test.pdf",
             file_size=len(sample_pdf_content),
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
         self.service._file_metadata[file_id] = pdf_info

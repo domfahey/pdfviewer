@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter
@@ -172,7 +172,7 @@ async def health_check() -> HealthResponse:
     try:
         response = HealthResponse(
             status=health_status,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             storage_available=storage_available,
         )
     except Exception as e:
@@ -183,7 +183,7 @@ async def health_check() -> HealthResponse:
         # Fallback response
         response = HealthResponse(
             status="unhealthy",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             storage_available=False,
         )
 

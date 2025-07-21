@@ -7,7 +7,8 @@ including parameter validation, response logging, and performance metrics.
 
 import functools
 import time
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import structlog
 from fastapi import Request
@@ -27,7 +28,7 @@ def log_api_call(
     log_params: bool = True,
     log_response: bool = False,
     log_timing: bool = True,
-    sensitive_params: Optional[list[str]] = None,
+    sensitive_params: list[str] | None = None,
 ):
     """
     Decorator for detailed API endpoint logging.
@@ -222,7 +223,7 @@ def _sanitize_params(
         if key.lower() in [k.lower() for k in sensitive_keys]:
             sanitized[key] = "[REDACTED]"
         elif hasattr(value, "__dict__") and not isinstance(
-            value, (str, int, float, bool)
+            value, str | int | float | bool
         ):
             # For complex objects, just log the type
             sanitized[key] = f"<{type(value).__name__}>"
@@ -261,7 +262,7 @@ class APILogger:
     Specialized logger for API operations with context binding.
     """
 
-    def __init__(self, operation: str, correlation_id: Optional[str] = None):
+    def __init__(self, operation: str, correlation_id: str | None = None):
         """
         Initialize API logger with operation context.
 
@@ -328,14 +329,14 @@ class APILogger:
         ).info(f"API operation completed for {self.operation}")
 
     def log_file_received(
-        self, filename: Optional[str] = None, file_size: int = 0, **context
+        self, filename: str | None = None, file_size: int = 0, **context
     ):
         """Log that a file has been received."""
         self.logger.bind(filename=filename, file_size=file_size, **context).info(
             f"File received for {self.operation}"
         )
 
-    def log_file_processed(self, filename: Optional[str] = None, **context):
+    def log_file_processed(self, filename: str | None = None, **context):
         """Log that a file has been processed."""
         self.logger.bind(filename=filename, **context).info(
             f"File processed for {self.operation}"

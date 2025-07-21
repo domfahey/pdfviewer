@@ -57,38 +57,9 @@ interface PDFExtractedFieldsProps {
   onResize: (width: number) => void;
 }
 
-export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
-  isVisible,
-  onClose,
-  width,
-  onResize,
-}) => {
-  const [viewMode, setViewMode] = useState<'extraction' | 'comparison'>('extraction');
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = width;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = startX - e.clientX;
-      const newWidth = Math.min(Math.max(300, startWidth + deltaX), 800);
-      onResize(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  if (!isVisible) return null;
-
-  // Mock extracted fields data with ground truth
-  const extractedFields = {
+// Mock extracted fields data with ground truth
+// Defined outside component to avoid recreating on every render
+const MOCK_EXTRACTED_FIELDS = {
     personal: [
       {
         label: 'Full Name',
@@ -181,7 +152,37 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
         accuracy: 'different' as const,
       },
     ],
+};
+
+export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
+  isVisible,
+  onClose,
+  width,
+  onResize,
+}) => {
+  const [viewMode, setViewMode] = useState<'extraction' | 'comparison'>('extraction');
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = width;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = startX - e.clientX;
+      const newWidth = Math.min(Math.max(300, startWidth + deltaX), 800);
+      onResize(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
+
+  if (!isVisible) return null;
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.9) return 'success';
@@ -234,10 +235,10 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
   // Calculate accuracy metrics
   const calculateAccuracyMetrics = () => {
     const allFields = [
-      ...extractedFields.personal,
-      ...extractedFields.business,
-      ...extractedFields.dates,
-      ...extractedFields.financial,
+      ...MOCK_EXTRACTED_FIELDS.personal,
+      ...MOCK_EXTRACTED_FIELDS.business,
+      ...MOCK_EXTRACTED_FIELDS.dates,
+      ...MOCK_EXTRACTED_FIELDS.financial,
     ];
 
     const withGroundTruth = allFields.filter(f => f.accuracy !== 'no-truth');
@@ -255,22 +256,22 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
     {
       title: 'Personal Information',
       icon: <PersonIcon fontSize="small" />,
-      fields: extractedFields.personal,
+      fields: MOCK_EXTRACTED_FIELDS.personal,
     },
     {
       title: 'Business Details',
       icon: <BusinessIcon fontSize="small" />,
-      fields: extractedFields.business,
+      fields: MOCK_EXTRACTED_FIELDS.business,
     },
     {
       title: 'Dates',
       icon: <DateRangeIcon fontSize="small" />,
-      fields: extractedFields.dates,
+      fields: MOCK_EXTRACTED_FIELDS.dates,
     },
     {
       title: 'Financial',
       icon: <MoneyIcon fontSize="small" />,
-      fields: extractedFields.financial,
+      fields: MOCK_EXTRACTED_FIELDS.financial,
     },
   ];
 

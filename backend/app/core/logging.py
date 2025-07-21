@@ -8,7 +8,7 @@ and different output formats for development vs production environments.
 import logging
 import logging.config
 import sys
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from rich.console import Console
@@ -170,7 +170,7 @@ class LogContext:
     def __init__(self, logger: structlog.stdlib.BoundLogger, **context: Any) -> None:
         self.logger = logger
         self.context = context
-        self.bound_logger: Optional[structlog.stdlib.BoundLogger] = None
+        self.bound_logger: structlog.stdlib.BoundLogger | None = None
 
     def __enter__(self) -> structlog.stdlib.BoundLogger:
         self.bound_logger = self.logger.bind(**self.context)

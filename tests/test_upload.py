@@ -199,7 +199,7 @@ def test_upload_metadata_complexity_scoring(
 
     metadata = data["metadata"]
     assert "document_complexity_score" in metadata
-    assert isinstance(metadata["document_complexity_score"], (int, float))
+    assert isinstance(metadata["document_complexity_score"], int | float)
     assert 0 <= metadata["document_complexity_score"] <= 100
 
     assert "document_category" in metadata
