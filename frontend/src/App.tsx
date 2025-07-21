@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
   Container,
   Box,
   Fab,
@@ -11,11 +8,10 @@ import {
   IconButton,
   Card,
   CardContent,
-  Chip,
+  Typography,
 } from '@mui/material';
 import {
   Add as AddIcon,
-  PictureAsPdf as PdfIcon,
   Close as CloseIcon,
   Visibility as VisibilityIcon,
   Speed as SpeedIcon,
@@ -51,22 +47,6 @@ function App() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Material AppBar Header */}
-      <AppBar position="static" elevation={1}>
-        <Toolbar>
-          <PdfIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            PDF Viewer
-          </Typography>
-          <Chip
-            label="Professional"
-            size="small"
-            variant="outlined"
-            sx={{ color: 'white', borderColor: 'white' }}
-          />
-        </Toolbar>
-      </AppBar>
-
       {/* Main Content */}
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
         {!uploadedFile ? (
@@ -182,7 +162,7 @@ function App() {
           </Container>
         ) : (
           /* PDF Viewer Section */
-          <Box sx={{ flex: 1, minHeight: 'calc(100vh - 64px)' }}>
+          <Box sx={{ flex: 1, minHeight: '100vh' }}>
             <PDFViewer fileUrl={getPDFUrl(uploadedFile.file_id)} metadata={uploadedFile.metadata} />
           </Box>
         )}

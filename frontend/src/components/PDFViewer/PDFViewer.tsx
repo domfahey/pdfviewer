@@ -7,11 +7,9 @@ import {
   CircularProgress,
   Alert,
   AlertTitle,
-  IconButton,
-  Chip,
   Skeleton,
 } from '@mui/material';
-import { Error as ErrorIcon, Info as InfoIcon } from '@mui/icons-material';
+import { Error as ErrorIcon, Article as ArticleIcon } from '@mui/icons-material';
 import { usePDFDocument } from '../../hooks/usePDFDocument';
 import { PDFService } from '../../services/pdfService';
 import { PDFPage } from './PDFPage';
@@ -59,6 +57,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>(initialFitMode);
+  const [viewMode, setViewMode] = useState<'original' | 'digital'>('original');
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -137,11 +136,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       const pageHeight = viewport.height;
 
       // Get the available container dimensions
-      // Account for thumbnails panel width when visible
+      // Account for thumbnails and metadata panel widths when visible
       const thumbnailsWidth = showThumbnails ? 300 : 0;
       const metadataWidth = showMetadata ? 300 : 0;
       const containerWidth = window.innerWidth - thumbnailsWidth - metadataWidth - 40; // 40px for padding
-      const containerHeight = window.innerHeight - 200; // Account for header and controls
+      const containerHeight = window.innerHeight - 120; // Account for PDF controls only
 
       let scale = 1;
 
@@ -230,6 +229,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleToggleMetadata = useCallback(() => {
     setShowMetadata(prev => !prev);
+  }, []);
+
+  const handleViewModeChange = useCallback((mode: 'original' | 'digital') => {
+    setViewMode(mode);
   }, []);
 
   const handleSearch = useCallback((query: string) => {
@@ -347,7 +350,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         }}
         className={className}
       >
-        <Alert severity="info" icon={<InfoIcon />}>
+        <Alert severity="info">
           <Typography variant="body1">No PDF loaded</Typography>
         </Alert>
       </Box>
@@ -370,9 +373,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         totalPages={totalPages}
         scale={scale}
         fitMode={fitMode}
+        viewMode={viewMode}
         onPageChange={setCurrentPage}
         onScaleChange={handleScaleChange}
         onFitModeChange={handleFitModeChange}
+        onViewModeChange={handleViewModeChange}
         onPreviousPage={previousPage}
         onNextPage={nextPage}
         onToggleThumbnails={handleToggleThumbnails}
@@ -394,111 +399,125 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
         {/* Material Document Viewer */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Material Document Info Bar */}
-          {metadata && (
-            <Paper
-              elevation={0}
-              sx={{
-                px: 3,
-                py: 2,
-                borderBottom: 1,
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {metadata.title || 'Untitled Document'}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label={`${metadata.page_count} pages`} size="small" variant="outlined" />
-                    <Chip
-                      label={`${(metadata.file_size / (1024 * 1024)).toFixed(1)} MB`}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-                  <IconButton onClick={handleToggleMetadata} size="small" color="primary">
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Paper>
-          )}
-
           {/* Material Page Content Area */}
           <Box sx={{ flex: 1 }}>
-            {useVirtualScrolling && document ? (
-              <VirtualPDFViewer
-                pdfDocument={document}
-                scale={scale}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-                className="h-full"
-              />
-            ) : (
-              <Box sx={{ p: 3, minHeight: 'calc(100vh - 200px)' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  {pageLoading ? (
-                    <Paper
-                      elevation={2}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: 384,
-                        width: '100%',
-                        bgcolor: 'background.paper',
-                      }}
-                    >
-                      <Box sx={{ textAlign: 'center' }}>
-                        <CircularProgress size={32} sx={{ mb: 2 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          Loading page {currentPage}...
-                        </Typography>
+            {viewMode === 'original' ? (
+              // Original PDF View
+              useVirtualScrolling && document ? (
+                <VirtualPDFViewer
+                  pdfDocument={document}
+                  scale={scale}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                  className="h-full"
+                />
+              ) : (
+                <Box sx={{ p: 3, minHeight: 'calc(100vh - 120px)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    {pageLoading ? (
+                      <Paper
+                        elevation={2}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: 384,
+                          width: '100%',
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <Box sx={{ textAlign: 'center' }}>
+                          <CircularProgress size={32} sx={{ mb: 2 }} />
+                          <Typography variant="body2" color="text.secondary">
+                            Loading page {currentPage}...
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    ) : pageError ? (
+                      <Paper
+                        elevation={2}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: 384,
+                          width: '100%',
+                          p: 3,
+                        }}
+                      >
+                        <Alert severity="error" icon={<ErrorIcon />} sx={{ maxWidth: 400 }}>
+                          <AlertTitle>Failed to load page</AlertTitle>
+                          <Typography variant="body2">{pageError}</Typography>
+                        </Alert>
+                      </Paper>
+                    ) : currentPageObj ? (
+                      <Box
+                        sx={{
+                          transform: `rotate(${rotation}deg)`,
+                          transition: 'transform 0.3s ease',
+                        }}
+                      >
+                        <PDFPage
+                          page={currentPageObj}
+                          scale={scale}
+                          onPageRender={handlePageRender}
+                          onPageError={handlePageError}
+                        />
                       </Box>
-                    </Paper>
-                  ) : pageError ? (
-                    <Paper
-                      elevation={2}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: 384,
-                        width: '100%',
-                        p: 3,
-                      }}
-                    >
-                      <Alert severity="error" icon={<ErrorIcon />} sx={{ maxWidth: 400 }}>
-                        <AlertTitle>Failed to load page</AlertTitle>
-                        <Typography variant="body2">{pageError}</Typography>
-                      </Alert>
-                    </Paper>
-                  ) : currentPageObj ? (
-                    <Box
-                      sx={{
-                        transform: `rotate(${rotation}deg)`,
-                        transition: 'transform 0.3s ease',
-                      }}
-                    >
-                      <PDFPage
-                        page={currentPageObj}
-                        scale={scale}
-                        onPageRender={handlePageRender}
-                        onPageError={handlePageError}
+                    ) : (
+                      <Skeleton
+                        variant="rectangular"
+                        width="100%"
+                        height={400}
+                        sx={{ borderRadius: 1 }}
                       />
-                    </Box>
-                  ) : (
-                    <Skeleton
-                      variant="rectangular"
-                      width="100%"
-                      height={400}
-                      sx={{ borderRadius: 1 }}
-                    />
-                  )}
+                    )}
+                  </Box>
                 </Box>
+              )
+            ) : (
+              // Digital Markdown View (Placeholder)
+              <Box sx={{ p: 3, minHeight: 'calc(100vh - 120px)' }}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    bgcolor: 'background.paper',
+                    maxWidth: 800,
+                    mx: 'auto',
+                  }}
+                >
+                  <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <ArticleIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 500 }}>
+                      Digital View
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Extracted markdown content will appear here
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ bgcolor: 'grey.50', p: 3, borderRadius: 1, border: '1px dashed', borderColor: 'grey.300' }}>
+                    <Typography variant="h6" gutterBottom>
+                      # Document Title
+                    </Typography>
+                    <Typography variant="body1" paragraph>
+                      This is a placeholder for the extracted markdown content from the PDF. 
+                      The digital view will display structured, searchable text content 
+                      extracted from the original PDF document.
+                    </Typography>
+                    <Typography variant="body1" paragraph>
+                      **Features coming soon:**
+                    </Typography>
+                    <Typography variant="body1" component="div">
+                      - Full text extraction
+                      - Structured headings and sections
+                      - Tables and lists formatting
+                      - Searchable content
+                      - Copy/paste functionality
+                    </Typography>
+                  </Box>
+                </Paper>
               </Box>
             )}
           </Box>
