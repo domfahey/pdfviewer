@@ -1,0 +1,88 @@
+# Changelog
+
+All notable changes to the PDF Viewer POC will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- **Full-text PDF search** with highlighting and navigation
+- **URL loading endpoint** (`/api/load-url`) to load PDFs from web URLs
+- **Test PDF loader** component for quick access to sample PDFs
+- **Search navigation controls** with next/previous buttons and keyboard shortcuts (F3/Shift+F3)
+- **PDFSearchHighlight** component for visual search results
+- **usePDFSearch** hook for managing search functionality
+- **Playwright E2E testing** support (`@playwright/test`)
+- **Test coverage reporting** with Vitest coverage
+- Extended CORS support to port 5176
+- Search match counter showing "X of Y" results
+- Comprehensive Pydantic v2 validation with computed fields
+- Enhanced metadata with complexity scoring and document categorization
+- Upload status tracking and processing priority calculation
+- File size validation with POC-specific constraints
+- UUID v4 pattern validation for file IDs
+- Path traversal protection in filename validation
+- Timezone-aware datetime handling
+- Storage efficiency metrics
+- Debug information in error responses
+- API logging utility module with microsecond precision
+- Material Design UI with MUI v7 components
+- Sticky PDF controls toolbar
+- Fit mode functionality (width, height, page)
+- View mode toggle (Original PDF / Digital Markdown)
+- Extracted fields panel for form data display
+- Author attribution and MIT licensing
+
+### Changed
+- Upgraded to Pydantic v2 with enhanced model validation
+- Improved error responses with `_debug` context
+- Refactored PDF viewer for React 19 compatibility
+- Updated all documentation to be more concise (86% reduction)
+- Consolidated documentation from 7 files to 4 files
+- Fixed all TypeScript and Python linting issues
+- Enhanced logging with request/response tracking
+- Upgraded from React 18 to React 19.1
+- Updated performance test thresholds for real-world PDFs (60s for image-heavy, 30s for standard)
+
+### Fixed
+- React double-rendering issues in Strict Mode
+- CORS configuration for frontend development
+- Type checking errors in TypeScript and mypy
+- Upload progress UI race conditions
+- PDF rendering cleanup on component unmount
+- Browser compatibility issues
+
+## [0.1.0] - 2025-01-20
+
+### Added
+- Initial POC release with core PDF viewing functionality
+- React 18+ frontend with PDF.js integration
+- FastAPI backend with file upload and metadata extraction
+- Virtual page rendering for performance optimization
+- Comprehensive structured logging infrastructure
+- API logging decorators for monitoring
+- Correlation ID tracking across requests
+- Rich console output for development
+- JSON logging for production environments
+- Docker deployment configuration
+- Comprehensive test suite with real PDF samples
+- API documentation with OpenAPI/Swagger
+
+### Features
+- PDF upload with validation (50MB limit)
+- Page navigation and zoom controls (25%-500%)
+- Thumbnail sidebar navigation
+- PDF metadata display
+- Print and download capabilities
+- Keyboard shortcuts support
+- Error boundaries and graceful error handling
+
+### Known Limitations (POC)
+- No authentication/authorization
+- Single-user file storage
+- No persistent storage (uploads cleared on restart)
+- Limited to PDF files only
+- No annotation editing capabilities
+- Search functionality not yet implemented
