@@ -32,7 +32,7 @@ Download PDF file.
 ```
 GET /api/metadata/{file_id}
 ```
-Returns page count, file size, complexity score, etc.
+Returns page count, file size, complexity score, document category.
 
 ### Delete PDF
 ```

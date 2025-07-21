@@ -143,9 +143,9 @@ docker-compose build     # Rebuild
 - Full-text PDF search with highlighting
 - URL and local file loading
 - Test PDF loader for demos
-- Form field extraction (preview)
+- Form field extraction with ground truth comparison (preview)
 - Virtual scrolling for performance
-- Material Design UI components
+- Material Design UI components (MUI v7)
 - Comprehensive test coverage
 
 ## Test Infrastructure

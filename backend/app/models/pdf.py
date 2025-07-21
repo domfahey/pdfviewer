@@ -38,19 +38,23 @@ class PDFMetadata(BaseModel):
         Union[str, None], Field(None, max_length=200, description="PDF document author")
     ] = None
     subject: Annotated[
-        Union[str, None], Field(None, max_length=500, description="PDF document subject")
+        Union[str, None],
+        Field(None, max_length=500, description="PDF document subject"),
     ] = None
     creator: Annotated[
-        Union[str, None], Field(None, max_length=200, description="PDF creation software")
+        Union[str, None],
+        Field(None, max_length=200, description="PDF creation software"),
     ] = None
     producer: Annotated[
-        Union[str, None], Field(None, max_length=200, description="PDF producer software")
+        Union[str, None],
+        Field(None, max_length=200, description="PDF producer software"),
     ] = None
     creation_date: Annotated[
         Union[datetime, None], Field(None, description="PDF creation timestamp")
     ] = None
     modification_date: Annotated[
-        Union[datetime, None], Field(None, description="PDF last modification timestamp")
+        Union[datetime, None],
+        Field(None, description="PDF last modification timestamp"),
     ] = None
     page_count: Annotated[
         int,

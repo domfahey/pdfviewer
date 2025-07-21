@@ -90,95 +90,95 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
   // Mock extracted fields data with ground truth
   const extractedFields = {
     personal: [
-      { 
-        label: 'Full Name', 
-        value: 'John Smith', 
+      {
+        label: 'Full Name',
+        value: 'John Smith',
         confidence: 0.95,
         groundTruth: 'John Smith',
-        accuracy: 'exact' as const
+        accuracy: 'exact' as const,
       },
-      { 
-        label: 'Email', 
-        value: 'john.smith@email.com', 
+      {
+        label: 'Email',
+        value: 'john.smith@email.com',
         confidence: 0.92,
         groundTruth: 'j.smith@email.com',
-        accuracy: 'different' as const
+        accuracy: 'different' as const,
       },
-      { 
-        label: 'Phone', 
-        value: '+1 (555) 123-4567', 
+      {
+        label: 'Phone',
+        value: '+1 (555) 123-4567',
         confidence: 0.88,
         groundTruth: '5551234567',
-        accuracy: 'similar' as const
+        accuracy: 'similar' as const,
       },
     ],
     business: [
-      { 
-        label: 'Company', 
-        value: 'Acme Corporation', 
+      {
+        label: 'Company',
+        value: 'Acme Corporation',
         confidence: 0.97,
         groundTruth: 'ACME Corporation',
-        accuracy: 'similar' as const
+        accuracy: 'similar' as const,
       },
-      { 
-        label: 'Position', 
-        value: 'Senior Manager', 
+      {
+        label: 'Position',
+        value: 'Senior Manager',
         confidence: 0.85,
         groundTruth: 'Senior Manager',
-        accuracy: 'exact' as const
+        accuracy: 'exact' as const,
       },
-      { 
-        label: 'Department', 
-        value: 'Operations', 
+      {
+        label: 'Department',
+        value: 'Operations',
         confidence: 0.8,
         // No ground truth for this field
-        accuracy: 'no-truth' as const
+        accuracy: 'no-truth' as const,
       },
     ],
     dates: [
-      { 
-        label: 'Document Date', 
-        value: '2024-01-15', 
+      {
+        label: 'Document Date',
+        value: '2024-01-15',
         confidence: 0.99,
         groundTruth: '01/15/2024',
-        accuracy: 'similar' as const
+        accuracy: 'similar' as const,
       },
-      { 
-        label: 'Expiry Date', 
-        value: '2025-01-15', 
+      {
+        label: 'Expiry Date',
+        value: '2025-01-15',
         confidence: 0.93,
         groundTruth: '2025-01-15',
-        accuracy: 'exact' as const
+        accuracy: 'exact' as const,
       },
-      { 
-        label: 'Created Date', 
-        value: '2024-01-10', 
+      {
+        label: 'Created Date',
+        value: '2024-01-10',
         confidence: 0.87,
         groundTruth: '2024-01-12',
-        accuracy: 'different' as const
+        accuracy: 'different' as const,
       },
     ],
     financial: [
-      { 
-        label: 'Total Amount', 
-        value: '$12,345.67', 
+      {
+        label: 'Total Amount',
+        value: '$12,345.67',
         confidence: 0.96,
         groundTruth: '12345.67',
-        accuracy: 'similar' as const
+        accuracy: 'similar' as const,
       },
-      { 
-        label: 'Tax Amount', 
-        value: '$1,234.56', 
+      {
+        label: 'Tax Amount',
+        value: '$1,234.56',
         confidence: 0.91,
         groundTruth: '$1,234.56',
-        accuracy: 'exact' as const
+        accuracy: 'exact' as const,
       },
-      { 
-        label: 'Net Amount', 
-        value: '$11,111.11', 
+      {
+        label: 'Net Amount',
+        value: '$11,111.11',
         confidence: 0.94,
         groundTruth: '$11,211.11',
-        accuracy: 'different' as const
+        accuracy: 'different' as const,
       },
     ],
   };
@@ -335,7 +335,7 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
               </IconButton>
             </Tooltip>
           </Box>
-          
+
           {/* View Mode Toggle */}
           <ToggleButtonGroup
             value={viewMode}
@@ -396,7 +396,13 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
                     variant="determinate"
                     value={metrics.accuracy}
                     sx={{ height: 8, borderRadius: 1 }}
-                    color={metrics.accuracy >= 80 ? 'success' : metrics.accuracy >= 60 ? 'warning' : 'error'}
+                    color={
+                      metrics.accuracy >= 80
+                        ? 'success'
+                        : metrics.accuracy >= 60
+                          ? 'warning'
+                          : 'error'
+                    }
                   />
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -421,8 +427,11 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <RemoveIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                     <Typography variant="caption">
-                      No Truth: {fieldCategories.reduce((acc, cat) => 
-                        acc + cat.fields.filter(f => f.accuracy === 'no-truth').length, 0
+                      No Truth:{' '}
+                      {fieldCategories.reduce(
+                        (acc, cat) =>
+                          acc + cat.fields.filter(f => f.accuracy === 'no-truth').length,
+                        0
                       )}
                     </Typography>
                   </Box>
@@ -486,7 +495,11 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
                             <Box sx={{ mt: 0.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                 <Box sx={{ flex: 1 }}>
-                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', mb: 0.5 }}
+                                  >
                                     Extracted Value
                                   </Typography>
                                   <TextField
@@ -500,16 +513,30 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
                                     }}
                                   />
                                 </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2 }}>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    mt: 2,
+                                  }}
+                                >
                                   {getAccuracyIcon(field.accuracy)}
-                                  <Typography variant="caption" color={getAccuracyColor(field.accuracy)}>
+                                  <Typography
+                                    variant="caption"
+                                    color={getAccuracyColor(field.accuracy)}
+                                  >
                                     {getAccuracyLabel(field.accuracy)}
                                   </Typography>
                                 </Box>
                               </Box>
                               {field.groundTruth && (
                                 <Box>
-                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', mb: 0.5 }}
+                                  >
                                     Ground Truth
                                   </Typography>
                                   <TextField
@@ -519,11 +546,14 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
                                     variant="outlined"
                                     InputProps={{
                                       readOnly: true,
-                                      sx: { 
-                                        fontSize: '0.75rem', 
-                                        bgcolor: field.accuracy === 'exact' ? 'success.lighter' : 
-                                                 field.accuracy === 'similar' ? 'warning.lighter' : 
-                                                 'error.lighter',
+                                      sx: {
+                                        fontSize: '0.75rem',
+                                        bgcolor:
+                                          field.accuracy === 'exact'
+                                            ? 'success.lighter'
+                                            : field.accuracy === 'similar'
+                                              ? 'warning.lighter'
+                                              : 'error.lighter',
                                         borderColor: getAccuracyColor(field.accuracy),
                                       },
                                     }}

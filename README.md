@@ -60,9 +60,9 @@ See all commands: `make help`
 - Full-text search with highlighting
 - Load PDFs from URLs or local files
 - Test PDF loader for quick demos
-- Form field extraction (preview)
+- Form field extraction with ground truth comparison (preview)
 - Enhanced metadata and validation
-- Material Design UI
+- Material Design UI (MUI v7)
 - Comprehensive test coverage
 
 ## API Endpoints

@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extracted fields panel for form data display (preview UI)
 - Ground truth comparison mode with accuracy metrics
 - Author attribution and MIT licensing
+- Documentation updates for POC best practices (2025-01-21)
 
 ### Changed
 - Upgraded to Pydantic v2 with enhanced model validation

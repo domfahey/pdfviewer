@@ -4,7 +4,7 @@ Guidance for Claude Code when working with this PDF Viewer POC.
 
 ## Project Overview
 
-PDF viewer POC with React/FastAPI. Features include full-text search, URL loading, and form extraction.
+PDF viewer POC with React/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison.
 
 ## Tech Stack
 
@@ -18,6 +18,8 @@ PDF viewer POC with React/FastAPI. Features include full-text search, URL loadin
 - 50MB file size limit
 - Correlation ID propagation
 - Zero linting/type errors
+- Security: Pre-commit hooks, no secrets in code
+- System dependency: libmagic (see README)
 
 ## Quick Reference
 
@@ -46,6 +48,7 @@ See [Technical Guide](docs/TECHNICAL.md) for:
 - `backend/app/api/load_url.py` - URL loading endpoint
 - `frontend/src/hooks/usePDFSearch.ts` - Search functionality
 - `frontend/src/components/TestPDFLoader.tsx` - Test PDF loader
+- `frontend/src/components/PDFViewer/PDFExtractedFields.tsx` - Form extraction UI
 
 Author: Dominic Fahey (domfahey@gmail.com)  
 License: MIT
