@@ -11,12 +11,14 @@ import {
 } from '@mui/material';
 import { Error as ErrorIcon, Article as ArticleIcon } from '@mui/icons-material';
 import { usePDFDocument } from '../../hooks/usePDFDocument';
+import { usePDFSearch } from '../../hooks/usePDFSearch';
 import { PDFService } from '../../services/pdfService';
 import { PDFPage } from './PDFPage';
 import { PDFControls } from './PDFControls';
 import { PDFThumbnails } from './PDFThumbnails';
 import { VirtualPDFViewer } from './VirtualPDFViewer';
 import { PDFMetadataPanel } from './PDFMetadataPanel';
+import { PDFExtractedFields } from './PDFExtractedFields';
 import type { PDFMetadata } from '../../types/pdf.types';
 
 interface FitMode {
@@ -59,9 +61,24 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [fitMode, setFitMode] = useState<FitMode>(initialFitMode);
   const [viewMode, setViewMode] = useState<'original' | 'digital'>('original');
   const [showThumbnails, setShowThumbnails] = useState(false);
+  const [thumbnailsWidth, setThumbnailsWidth] = useState(300);
   const [showMetadata, setShowMetadata] = useState(false);
+  const [showExtractedFields, setShowExtractedFields] = useState(false);
+  const [extractedFieldsWidth, setExtractedFieldsWidth] = useState(400);
   const [rotation, setRotation] = useState(0);
-  const [, setSearchQuery] = useState('');
+  
+  // Search functionality
+  const {
+    searchQuery,
+    currentMatchIndex,
+    isSearching,
+    totalMatches,
+    search,
+    nextMatch,
+    previousMatch,
+    clearSearch,
+    getCurrentMatch,
+  } = usePDFSearch(document);
 
   // Load the PDF document
   useEffect(() => {
@@ -136,10 +153,12 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       const pageHeight = viewport.height;
 
       // Get the available container dimensions
-      // Account for thumbnails and metadata panel widths when visible
-      const thumbnailsWidth = showThumbnails ? 300 : 0;
+      // Account for thumbnails, metadata, and extracted fields panel widths when visible
+      const thumbnailsWidthActual = showThumbnails ? thumbnailsWidth : 0;
       const metadataWidth = showMetadata ? 300 : 0;
-      const containerWidth = window.innerWidth - thumbnailsWidth - metadataWidth - 40; // 40px for padding
+      const extractedFieldsWidthActual = showExtractedFields ? extractedFieldsWidth : 0;
+      const containerWidth =
+        window.innerWidth - thumbnailsWidthActual - metadataWidth - extractedFieldsWidthActual - 40; // 40px for padding
       const containerHeight = window.innerHeight - 120; // Account for PDF controls only
 
       let scale = 1;
@@ -165,7 +184,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       // Clamp scale to reasonable bounds
       return Math.max(0.1, Math.min(5.0, scale));
     },
-    [showThumbnails, showMetadata]
+    [showThumbnails, thumbnailsWidth, showMetadata, showExtractedFields, extractedFieldsWidth]
   );
 
   // Recalculate fit mode when page loads or window resizes
@@ -188,7 +207,17 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       );
       setScale(newScale);
     }
-  }, [showThumbnails, showMetadata, currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+  }, [
+    showThumbnails,
+    thumbnailsWidth,
+    showMetadata,
+    showExtractedFields,
+    extractedFieldsWidth,
+    currentPageObj,
+    fitMode.mode,
+    calculateFitScale,
+    setScale,
+  ]);
 
   // Handle window resize for fit modes
   useEffect(() => {
@@ -235,11 +264,38 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     setViewMode(mode);
   }, []);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    // TODO: Implement search functionality
-    console.log('Searching for:', query);
+  const handleToggleExtractedFields = useCallback(() => {
+    setShowExtractedFields(prev => !prev);
   }, []);
+
+  const handleExtractedFieldsResize = useCallback((width: number) => {
+    setExtractedFieldsWidth(width);
+  }, []);
+
+  const handleThumbnailsResize = useCallback((width: number) => {
+    setThumbnailsWidth(width);
+  }, []);
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      console.log('🔍 [PDFViewer] Searching for:', query);
+      search(query);
+    },
+    [search]
+  );
+
+  // Navigate to current search match
+  useEffect(() => {
+    const currentMatch = getCurrentMatch();
+    if (currentMatch && document) {
+      // Navigate to the page with the current match
+      const targetPage = currentMatch.pageIndex + 1; // Convert back to 1-based
+      if (targetPage !== currentPage) {
+        console.log('🔍 [PDFViewer] Navigating to search result page:', targetPage);
+        setCurrentPage(targetPage);
+      }
+    }
+  }, [currentMatchIndex, getCurrentMatch, document, currentPage, setCurrentPage]);
 
   const handleRotate = useCallback((degrees: number) => {
     setRotation(prev => (prev + degrees) % 360);
@@ -382,7 +438,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         onNextPage={nextPage}
         onToggleThumbnails={handleToggleThumbnails}
         onToggleBookmarks={handleToggleMetadata}
+        onToggleExtractedFields={handleToggleExtractedFields}
         onSearch={handleSearch}
+        onSearchNext={nextMatch}
+        onSearchPrevious={previousMatch}
+        onClearSearch={clearSearch}
+        searchMatches={totalMatches}
+        currentSearchMatch={currentMatchIndex}
+        isSearching={isSearching}
         onRotate={handleRotate}
         showAdvanced={true}
       />
@@ -395,6 +458,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           currentPage={currentPage}
           onPageSelect={setCurrentPage}
           isVisible={showThumbnails}
+          width={thumbnailsWidth}
+          onResize={handleThumbnailsResize}
         />
 
         {/* Material Document Viewer */}
@@ -460,6 +525,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                         <PDFPage
                           page={currentPageObj}
                           scale={scale}
+                          searchQuery={searchQuery}
+                          isCurrentSearchPage={getCurrentMatch()?.pageIndex === currentPage - 1}
                           onPageRender={handlePageRender}
                           onPageError={handlePageError}
                         />
@@ -496,25 +563,30 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                       Extracted markdown content will appear here
                     </Typography>
                   </Box>
-                  
-                  <Box sx={{ bgcolor: 'grey.50', p: 3, borderRadius: 1, border: '1px dashed', borderColor: 'grey.300' }}>
+
+                  <Box
+                    sx={{
+                      bgcolor: 'grey.50',
+                      p: 3,
+                      borderRadius: 1,
+                      border: '1px dashed',
+                      borderColor: 'grey.300',
+                    }}
+                  >
                     <Typography variant="h6" gutterBottom>
                       # Document Title
                     </Typography>
                     <Typography variant="body1" paragraph>
-                      This is a placeholder for the extracted markdown content from the PDF. 
-                      The digital view will display structured, searchable text content 
-                      extracted from the original PDF document.
+                      This is a placeholder for the extracted markdown content from the PDF. The
+                      digital view will display structured, searchable text content extracted from
+                      the original PDF document.
                     </Typography>
                     <Typography variant="body1" paragraph>
                       **Features coming soon:**
                     </Typography>
                     <Typography variant="body1" component="div">
-                      - Full text extraction
-                      - Structured headings and sections
-                      - Tables and lists formatting
-                      - Searchable content
-                      - Copy/paste functionality
+                      - Full text extraction - Structured headings and sections - Tables and lists
+                      formatting - Searchable content - Copy/paste functionality
                     </Typography>
                   </Box>
                 </Paper>
@@ -537,6 +609,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               : undefined
           }
           isVisible={showMetadata}
+        />
+
+        {/* Material Extracted Fields Panel */}
+        <PDFExtractedFields
+          isVisible={showExtractedFields}
+          onClose={() => setShowExtractedFields(false)}
+          width={extractedFieldsWidth}
+          onResize={handleExtractedFieldsResize}
         />
       </Box>
     </Box>

@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { PDFService } from '../../services/pdfService';
+import { PDFSearchHighlight } from './PDFSearchHighlight';
 
 interface PDFPageProps {
   page: PDFPageProxy;
   scale: number;
   className?: string;
+  searchQuery?: string;
+  isCurrentSearchPage?: boolean;
   onPageRender?: () => void;
   onPageError?: (error: string) => void;
 }
@@ -14,6 +17,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   page,
   scale,
   className = '',
+  searchQuery = '',
+  isCurrentSearchPage = false,
   onPageRender,
   onPageError,
 }) => {
@@ -170,6 +175,13 @@ export const PDFPage: React.FC<PDFPageProps> = ({
         style={{
           pointerEvents: 'auto',
         }}
+      />
+      
+      {/* Search highlight layer */}
+      <PDFSearchHighlight
+        searchQuery={searchQuery}
+        textLayer={textLayerRef.current}
+        isCurrentPage={isCurrentSearchPage}
       />
     </div>
   );
