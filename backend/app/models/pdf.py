@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-from typing import Annotated, Any, Union
+
+UTC = timezone.utc
+from typing import Annotated, Any
 
 from pydantic import (
     BaseModel,
@@ -32,28 +34,28 @@ class PDFMetadata(BaseModel):
     )
 
     title: Annotated[
-        Union[str, None], Field(None, max_length=500, description="PDF document title")
+        str | None, Field(None, max_length=500, description="PDF document title")
     ] = None
     author: Annotated[
-        Union[str, None], Field(None, max_length=200, description="PDF document author")
+        str | None, Field(None, max_length=200, description="PDF document author")
     ] = None
     subject: Annotated[
-        Union[str, None],
+        str | None,
         Field(None, max_length=500, description="PDF document subject"),
     ] = None
     creator: Annotated[
-        Union[str, None],
+        str | None,
         Field(None, max_length=200, description="PDF creation software"),
     ] = None
     producer: Annotated[
-        Union[str, None],
+        str | None,
         Field(None, max_length=200, description="PDF producer software"),
     ] = None
     creation_date: Annotated[
-        Union[datetime, None], Field(None, description="PDF creation timestamp")
+        datetime | None, Field(None, description="PDF creation timestamp")
     ] = None
     modification_date: Annotated[
-        Union[datetime, None],
+        datetime | None,
         Field(None, description="PDF last modification timestamp"),
     ] = None
     page_count: Annotated[
@@ -84,17 +86,17 @@ class PDFMetadata(BaseModel):
 
     @field_validator("creation_date", "modification_date")
     @classmethod
-    def validate_dates(cls, v: Union[datetime, None]) -> Union[datetime, None]:
+    def validate_dates(cls, v: datetime | None) -> datetime | None:
         """Ensure dates are timezone-aware and not in the future."""
         if v is None:
             return v
 
         # Convert naive datetime to UTC
         if v.tzinfo is None:
-            v = v.replace(tzinfo=timezone.utc)
+            v = v.replace(tzinfo=UTC)
 
         # Ensure date is not in the future (with small tolerance for clock skew)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if v > now:
             raise ValueError("PDF date cannot be in the future")
 
@@ -102,7 +104,7 @@ class PDFMetadata(BaseModel):
 
     @field_validator("title", "author", "subject", "creator", "producer")
     @classmethod
-    def validate_text_fields(cls, v: Union[str, None]) -> Union[str, None]:
+    def validate_text_fields(cls, v: str | None) -> str | None:
         """Validate and sanitize text metadata fields."""
         if v is None:
             return v
@@ -227,13 +229,13 @@ class PDFMetadata(BaseModel):
             return "very-long-document"
 
     @field_serializer("creation_date", "modification_date")
-    def serialize_dates(self, value: Union[datetime, None]) -> Union[str, None]:
+    def serialize_dates(self, value: datetime | None) -> str | None:
         """Serialize dates to ISO format for POC consistency."""
         if value is None:
             return None
         # Ensure timezone-aware datetime is serialized consistently
         if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
+            value = value.replace(tzinfo=UTC)
         return value.isoformat()
 
 
@@ -295,12 +297,12 @@ class PDFUploadResponse(BaseModel):
     upload_time: Annotated[
         datetime,
         Field(
-            default_factory=lambda: datetime.now(timezone.utc),
+            default_factory=lambda: datetime.now(UTC),
             description="UTC timestamp when file was uploaded",
         ),
     ]
     metadata: Annotated[
-        Union[PDFMetadata, None],
+        PDFMetadata | None,
         Field(None, description="Extracted PDF metadata if available"),
     ] = None
 
@@ -402,11 +404,11 @@ class PDFUploadResponse(BaseModel):
     @property
     def upload_age_hours(self) -> float:
         """Hours since upload, useful for POC debugging."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Ensure upload_time is timezone-aware
         upload_time = self.upload_time
         if upload_time.tzinfo is None:
-            upload_time = upload_time.replace(tzinfo=timezone.utc)
+            upload_time = upload_time.replace(tzinfo=UTC)
 
         delta = now - upload_time
         return round(delta.total_seconds() / 3600, 1)
@@ -444,7 +446,7 @@ class PDFUploadResponse(BaseModel):
         """Serialize upload time to ISO format."""
         # Ensure timezone-aware datetime
         if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
+            value = value.replace(tzinfo=UTC)
         return value.isoformat()
 
     @model_serializer
@@ -466,7 +468,7 @@ class PDFUploadResponse(BaseModel):
 
         # Add POC-specific metadata for debugging
         data["_poc_info"] = {
-            "serialized_at": datetime.now(timezone.utc).isoformat(),
+            "serialized_at": datetime.now(UTC).isoformat(),
             "model_version": "2.0",
             "enhanced_validation": True,
         }
@@ -527,7 +529,7 @@ class PDFInfo(BaseModel):
     def serialize_upload_time(self, value: datetime) -> str:
         """Serialize upload time consistently."""
         if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
+            value = value.replace(tzinfo=UTC)
         return value.isoformat()
 
     @model_serializer
@@ -574,7 +576,7 @@ class ErrorResponse(BaseModel):
         ),
     ]
     detail: Annotated[
-        Union[str, None],
+        str | None,
         Field(
             None,
             max_length=1000,
@@ -583,7 +585,7 @@ class ErrorResponse(BaseModel):
         ),
     ] = None
     error_code: Annotated[
-        Union[str, None],
+        str | None,
         Field(
             None,
             pattern=r"^[A-Z_]+$",
@@ -613,7 +615,7 @@ class ErrorResponse(BaseModel):
 
     @field_validator("error_code")
     @classmethod
-    def validate_error_code(cls, v: Union[str, None]) -> Union[str, None]:
+    def validate_error_code(cls, v: str | None) -> str | None:
         """Enhanced error code validation with POC standards."""
         if v is None:
             return v
@@ -651,7 +653,7 @@ class ErrorResponse(BaseModel):
         return self
 
     @field_serializer("error", "detail")
-    def serialize_error_fields(self, value: Union[str, None]) -> Union[str, None]:
+    def serialize_error_fields(self, value: str | None) -> str | None:
         """Serialize error fields with consistent formatting."""
         if value is None:
             return None
@@ -665,7 +667,7 @@ class ErrorResponse(BaseModel):
             "error": self.serialize_error_fields(self.error),
             "detail": self.serialize_error_fields(self.detail),
             "error_code": self.error_code,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Add POC debugging information

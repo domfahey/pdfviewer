@@ -3,7 +3,7 @@
 ## Setup
 
 ### Prerequisites
-- Python 3.9+ with UV
+- Python 3.11+ with UV
 - Node.js 18+
 - Docker (optional)
 - libmagic (for file type detection)
@@ -77,7 +77,7 @@ make test-parallel   # Parallel execution
 ```
 
 ### Type Safety
-- Python 3.9+ compatible (no 3.10 union syntax)
+- Python 3.11+ with modern type annotations
 - Strict typing for business logic
 - Relaxed typing for tests and utilities
 - Pydantic v2 for runtime validation

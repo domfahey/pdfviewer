@@ -86,7 +86,7 @@ Create a cutting-edge PDF viewer that showcases modern web technologies while pr
 - **TypeScript:** Full TypeScript implementation
 
 #### 5.2 Backend Architecture
-- **Framework:** FastAPI (Python 3.9+)
+- **Framework:** FastAPI (Python 3.11+)
 - **File Handling:** Async file upload and processing
 - **PDF Processing:** PDF metadata extraction
 - **API Documentation:** Auto-generated OpenAPI/Swagger docs

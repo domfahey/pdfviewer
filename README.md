@@ -4,6 +4,9 @@ Modern PDF viewer with React frontend and FastAPI backend, featuring comprehensi
 
 ## Prerequisites
 
+- Python 3.11 or higher
+- Node.js 18 or higher
+
 ### System Dependencies
 
 The backend requires `libmagic` for file type detection:

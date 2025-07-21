@@ -16,7 +16,7 @@ Modern PDF viewer POC with React 18+ frontend and FastAPI backend, emphasizing P
 
 **Development Stack:**
 - Frontend: React 18+, TypeScript, Vite, Tailwind CSS
-- Backend: FastAPI, Python 3.9+, UV dependencies
+- Backend: FastAPI, Python 3.11+, UV dependencies
 - Testing: pytest, TDD practices
 - Linting: ruff, black formatting
 

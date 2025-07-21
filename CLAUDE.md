@@ -9,7 +9,7 @@ PDF viewer POC with React/FastAPI. Features include full-text search, URL loadin
 ## Tech Stack
 
 **Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
-**Backend:** FastAPI, Python 3.9+, UV, Pydantic v2
+**Backend:** FastAPI, Python 3.11+, UV, Pydantic v2
 
 ## Key Requirements
 

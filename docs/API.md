@@ -100,5 +100,5 @@ All responses include:
 
 - Pydantic v2 models with validation
 - Comprehensive error responses
-- Python 3.9+ compatible types
+- Python 3.11+ with modern type annotations
 - Runtime type checking

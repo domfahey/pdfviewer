@@ -1,5 +1,5 @@
 import os
-from collections.abc import AsyncGenerator
+from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 

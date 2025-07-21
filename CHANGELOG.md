@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `make qa` for full quality assurance
   - `make help` for command documentation
 - **Type safety improvements**:
-  - Fixed Python 3.10 union syntax for 3.9 compatibility
+  - Updated to require Python 3.11+ minimum version
   - Added type annotations to critical functions
   - Configured mypy with appropriate overrides
 - **Security enhancements**:
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React double-rendering issues in Strict Mode
 - CORS configuration for frontend development
 - Type checking errors in TypeScript and mypy
-- Python 3.10 union syntax incompatibility with Python 3.9
+- Updated minimum Python version to 3.11+ for modern features
 - All backend type errors (139 → 0)
 - Failing tests in PDFThumbnails component
 - Integration test failures for PDF workflows
