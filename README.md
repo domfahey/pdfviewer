@@ -30,7 +30,10 @@ sudo dnf install file-devel
 ## Quick Start
 
 ```bash
-# Install dependencies
+# Optional: Install uv for faster Python dependency management
+make setup-uv
+
+# Install dependencies (automatically uses uv if available, falls back to pip)
 make install
 
 # Run development servers
