@@ -5,7 +5,7 @@ Tests cover all model validation, computed fields, serialization,
 and POC-specific enhancements in the PDF models.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
@@ -33,8 +33,8 @@ class TestPDFMetadataModel:
 
     def test_full_metadata_with_all_fields(self):
         """Test creating PDFMetadata with all fields populated."""
-        creation_date = datetime.now(timezone.utc) - timedelta(days=1)
-        modification_date = datetime.now(timezone.utc)
+        creation_date = datetime.now(UTC) - timedelta(days=1)
+        modification_date = datetime.now(UTC)
 
         metadata = PDFMetadata(
             title="Test Document",
@@ -146,7 +146,7 @@ class TestPDFMetadataModel:
 
     def test_field_validation_dates(self):
         """Test date field validation."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         past_date = now - timedelta(days=1)
         future_date = now + timedelta(days=1)
 
@@ -190,7 +190,7 @@ class TestPDFMetadataModel:
 
     def test_model_validation_date_consistency(self):
         """Test model-level date consistency validation."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         past_date = now - timedelta(days=1)
 
         # Valid: creation before modification
@@ -209,7 +209,7 @@ class TestPDFMetadataModel:
 
     def test_field_serialization_dates(self):
         """Test date field serialization."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         metadata = PDFMetadata(page_count=1, file_size=1024, creation_date=now)
 
@@ -243,7 +243,7 @@ class TestPDFUploadResponseModel:
 
     def test_minimal_valid_response(self):
         """Test creating PDFUploadResponse with minimal fields."""
-        upload_time = datetime.now(timezone.utc)
+        upload_time = datetime.now(UTC)
 
         response = PDFUploadResponse(
             file_id="550e8400-e29b-41d4-a716-446655440000",
@@ -273,7 +273,7 @@ class TestPDFUploadResponseModel:
 
     def test_computed_field_upload_age_hours(self):
         """Test upload_age_hours computed field."""
-        past_time = datetime.now(timezone.utc) - timedelta(hours=2)
+        past_time = datetime.now(UTC) - timedelta(hours=2)
 
         response = PDFUploadResponse(
             file_id="550e8400-e29b-41d4-a716-446655440000",
@@ -288,7 +288,7 @@ class TestPDFUploadResponseModel:
 
     def test_computed_field_upload_status(self):
         """Test upload_status computed field based on age."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Fresh upload
         fresh = PDFUploadResponse(
@@ -607,7 +607,7 @@ class TestPDFInfoModel:
     def test_valid_pdf_info(self):
         """Test creating valid PDFInfo."""
         metadata = PDFMetadata(page_count=10, file_size=1024000)
-        upload_time = datetime.now(timezone.utc)
+        upload_time = datetime.now(UTC)
 
         pdf_info = PDFInfo(
             file_id="550e8400-e29b-41d4-a716-446655440000",
@@ -634,7 +634,7 @@ class TestPDFInfoModel:
             filename="efficient.pdf",
             file_size=500000,
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=efficient_metadata,
         )
         assert efficient_info.storage_efficiency == 1.0
@@ -648,7 +648,7 @@ class TestPDFInfoModel:
             filename="inefficient.pdf",
             file_size=1000000,
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=inefficient_metadata,
         )
         assert inefficient_info.storage_efficiency < 1.0
@@ -662,7 +662,7 @@ class TestPDFInfoModel:
             filename="test.pdf",
             file_size=1024000,
             mime_type="application/pdf",
-            upload_time=datetime.now(timezone.utc),
+            upload_time=datetime.now(UTC),
             metadata=metadata,
         )
 

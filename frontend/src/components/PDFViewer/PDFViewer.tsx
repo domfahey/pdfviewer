@@ -156,8 +156,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       // Account for thumbnails, metadata, and extracted fields panel widths when visible
       const thumbnailsWidthActual = showThumbnails ? thumbnailsWidth : 0;
       const metadataWidth = showMetadata ? 300 : 0;
-      const containerWidth =
-        window.innerWidth - thumbnailsWidthActual - metadataWidth - 40; // 40px for padding
+      const containerWidth = window.innerWidth - thumbnailsWidthActual - metadataWidth - 40; // 40px for padding
       const containerHeight = window.innerHeight - 120; // Account for PDF controls only
 
       let scale = 1;
@@ -264,7 +263,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const handleViewModeChange = useCallback((mode: 'original' | 'digital') => {
     setViewMode(mode);
   }, []);
-
 
   const handleThumbnailsResize = useCallback((width: number) => {
     setThumbnailsWidth(width);
@@ -612,7 +610,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           width={extractedFieldsWidth}
           onResize={setExtractedFieldsWidth}
         />
-
       </Box>
     </Box>
   );

@@ -3,7 +3,7 @@
 ## Setup
 
 ### Prerequisites
-- Python 3.9+ with UV
+- Python 3.11+ with UV
 - Node.js 18+
 - Docker (optional)
 - libmagic (for file type detection)
@@ -77,10 +77,14 @@ make test-parallel   # Parallel execution
 ```
 
 ### Type Safety
-- Python 3.9+ compatible (no 3.10 union syntax)
+- Python 3.11+ with modern type annotations
+  - Union types using `X | Y` syntax
+  - Direct `datetime.UTC` usage
+  - Modern `isinstance(x, int | float)` patterns
 - Strict typing for business logic
 - Relaxed typing for tests and utilities
 - Pydantic v2 for runtime validation
+- React 19.1 with full TypeScript support
 
 ## Project Structure
 
@@ -143,9 +147,9 @@ docker-compose build     # Rebuild
 - Full-text PDF search with highlighting
 - URL and local file loading
 - Test PDF loader for demos
-- Form field extraction (preview)
+- Form field extraction with ground truth comparison (preview)
 - Virtual scrolling for performance
-- Material Design UI components
+- Material Design UI components (MUI v7)
 - Comprehensive test coverage
 
 ## Test Infrastructure

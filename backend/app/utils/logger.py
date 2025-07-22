@@ -7,7 +7,7 @@ logging patterns used throughout the application.
 
 import functools
 import time
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -25,7 +25,7 @@ class PerformanceTracker:
     def __init__(
         self,
         operation_name: str,
-        logger_instance: Optional[structlog.stdlib.BoundLogger] = None,
+        logger_instance: structlog.stdlib.BoundLogger | None = None,
         log_start: bool = True,
         min_duration_ms: float = 0.0,
         **context: Any,
@@ -45,8 +45,8 @@ class PerformanceTracker:
         self.log_start = log_start
         self.min_duration_ms = min_duration_ms
         self.context = context
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
     def __enter__(self) -> "PerformanceTracker":
         self.start()
@@ -67,7 +67,7 @@ class PerformanceTracker:
                 **self.context,
             )
 
-    def stop(self, exception: bool = False, error: Optional[str] = None) -> float:
+    def stop(self, exception: bool = False, error: str | None = None) -> float:
         """
         Stop timing and log the results.
 
@@ -104,7 +104,7 @@ class PerformanceTracker:
         return duration_ms
 
     @property
-    def duration_ms(self) -> Optional[float]:
+    def duration_ms(self) -> float | None:
         """Get current duration in milliseconds."""
         if self.start_time is None:
             return None
@@ -113,7 +113,7 @@ class PerformanceTracker:
 
 
 def log_function_call(
-    operation_name: Optional[str] = None,
+    operation_name: str | None = None,
     log_args: bool = False,
     log_result: bool = False,
     min_duration_ms: float = 0.0,
@@ -196,7 +196,7 @@ def log_dict_safely(data: dict[str, Any], max_length: int = 1000) -> dict[str, A
     for key, value in data.items():
         if isinstance(value, str) and len(value) > max_length:
             safe_dict[key] = value[:max_length] + "... (truncated)"
-        elif isinstance(value, (bytes, bytearray)):
+        elif isinstance(value, bytes | bytearray):
             safe_dict[key] = f"<binary data: {len(value)} bytes>"
         elif isinstance(value, dict):
             safe_dict[key] = log_dict_safely(value, max_length)  # type: ignore[assignment]
@@ -237,7 +237,7 @@ class FileOperationLogger:
     download, processing, and deletion with standard context fields.
     """
 
-    def __init__(self, base_logger: Optional[structlog.stdlib.BoundLogger] = None):
+    def __init__(self, base_logger: structlog.stdlib.BoundLogger | None = None):
         self.logger = base_logger or get_logger(__name__)
 
     def upload_started(self, filename: str, file_size: int, **context: Any) -> None:

@@ -32,7 +32,7 @@ Download PDF file.
 ```
 GET /api/metadata/{file_id}
 ```
-Returns page count, file size, complexity score, etc.
+Returns page count, file size, complexity score, document category.
 
 ### Delete PDF
 ```
@@ -53,7 +53,10 @@ GET /api/health
   "file_size_mb": 1.0,
   "metadata": {
     "page_count": 10,
-    "document_category": "short-document"
+    "document_category": "short-document",
+    "complexity_score": 3.5,
+    "has_forms": false,
+    "has_images": true
   }
 }
 ```
@@ -100,5 +103,5 @@ All responses include:
 
 - Pydantic v2 models with validation
 - Comprehensive error responses
-- Python 3.9+ compatible types
+- Python 3.11+ with modern type annotations
 - Runtime type checking

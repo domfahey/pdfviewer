@@ -1,8 +1,7 @@
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Union
 
 import aiofiles
 import magic
@@ -274,7 +273,7 @@ class PDFService:
                     filename=file.filename,
                     file_size=file_path.stat().st_size,
                     mime_type=mime_type,
-                    upload_time=datetime.now(timezone.utc),
+                    upload_time=datetime.now(UTC),
                     metadata=metadata,
                 )
                 self._file_metadata[file_id] = pdf_info
@@ -294,7 +293,7 @@ class PDFService:
                     filename=file.filename,
                     file_size=file_path.stat().st_size,
                     mime_type=mime_type,
-                    upload_time=datetime.now(timezone.utc),
+                    upload_time=datetime.now(UTC),
                     metadata=metadata,
                 )
 
@@ -486,7 +485,7 @@ class PDFService:
 
         return self._file_metadata.copy()
 
-    def get_service_stats(self) -> dict[str, Union[int, float, str]]:
+    def get_service_stats(self) -> dict[str, int | float | str]:
         """Get service statistics for monitoring and debugging"""
         files = list(self._file_metadata.values())
         total_size = sum(f.file_size for f in files)

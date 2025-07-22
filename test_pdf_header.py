@@ -19,7 +19,7 @@ def check_pdf_header(file_path: str) -> bool:
         return False
 
 
-def main():
+def main() -> None:
     """Test PDF header checking on all PDF files in uploads directory."""
     upload_dir = Path("uploads")
     
