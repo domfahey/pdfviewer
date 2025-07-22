@@ -5,6 +5,12 @@
 help: ## Show this help message
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Prerequisites:"
+	@echo "  For faster Python dependency management, install uv:"
+	@echo "    pip install uv"
+	@echo "  The Makefile will automatically fall back to pip if uv is not available."
+
 
 # Linting commands
 .PHONY: lint
@@ -231,13 +237,35 @@ dev-frontend: ## Start frontend development server
 	cd frontend && npm run dev
 
 # Installation commands
+
+.PHONY: setup-uv
+setup-uv: ## Install uv for faster Python dependency management
+	@echo "Installing uv for faster Python dependency management..."
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "uv is already installed (version: $$(uv --version))"; \
+	else \
+		echo "Installing uv..."; \
+		pip install uv; \
+		echo "uv installed successfully!"; \
+	fi
+
+
 .PHONY: install
 install: install-backend install-frontend ## Install all dependencies
 
 .PHONY: install-backend
 install-backend: ## Install backend dependencies
 	@echo "Installing backend dependencies..."
-	uv pip install -e ".[dev]"
+
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Using uv for faster installation..."; \
+		uv pip install -e ".[dev]"; \
+	else \
+		echo "uv not found, falling back to pip (consider installing uv for faster dependency management)"; \
+		echo "Install uv with: pip install uv"; \
+		pip install -e ".[dev]"; \
+	fi
+
 
 .PHONY: install-frontend
 install-frontend: ## Install frontend dependencies
