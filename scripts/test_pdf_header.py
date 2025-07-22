@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test script to check if we can replace python-magic with simple header checking."""
 
-import os
 import glob
+import os
 from pathlib import Path
 
 
