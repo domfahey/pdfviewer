@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser compatibility issues
 - Restored PDFExtractedFields panel that was accidentally removed
 
-## [0.1.0] - 2025-01-20
+## [0.1.0] - 2025-07-20
 
 ### Added
 - Initial POC release with core PDF viewing functionality
