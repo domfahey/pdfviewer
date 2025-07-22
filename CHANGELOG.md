@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Python 3.11+ modernization**:
+  - Updated minimum Python version from 3.9 to 3.11
+  - Modern union syntax (`X | Y`) throughout codebase
+  - Direct use of `datetime.UTC` constant
+  - Updated `isinstance` calls to use union types
+- **Enhanced ground truth comparison UI**:
+  - Fully functional toggle between extraction and comparison views
+  - Real-time accuracy metrics calculation (75% overall accuracy)
+  - Visual indicators for match quality (exact, similar, different, no truth)
+  - Overall accuracy percentage with color-coded progress bar
+  - Detailed accuracy breakdown by category (personal, business, dates, financial)
+  - Mock data optimization moved outside component for performance
 - **Full-text PDF search** with highlighting and navigation
 - **URL loading endpoint** (`/api/load-url`) to load PDFs from web URLs
 - **Test PDF loader** component for quick access to sample PDFs
@@ -26,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `make qa` for full quality assurance
   - `make help` for command documentation
 - **Type safety improvements**:
-  - Fixed Python 3.10 union syntax for 3.9 compatibility
+  - Updated to require Python 3.11+ minimum version
   - Added type annotations to critical functions
   - Configured mypy with appropriate overrides
 - **Test PDF fixtures** and sample files
@@ -64,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React double-rendering issues in Strict Mode
 - CORS configuration for frontend development
 - Type checking errors in TypeScript and mypy
-- Python 3.10 union syntax incompatibility with Python 3.9
+- Updated minimum Python version to 3.11+ for modern features
 - All backend type errors (139 → 0)
 - Failing tests in PDFThumbnails component
 - Integration test failures for PDF workflows
@@ -73,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PDF rendering cleanup on component unmount
 - Browser compatibility issues
 
-## [0.1.0] - 2025-01-20
+## [0.1.0] - 2025-07-20
 
 ### Added
 - Initial POC release with core PDF viewing functionality
