@@ -11,6 +11,7 @@ help: ## Show this help message
 	@echo "    pip install uv"
 	@echo "  The Makefile will automatically fall back to pip if uv is not available."
 
+
 # Linting commands
 .PHONY: lint
 lint: lint-backend lint-frontend ## Run all linters
@@ -236,6 +237,7 @@ dev-frontend: ## Start frontend development server
 	cd frontend && npm run dev
 
 # Installation commands
+
 .PHONY: setup-uv
 setup-uv: ## Install uv for faster Python dependency management
 	@echo "Installing uv for faster Python dependency management..."
@@ -247,12 +249,14 @@ setup-uv: ## Install uv for faster Python dependency management
 		echo "uv installed successfully!"; \
 	fi
 
+
 .PHONY: install
 install: install-backend install-frontend ## Install all dependencies
 
 .PHONY: install-backend
 install-backend: ## Install backend dependencies
 	@echo "Installing backend dependencies..."
+
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Using uv for faster installation..."; \
 		uv pip install -e ".[dev]"; \
@@ -261,6 +265,7 @@ install-backend: ## Install backend dependencies
 		echo "Install uv with: pip install uv"; \
 		pip install -e ".[dev]"; \
 	fi
+
 
 .PHONY: install-frontend
 install-frontend: ## Install frontend dependencies
