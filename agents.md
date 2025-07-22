@@ -4,7 +4,7 @@ This file provides guidance for AI agents working with this PDF viewer proof of 
 
 ## Project Context
 
-Modern PDF viewer POC with React 18+ frontend and FastAPI backend, emphasizing PDF.js performance optimization and virtual page rendering.
+Modern PDF viewer POC with React 19.1 frontend and FastAPI backend, emphasizing PDF.js performance optimization, virtual page rendering, and ground truth comparison UI.
 
 ## Key Technical Requirements
 
@@ -15,8 +15,8 @@ Modern PDF viewer POC with React 18+ frontend and FastAPI backend, emphasizing P
 - HTTP Range Requests for large files
 
 **Development Stack:**
-- Frontend: React 18+, TypeScript, Vite, Tailwind CSS
-- Backend: FastAPI, Python 3.11+, UV dependencies
+- Frontend: React 19.1, TypeScript, Vite, Material-UI v7
+- Backend: FastAPI, Python 3.11+, UV dependencies, modern syntax (X | Y unions)
 - Testing: pytest, TDD practices
 - Linting: ruff, black formatting
 

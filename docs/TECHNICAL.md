@@ -78,9 +78,13 @@ make test-parallel   # Parallel execution
 
 ### Type Safety
 - Python 3.11+ with modern type annotations
+  - Union types using `X | Y` syntax
+  - Direct `datetime.UTC` usage
+  - Modern `isinstance(x, int | float)` patterns
 - Strict typing for business logic
 - Relaxed typing for tests and utilities
 - Pydantic v2 for runtime validation
+- React 19.1 with full TypeScript support
 
 ## Project Structure
 

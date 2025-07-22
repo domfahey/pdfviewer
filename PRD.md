@@ -6,7 +6,7 @@
 **Project Name:** Modern PDF Viewer POC  
 **Project Type:** Proof of Concept  
 **Timeline:** 4-6 weeks  
-**Objective:** Build a modern, performant PDF viewer web application demonstrating advanced PDF.js integration with React 18+ frontend and FastAPI backend.
+**Objective:** Build a modern, performant PDF viewer web application demonstrating advanced PDF.js integration with React 19.1 frontend and FastAPI backend.
 
 ### 2. Product Vision
 
@@ -78,9 +78,9 @@ Create a cutting-edge PDF viewer that showcases modern web technologies while pr
 ### 5. Technical Requirements
 
 #### 5.1 Frontend Architecture
-- **Framework:** React 18+ with functional components
+- **Framework:** React 19.1 with functional components
 - **State Management:** React Context API or Zustand
-- **Styling:** Tailwind CSS or styled-components
+- **Styling:** Material-UI v7 components
 - **PDF Rendering:** PDF.js (latest stable version)
 - **Build Tool:** Vite for fast development and optimized builds
 - **TypeScript:** Full TypeScript implementation

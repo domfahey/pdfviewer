@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Python 3.11+ modernization**:
+  - Updated minimum Python version from 3.9 to 3.11
+  - Modern union syntax (`X | Y`) throughout codebase
+  - Direct use of `datetime.UTC` constant
+  - Updated `isinstance` calls to use union types
+- **React component optimization**:
+  - Moved mock data outside components to prevent recreations
+  - Improved performance with referential equality
+- **Enhanced ground truth comparison UI**:
+  - Fully functional toggle between extraction and comparison views
+  - Real-time accuracy metrics calculation (75% overall accuracy)
+  - Visual indicators for match quality (exact, similar, different, no truth)
+  - Overall accuracy percentage with color-coded progress bar
+  - Detailed accuracy breakdown by category (personal, business, dates, financial)
+  - Mock data optimization moved outside component for performance
 - **Full-text PDF search** with highlighting and navigation
 - **URL loading endpoint** (`/api/load-url`) to load PDFs from web URLs
 - **Test PDF loader** component for quick access to sample PDFs

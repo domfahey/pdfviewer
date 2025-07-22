@@ -53,7 +53,10 @@ GET /api/health
   "file_size_mb": 1.0,
   "metadata": {
     "page_count": 10,
-    "document_category": "short-document"
+    "document_category": "short-document",
+    "complexity_score": 3.5,
+    "has_forms": false,
+    "has_images": true
   }
 }
 ```

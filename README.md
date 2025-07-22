@@ -1,6 +1,6 @@
 # PDF Viewer POC
 
-Modern PDF viewer with React frontend and FastAPI backend, featuring comprehensive testing infrastructure and developer tooling.
+Modern PDF viewer with React 19.1 frontend and FastAPI backend, featuring comprehensive testing infrastructure, ground truth comparison UI, and developer tooling.
 
 ## Prerequisites
 
@@ -63,10 +63,15 @@ See all commands: `make help`
 - Full-text search with highlighting
 - Load PDFs from URLs or local files
 - Test PDF loader for quick demos
-- Form field extraction with ground truth comparison (preview)
+- Form field extraction with ground truth comparison UI
+  - Toggle between extraction-only and comparison views
+  - Accuracy metrics (exact, similar, different matches)
+  - Visual indicators for match quality
 - Enhanced metadata and validation
 - Material Design UI (MUI v7)
 - Comprehensive test coverage
+- Modern Python 3.11+ type annotations
+- React 19.1 with TypeScript
 
 ## API Endpoints
 

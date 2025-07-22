@@ -4,17 +4,19 @@ Guidance for Claude Code when working with this PDF Viewer POC.
 
 ## Project Overview
 
-PDF viewer POC with React/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison.
+PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison UI.
 
 ## Tech Stack
 
 **Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
-**Backend:** FastAPI, Python 3.11+, UV, Pydantic v2
+**Backend:** FastAPI, Python 3.11+, UV, Pydantic v2  
+**Code Quality:** Modern Python syntax (X | Y unions, datetime.UTC), optimized React patterns
 
 ## Key Requirements
 
 - Full-text PDF search with highlighting
 - URL loading support for remote PDFs
+- Ground truth comparison UI with accuracy metrics
 - 50MB file size limit
 - Correlation ID propagation
 - Zero linting/type errors
