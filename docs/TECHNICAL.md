@@ -35,7 +35,7 @@ make dev-frontend     # Start frontend
 
 # Manual setup
 uv venv && source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv pip install -e ".[dev]" -c configs/pyproject.toml
 cd backend && uvicorn app.main:app --reload
 
 # Docker

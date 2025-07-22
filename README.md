@@ -105,6 +105,27 @@ make test-coverage
 
 See [Test Documentation](tests/README.md) for details.
 
+## Project Structure
+
+```
+pdfviewer/
+├── configs/           # Configuration files
+│   ├── Makefile      # Development commands
+│   ├── pyproject.toml # Python project config
+│   └── playwright.config.ts # E2E test config
+├── docs/             # Documentation
+├── scripts/          # Build and utility scripts
+├── logs/             # Application logs (gitignored)
+├── artifacts/        # Build artifacts, coverage reports
+├── backend/          # Python FastAPI backend
+├── frontend/         # React frontend
+├── tests/            # Test suites (unit, integration, e2e)
+├── README.md         # This file
+├── CHANGELOG.md      # Version history
+├── CLAUDE.md         # AI assistant instructions
+└── package.json      # Root package management
+```
+
 ## Security
 
 ```bash

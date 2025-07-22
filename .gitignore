@@ -110,11 +110,8 @@ backend/uploads/
 *.pdf.tmp
 debug_*.html
 debug_*.png
-backend.log
-server.log
-api_test.log
-debug_api_test.log
-test-results/
+logs/
+artifacts/
 frontend/coverage/
 
 # Temporary files
