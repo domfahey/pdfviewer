@@ -62,6 +62,23 @@ Update dependencies to latest versions
 
 ## Development Setup
 
+### System Dependencies
+
+The project requires `libmagic` for file type validation:
+
+```bash
+# macOS
+brew install libmagic
+
+# Ubuntu/Debian
+sudo apt-get install libmagic1
+
+# RHEL/CentOS/Fedora
+sudo yum install file-devel
+
+# Windows - python-magic-bin is installed automatically
+```
+
 ### Pre-commit Hooks
 ```bash
 # Install pre-commit
@@ -81,3 +98,34 @@ cp .env.example .env
 ```
 
 Never commit `.env` files!
+
+### Troubleshooting
+
+**libmagic errors on macOS:**
+```bash
+# If you get "libmagic.dylib not found"
+brew reinstall libmagic
+```
+
+**libmagic errors on Linux:**
+```bash
+# If you get "cannot open shared object file"
+sudo ldconfig
+```
+
+**Installation fails on Windows:**
+The project automatically installs `python-magic-bin` on Windows.
+If issues persist, install Visual C++ Redistributable.
+
+## Repository History
+
+⚠️ **Important**: This repository's history was cleaned on 2025-01-21 to remove:
+- All uploaded PDF files from the `uploads/` directory
+- All Python cache files (`__pycache__`)
+
+If you had a local clone before this date, please:
+1. Back up any local changes
+2. Re-clone the repository:
+   ```bash
+   git clone https://github.com/domfahey/pdfviewer.git
+   ```

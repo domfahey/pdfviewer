@@ -18,6 +18,7 @@ import { PDFControls } from './PDFControls';
 import { PDFThumbnails } from './PDFThumbnails';
 import { VirtualPDFViewer } from './VirtualPDFViewer';
 import { PDFMetadataPanel } from './PDFMetadataPanel';
+import { PDFExtractedFields } from './PDFExtractedFields';
 import type { PDFMetadata } from '../../types/pdf.types';
 
 interface FitMode {
@@ -62,6 +63,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [thumbnailsWidth, setThumbnailsWidth] = useState(300);
   const [showMetadata, setShowMetadata] = useState(false);
+  const [showExtractedFields, setShowExtractedFields] = useState(false);
+  const [extractedFieldsWidth, setExtractedFieldsWidth] = useState(350);
   const [rotation, setRotation] = useState(0);
 
   // Search functionality
@@ -153,8 +156,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       // Account for thumbnails, metadata, and extracted fields panel widths when visible
       const thumbnailsWidthActual = showThumbnails ? thumbnailsWidth : 0;
       const metadataWidth = showMetadata ? 300 : 0;
-      const containerWidth =
-        window.innerWidth - thumbnailsWidthActual - metadataWidth - 40; // 40px for padding
+      const containerWidth = window.innerWidth - thumbnailsWidthActual - metadataWidth - 40; // 40px for padding
       const containerHeight = window.innerHeight - 120; // Account for PDF controls only
 
       let scale = 1;
@@ -254,10 +256,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     setShowMetadata(prev => !prev);
   }, []);
 
+  const handleToggleExtractedFields = useCallback(() => {
+    setShowExtractedFields(prev => !prev);
+  }, []);
+
   const handleViewModeChange = useCallback((mode: 'original' | 'digital') => {
     setViewMode(mode);
   }, []);
-
 
   const handleThumbnailsResize = useCallback((width: number) => {
     setThumbnailsWidth(width);
@@ -425,6 +430,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         onNextPage={nextPage}
         onToggleThumbnails={handleToggleThumbnails}
         onToggleBookmarks={handleToggleMetadata}
+        onToggleExtractedFields={handleToggleExtractedFields}
         onSearch={handleSearch}
         onSearchNext={nextMatch}
         onSearchPrevious={previousMatch}
@@ -597,6 +603,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           isVisible={showMetadata}
         />
 
+        {/* Extracted Fields Panel */}
+        <PDFExtractedFields
+          isVisible={showExtractedFields}
+          onClose={() => setShowExtractedFields(false)}
+          width={extractedFieldsWidth}
+          onResize={setExtractedFieldsWidth}
+        />
       </Box>
     </Box>
   );

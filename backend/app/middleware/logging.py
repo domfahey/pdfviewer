@@ -10,16 +10,13 @@ import os
 import time
 import uuid
 from contextvars import ContextVar
-from typing import Optional
 
 import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # Context variable to store correlation ID across async calls
-correlation_id_var: ContextVar[Optional[str]] = ContextVar(
-    "correlation_id", default=None
-)
+correlation_id_var: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 
 logger = structlog.get_logger(__name__)
 
@@ -41,8 +38,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         self,
         app,
         correlation_header: str = "X-Correlation-ID",
-        log_request_bodies: Optional[bool] = None,
-        log_response_bodies: Optional[bool] = None,
+        log_request_bodies: bool | None = None,
+        log_response_bodies: bool | None = None,
         max_body_size: int = 4096,  # 4KB default limit
     ):  # type: ignore[misc]
         super().__init__(app)
@@ -240,7 +237,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         return True
 
-    async def _safe_read_body(self, request: Request) -> Optional[str]:
+    async def _safe_read_body(self, request: Request) -> str | None:
         """Safely read request body with size limits."""
         try:
             body = await request.body()
@@ -256,7 +253,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             return f"[ERROR READING BODY: {str(e)}]"
 
-    async def _safe_read_response_body(self, response: Response) -> Optional[str]:
+    async def _safe_read_response_body(self, response: Response) -> str | None:
         """Safely read response body with size limits."""
         try:
             # For StreamingResponse or FileResponse, we can't read the body
@@ -279,7 +276,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         return None
 
-    def _sanitize_body(self, body: str, content_type: Optional[str]) -> str:
+    def _sanitize_body(self, body: str, content_type: str | None) -> str:
         """Sanitize body content for logging."""
         if not body:
             return body
@@ -330,7 +327,7 @@ def add_correlation_id(logger, method_name, event_dict):
     return event_dict
 
 
-def get_correlation_id() -> Optional[str]:
+def get_correlation_id() -> str | None:
     """Get the current correlation ID from context."""
     correlation_id = correlation_id_var.get()
     if correlation_id is None:
@@ -342,7 +339,7 @@ def get_correlation_id() -> Optional[str]:
     return correlation_id
 
 
-def set_correlation_id(correlation_id: Optional[str]) -> None:
+def set_correlation_id(correlation_id: str | None) -> None:
     """Set the correlation ID in the current context."""
     correlation_id_var.set(correlation_id)
 
@@ -382,7 +379,7 @@ class RequestContextLogger:
     def __init__(self, logger_instance: structlog.stdlib.BoundLogger, request: Request):
         self.logger = logger_instance
         self.request = request
-        self.context_logger: Optional[structlog.stdlib.BoundLogger] = None
+        self.context_logger: structlog.stdlib.BoundLogger | None = None
 
     def __enter__(self) -> structlog.stdlib.BoundLogger:
         context = {
@@ -403,7 +400,7 @@ class RequestContextLogger:
             )
 
 
-def log_file_operation(operation: str, filename: str, file_id: Optional[str] = None):
+def log_file_operation(operation: str, filename: str, file_id: str | None = None):
     """
     Decorator to log file operations with consistent context.
 

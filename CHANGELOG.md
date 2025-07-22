@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modern union syntax (`X | Y`) throughout codebase
   - Direct use of `datetime.UTC` constant
   - Updated `isinstance` calls to use union types
+- **React component optimization**:
+  - Moved mock data outside components to prevent recreations
+  - Improved performance with referential equality
 - **Enhanced ground truth comparison UI**:
   - Fully functional toggle between extraction and comparison views
   - Real-time accuracy metrics calculation (75% overall accuracy)
@@ -41,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated to require Python 3.11+ minimum version
   - Added type annotations to critical functions
   - Configured mypy with appropriate overrides
+- **Security enhancements**:
+  - Pre-commit hooks for secret detection (detect-secrets, gitleaks)
+  - Comprehensive `.gitignore` with security patterns
+  - `.env.example` template for safe configuration
+  - CONTRIBUTING.md with security checklist
+  - Removed all uploaded PDFs from git history
+  - Cleaned Python cache files from repository
 - **Test PDF fixtures** and sample files
 - Extended CORS support to ports 5173-5176
 - Search match counter showing "X of Y" results
@@ -58,8 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sticky PDF controls toolbar
 - Fit mode functionality (width, height, page)
 - View mode toggle (Original PDF / Digital Markdown)
-- Extracted fields panel for form data display
+- Extracted fields panel for form data display (preview UI)
+- Ground truth comparison mode with accuracy metrics
 - Author attribution and MIT licensing
+- Documentation updates for POC best practices (2025-01-21)
 
 ### Changed
 - Upgraded to Pydantic v2 with enhanced model validation
@@ -71,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced logging with request/response tracking
 - Upgraded from React 18 to React 19.1
 - Updated performance test thresholds for real-world PDFs (60s for image-heavy, 30s for standard)
+- **BREAKING**: Rewritten git history to remove sensitive files (collaborators must re-clone)
+- Added automatic `python-magic-bin` installation for Windows compatibility
 
 ### Fixed
 - React double-rendering issues in Strict Mode
@@ -84,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upload progress UI race conditions
 - PDF rendering cleanup on component unmount
 - Browser compatibility issues
+- Restored PDFExtractedFields panel that was accidentally removed
 
 ## [0.1.0] - 2025-07-20
 

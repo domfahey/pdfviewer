@@ -6,6 +6,24 @@
 - Python 3.11+ with UV
 - Node.js 18+
 - Docker (optional)
+- libmagic (for file type detection)
+
+### System Dependencies
+
+```bash
+# Install libmagic (required for PDF validation)
+
+# macOS
+brew install libmagic
+
+# Ubuntu/Debian
+sudo apt-get install libmagic1
+
+# RHEL/CentOS/Fedora
+sudo yum install file-devel
+
+# Windows - automatically handled by python-magic-bin
+```
 
 ### Install & Run
 
@@ -131,7 +149,7 @@ docker-compose build     # Rebuild
 - Test PDF loader for demos
 - Form field extraction with ground truth comparison (preview)
 - Virtual scrolling for performance
-- Material Design UI components
+- Material Design UI components (MUI v7)
 - Comprehensive test coverage
 
 ## Test Infrastructure
@@ -144,8 +162,17 @@ docker-compose build     # Rebuild
 
 See [Test Guide](../tests/README.md) for details.
 
+## Security Practices
+
+- **Secret Detection**: Pre-commit hooks prevent accidental commits
+- **Environment Variables**: All configuration via `.env` files
+- **Git History**: Cleaned of all uploaded files and caches
+- **Log Sanitization**: Automatic redaction of sensitive data
+- **File Validation**: Path traversal protection
+
 ## Production Notes
 
 - Enable JSON logs: `JSON_LOGS=true`
 - Configure CORS for production domains
 - Set up persistent storage for uploads
+- Review security configuration in CONTRIBUTING.md

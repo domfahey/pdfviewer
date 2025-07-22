@@ -322,7 +322,6 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
                 </IconButton>
               </Tooltip>
             )}
-
             {onToggleExtractedFields && (
               <Tooltip title="Extracted fields">
                 <IconButton onClick={onToggleExtractedFields} size="small">
