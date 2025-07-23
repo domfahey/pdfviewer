@@ -81,8 +81,8 @@ class TestPDFServiceDependency:
 
             result = get_pdf_service()
 
-            # The function creates a new instance directly
-            assert isinstance(result, PDFService)
+            # The function creates a new instance and returns the mock
+            assert result is mock_instance
 
 
 class TestLoadPDFRequestModel:
