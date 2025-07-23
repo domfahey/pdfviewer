@@ -14,6 +14,7 @@ PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL l
 
 ## Key Requirements
 
+- **Git**: Use `main` branch (NOT `master`) for all development
 - Full-text PDF search with highlighting
 - URL loading support for remote PDFs
 - Ground truth comparison UI with accuracy metrics
@@ -55,7 +56,9 @@ See [Technical Guide](docs/TECHNICAL.md) for:
 5. Repeat for next feature
 
 **Branch Management:**
-- Use only `main` as primary branch (consolidated from master/main)
+- **Primary Branch**: `main` (NOT `master`) - GitHub default branch
+- Use only `main` as primary branch (consolidated from master/main in July 2025)
+- All feature branches should branch from and merge back to `main`
 - Delete merged feature branches immediately
 - Keep branch lists clean and minimal
 - Use short-lived feature branches (days/weeks, not months)
