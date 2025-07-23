@@ -10,7 +10,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 
-def create_sample_pdf(output_path: Path, num_pages: int = 3, title: str = "Sample PDF") -> None:
+def create_sample_pdf(
+    output_path: Path, num_pages: int = 3, title: str = "Sample PDF"
+) -> None:
     """Create a simple PDF with text content."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
