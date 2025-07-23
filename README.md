@@ -34,14 +34,25 @@ See all commands: `make help`
 
 ## Features
 
+### Core PDF Functionality
 - PDF rendering with virtual scrolling
 - Full-text search with highlighting
 - Load PDFs from URLs or local files
 - Test PDF loader for quick demos
-- Form field extraction (preview)
 - Enhanced metadata and validation
-- Material Design UI
-- Comprehensive test coverage
+
+### Advanced UI Features
+- **Extracted Fields Panel**: AI-powered field extraction with confidence scores
+- **Ground Truth Comparison**: Toggle to compare extracted vs expected values
+- **Visual Accuracy Metrics**: Real-time extraction performance indicators
+- **Material Design UI**: Modern, responsive interface
+- **Multi-Panel Layout**: Thumbnails, metadata, and extracted fields panels
+
+### Development & Testing
+- Comprehensive test coverage (unit, integration, E2E)
+- Type safety (TypeScript + Python)
+- Linting and code quality tools
+- Docker support for deployment
 
 ## API Endpoints
 

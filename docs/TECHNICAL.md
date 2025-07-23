@@ -80,6 +80,11 @@ make test-parallel   # Parallel execution
 ├── frontend/
 │   ├── src/
 │   │   ├── components/  # React 19 components
+│   │   │   ├── PDFViewer/       # Core viewer components
+│   │   │   │   ├── PDFExtractedFields.tsx  # Fields with ground truth
+│   │   │   │   ├── PDFViewer.tsx           # Main viewer
+│   │   │   │   └── PDFControls.tsx         # Toolbar controls
+│   │   │   └── TestPDFLoader.tsx           # Test PDF loader
 │   │   ├── hooks/       # Custom React hooks
 │   │   ├── services/    # API client
 │   │   └── types/       # TypeScript types
@@ -122,13 +127,30 @@ docker-compose build     # Rebuild
 
 ## Key Features
 
+### Core PDF Functionality
 - Full-text PDF search with highlighting
 - URL and local file loading
 - Test PDF loader for demos
-- Form field extraction (preview)
 - Virtual scrolling for performance
-- Material Design UI components
-- Comprehensive test coverage
+
+### Advanced UI Components
+- **Extracted Fields Panel**: AI-powered field extraction with confidence scores
+- **Ground Truth Comparison**: Toggle to compare extracted vs expected values with visual indicators
+- **Accuracy Metrics Dashboard**: Real-time extraction performance summary
+- **Multi-Panel Layout**: Thumbnails, metadata, and extracted fields panels
+- **Material Design UI**: Modern, responsive interface components
+
+### Field Extraction Features
+- **Match Type Classification**: Exact, similar, and different match indicators
+- **Color-Coded Comparison**: Visual feedback for extraction accuracy
+- **Dual Field Display**: Side-by-side extracted vs ground truth values
+- **Confidence Scoring**: Percentage confidence for each extracted field
+- **Category Organization**: Personal, business, dates, and financial fields
+
+### Testing & Quality
+- Comprehensive test coverage (unit, integration, E2E)
+- Type safety (TypeScript + Python)
+- Linting and code quality tools
 
 ## Test Infrastructure
 
