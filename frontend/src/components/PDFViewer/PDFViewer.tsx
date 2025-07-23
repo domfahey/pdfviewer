@@ -263,7 +263,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const handleToggleExtractedFields = useCallback(() => {
     setShowExtractedFields(prev => !prev);
   }, []);
-
   const handleViewModeChange = useCallback((mode: 'original' | 'digital') => {
     setViewMode(mode);
   }, []);
