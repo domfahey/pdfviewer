@@ -45,6 +45,21 @@ See [Technical Guide](docs/TECHNICAL.md) for:
 - Debug logging enabled by default
 - CORS configured for ports 5173-5176
 
+## Git Workflow
+
+🔄 **Recommended Ongoing Process:**
+1. Create feature branch from `main`
+2. Develop and test the feature
+3. Create PR to merge into `main`
+4. Delete branch immediately after merge
+5. Repeat for next feature
+
+**Branch Management:**
+- Use only `main` as primary branch (consolidated from master/main)
+- Delete merged feature branches immediately
+- Keep branch lists clean and minimal
+- Use short-lived feature branches (days/weeks, not months)
+
 ## Important Files
 
 - `backend/app/api/load_url.py` - URL loading endpoint
