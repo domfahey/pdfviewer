@@ -476,7 +476,7 @@ class TestLoadPDFFromURLEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["file_id"] == "test-file-id"
+        assert data["file_id"] == expected_response.file_id
         assert data["filename"] == "annual_report.pdf"
         assert data["file_size"] == len(sample_pdf_content)
         assert data["mime_type"] == "application/pdf"
