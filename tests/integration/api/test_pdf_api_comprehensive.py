@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.api.pdf import get_pdf_service, init_pdf_service
 from backend.app.services.pdf_service import PDFService
+from tests.helpers.mock_helpers import PDFServiceMockBuilder, ErrorSimulator
 
 
 @pytest.fixture(autouse=True)
@@ -32,7 +33,6 @@ def reset_pdf_service_state():
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.services.pdf_service import PDFService
     from backend.app.api.pdf import init_pdf_service
 
     # Create a service instance
@@ -46,7 +46,7 @@ class TestPDFServiceDependency:
 
     def test_get_pdf_service_with_initialized_service(self):
         """Test that get_pdf_service returns initialized service."""
-        mock_service = Mock(spec=PDFService)
+        mock_service = PDFServiceMockBuilder().build()
         init_pdf_service(mock_service)
 
         result = get_pdf_service()
@@ -60,7 +60,7 @@ class TestPDFServiceDependency:
         pdf._pdf_service = None
 
         with patch("backend.app.api.pdf.PDFService") as mock_pdf_service_class:
-            mock_instance = Mock(spec=PDFService)
+            mock_instance = PDFServiceMockBuilder().build()
             mock_pdf_service_class.return_value = mock_instance
 
             result = get_pdf_service()
@@ -95,7 +95,7 @@ class TestGetPDFFileEndpoint:
         with patch(
             "backend.app.services.pdf_service.PDFService.get_pdf_path"
         ) as mock_get_path:
-            mock_get_path.side_effect = Exception("Database connection failed")
+            mock_get_path.side_effect = ErrorSimulator.database_error()
 
             response = client.get("/api/pdf/test-file-id")
             assert response.status_code == 500
@@ -107,8 +107,8 @@ class TestGetPDFFileEndpoint:
         with patch(
             "backend.app.services.pdf_service.PDFService.get_pdf_path"
         ) as mock_get_path:
-            mock_get_path.side_effect = HTTPException(
-                status_code=403, detail="Access denied"
+            mock_get_path.side_effect = ErrorSimulator.http_error(
+                status_code=403, message="Access denied"
             )
 
             response = client.get("/api/pdf/test-file-id")
@@ -415,3 +415,7 @@ class TestEdgeCaseInputs:
         response = client.get(f"/api/pdf/{sql_injection_id}")
         # Should handle safely
         assert response.status_code == 404
+
+
+# Note: Full workflow integration test moved to integration test suite
+# as it requires cross-service coordination and shared state management

@@ -492,9 +492,7 @@ class TestAPILoggingIntegration:
         from backend.app.api.load_url import load_pdf_from_url
 
         # The function should have the decorator applied
-        assert hasattr(load_pdf_from_url, "__wrapped__") or callable(
-            load_pdf_from_url
-        )
+        assert hasattr(load_pdf_from_url, "__wrapped__") or callable(load_pdf_from_url)
 
         # Make a test request to verify logging works (this tests integration)
         response = client.post("/api/load-url", json={"url": "invalid-url"})

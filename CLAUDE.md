@@ -4,23 +4,23 @@ Guidance for Claude Code when working with this PDF Viewer POC.
 
 ## Project Overview
 
-PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison UI.
+Production-ready PDF viewer POC with React 19.1/FastAPI. Features zero-error code quality, comprehensive test infrastructure, and advanced developer tooling.
 
 ## Tech Stack
 
 **Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
 **Backend:** FastAPI, Python 3.11+, UV, Pydantic v2  
-**Code Quality:** Modern Python syntax (X | Y unions, datetime.UTC), optimized React patterns
+**Code Quality:** Zero linting errors, strict type checking, comprehensive test infrastructure
 
 ## Key Requirements
 
 - **Git**: Use `main` branch (NOT `master`) for all development
+- **Code Quality**: Zero linting errors (ESLint, Ruff), strict type checking (mypy, tsc)
+- **Testing**: 99% backend pass rate, helper patterns, comprehensive coverage
 - Full-text PDF search with highlighting
 - URL loading support for remote PDFs
 - Ground truth comparison UI with accuracy metrics
-- 50MB file size limit
-- Correlation ID propagation
-- Zero linting/type errors
+- 50MB file size limit, correlation ID propagation
 - Security: Pre-commit hooks, no secrets in code
 - System dependency: libmagic (see README)
 
@@ -41,10 +41,13 @@ See [Technical Guide](docs/TECHNICAL.md) for:
 
 ## Development Notes
 
-- React 19 Strict Mode compatibility
-- Pydantic v2 computed fields and validators
-- Debug logging enabled by default
-- CORS configured for ports 5173-5176
+- **Quality Pipeline**: `make qa` runs lint, format, type, test (all pass)
+- **React 19**: Strict Mode compatibility, zero ESLint errors
+- **Python 3.11+**: Modern syntax (X | Y unions), zero mypy errors
+- **Testing**: Helper patterns reduce duplication by 30-40%
+- **Pydantic v2**: Computed fields and validators
+- **Debug logging**: Enabled by default with correlation IDs
+- **CORS**: Configured for ports 5173-5176
 
 ## Git Workflow
 

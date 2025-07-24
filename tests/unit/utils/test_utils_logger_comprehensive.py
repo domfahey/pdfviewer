@@ -18,6 +18,7 @@ from backend.app.utils.logger import (
     log_exception_context,
     FileOperationLogger,
 )
+from tests.helpers.mock_helpers import create_mock_logger, ErrorSimulator
 
 
 class TestPerformanceTracker:
@@ -37,7 +38,7 @@ class TestPerformanceTracker:
 
     def test_performance_tracker_initialization_custom(self):
         """Test PerformanceTracker with custom parameters."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
         tracker = PerformanceTracker(
             "custom_operation",
             logger_instance=mock_logger,
@@ -54,7 +55,7 @@ class TestPerformanceTracker:
 
     def test_performance_tracker_start_with_logging(self):
         """Test start method with logging enabled."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
         tracker = PerformanceTracker(
             "test_op", logger_instance=mock_logger, log_start=True
         )
@@ -68,7 +69,7 @@ class TestPerformanceTracker:
 
     def test_performance_tracker_start_without_logging(self):
         """Test start method with logging disabled."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
         tracker = PerformanceTracker(
             "test_op", logger_instance=mock_logger, log_start=False
         )
@@ -80,7 +81,7 @@ class TestPerformanceTracker:
 
     def test_performance_tracker_stop_success(self):
         """Test stop method for successful operation."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
         tracker = PerformanceTracker("test_op", logger_instance=mock_logger)
 
         tracker.start()
@@ -105,7 +106,7 @@ class TestPerformanceTracker:
 
     def test_performance_tracker_stop_with_exception(self):
         """Test stop method with exception."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
         tracker = PerformanceTracker("test_op", logger_instance=mock_logger)
 
         tracker.start()
@@ -396,8 +397,8 @@ class TestLogExceptionContext:
 
     def test_log_exception_context_basic(self):
         """Test basic exception context logging."""
-        mock_logger = Mock()
-        exception = ValueError("Test error message")
+        mock_logger = create_mock_logger()
+        exception = ErrorSimulator.invalid_pdf_error()
 
         log_exception_context(
             mock_logger,
@@ -413,22 +414,20 @@ class TestLogExceptionContext:
         assert "Exception during file processing" in call_args[0][0]
         assert call_args[1]["operation"] == "file processing"
         assert call_args[1]["exception_type"] == "ValueError"
-        assert call_args[1]["exception_message"] == "Test error message"
+        assert call_args[1]["exception_message"] == "Invalid PDF format"
         assert call_args[1]["file_id"] == "test-123"
         assert call_args[1]["operation_type"] == "pdf_parse"
 
     def test_log_exception_context_different_exception_types(self):
         """Test exception context logging with different exception types."""
-        mock_logger = Mock()
+        mock_logger = create_mock_logger()
 
         test_cases = [
-            (RuntimeError("Runtime issue"), "RuntimeError"),
-            (
-                OSError("File not found"),
-                "OSError",
-            ),  # IOError is aliased to OSError in Python 3+
-            (KeyError("missing_key"), "KeyError"),
-            (Exception("Generic error"), "Exception"),
+            (ErrorSimulator.database_error(), "Exception"),
+            (ErrorSimulator.file_not_found("test.pdf"), "FileNotFoundError"),
+            (ErrorSimulator.permission_denied("read"), "PermissionError"),
+            (ErrorSimulator.network_timeout(), "Timeout"),
+            (ErrorSimulator.network_connection_error(), "ConnectionError"),
         ]
 
         for exception, expected_type in test_cases:
@@ -459,7 +458,7 @@ class TestFileOperationLogger:
     def test_file_operation_logger_initialization_default(self):
         """Test FileOperationLogger with default logger."""
         with patch("backend.app.utils.logger.get_logger") as mock_get_logger:
-            mock_logger = Mock()
+            mock_logger = create_mock_logger()
             mock_get_logger.return_value = mock_logger
 
             file_logger = FileOperationLogger()
@@ -468,7 +467,7 @@ class TestFileOperationLogger:
 
     def test_file_operation_logger_initialization_custom(self):
         """Test FileOperationLogger with custom logger."""
-        custom_logger = Mock()
+        custom_logger = create_mock_logger()
         file_logger = FileOperationLogger(base_logger=custom_logger)
 
         assert file_logger.logger is custom_logger

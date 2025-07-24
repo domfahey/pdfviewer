@@ -1,0 +1,88 @@
+"""Test helpers module."""
+
+from .test_data_factories import (
+    PDFDataFactory,
+    ErrorScenarioFactory,
+    PerformanceScenarioFactory,
+    APITestScenarioFactory,
+    get_standard_pdf_variations,
+    get_error_test_cases,
+    get_performance_test_scenarios,
+)
+
+from .test_assertions import (
+    assert_upload_success_response,
+    assert_error_response,
+    assert_metadata_response,
+    create_upload_file_data,
+    upload_pdf_file,
+    assert_valid_pdf_content,
+    assert_valid_uuid,
+    assert_correlation_id_propagated,
+    assert_file_size_fields,
+    assert_timestamp_fields,
+    mock_pdf_service_method,
+    mock_api_dependency,
+    perform_upload_workflow,
+    perform_metadata_workflow,
+    perform_full_pdf_workflow,
+)
+
+from .mock_helpers import (
+    MockResponseBuilder,
+    PDFServiceMockBuilder,
+    mock_pdfservice_with_behavior,
+    mock_external_requests,
+    mock_file_operations,
+    create_mock_logger,
+    create_mock_performance_tracker,
+    create_mock_api_logger,
+    ErrorSimulator,
+    assert_mock_called_with_correlation_id,
+    assert_mock_called_with_file_context,
+    MockFileHelper,
+    create_mock_upload_file,
+    simulate_service_error,
+)
+
+__all__ = [
+    # Data factories
+    "PDFDataFactory",
+    "ErrorScenarioFactory",
+    "PerformanceScenarioFactory",
+    "APITestScenarioFactory",
+    "get_standard_pdf_variations",
+    "get_error_test_cases",
+    "get_performance_test_scenarios",
+    # Test assertions
+    "assert_upload_success_response",
+    "assert_error_response",
+    "assert_metadata_response",
+    "create_upload_file_data",
+    "upload_pdf_file",
+    "assert_valid_pdf_content",
+    "assert_valid_uuid",
+    "assert_correlation_id_propagated",
+    "assert_file_size_fields",
+    "assert_timestamp_fields",
+    "mock_pdf_service_method",
+    "mock_api_dependency",
+    "perform_upload_workflow",
+    "perform_metadata_workflow",
+    "perform_full_pdf_workflow",
+    # Mock helpers
+    "MockResponseBuilder",
+    "PDFServiceMockBuilder",
+    "mock_pdfservice_with_behavior",
+    "mock_external_requests",
+    "mock_file_operations",
+    "create_mock_logger",
+    "create_mock_performance_tracker",
+    "create_mock_api_logger",
+    "ErrorSimulator",
+    "assert_mock_called_with_correlation_id",
+    "assert_mock_called_with_file_context",
+    "MockFileHelper",
+    "create_mock_upload_file",
+    "simulate_service_error",
+]

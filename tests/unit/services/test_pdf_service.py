@@ -16,6 +16,7 @@ from fastapi import HTTPException, UploadFile
 
 from backend.app.models.pdf import PDFMetadata, PDFUploadResponse
 from backend.app.services.pdf_service import PDFService
+from tests.helpers.mock_helpers import create_mock_upload_file, ErrorSimulator
 
 
 class TestPDFServiceInitialization:
@@ -55,32 +56,33 @@ class TestPDFServiceValidation:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = PDFService(upload_dir="test_uploads")
+        self.temp_dir = tempfile.mkdtemp()
+        self.service = PDFService(upload_dir=self.temp_dir)
 
     def teardown_method(self):
         """Clean up test fixtures."""
         # Clean up test upload directory if it exists
-        if self.service.upload_dir.exists():
+        if hasattr(self, "temp_dir") and Path(self.temp_dir).exists():
             import shutil
 
-            shutil.rmtree(self.service.upload_dir, ignore_errors=True)
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_validate_file_valid_pdf(self, sample_pdf_content):
         """Test validation of a valid PDF file."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.pdf"
-        mock_file.content_type = "application/pdf"
-        mock_file.size = len(sample_pdf_content)
+        mock_file = create_mock_upload_file(
+            filename="test.pdf",
+            content_type="application/pdf",
+            file_size=len(sample_pdf_content),
+        )
 
         # Should not raise an exception
         self.service._validate_file(mock_file)
 
     def test_validate_file_no_filename(self):
         """Test validation fails when no filename is provided."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = None
-        mock_file.content_type = "application/pdf"
-        mock_file.size = 1000
+        mock_file = create_mock_upload_file(
+            filename=None, content_type="application/pdf", file_size=1000
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             self.service._validate_file(mock_file)
@@ -90,10 +92,9 @@ class TestPDFServiceValidation:
 
     def test_validate_file_empty_filename(self):
         """Test validation fails when filename is empty."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = ""
-        mock_file.content_type = "application/pdf"
-        mock_file.size = 1000
+        mock_file = create_mock_upload_file(
+            filename="", content_type="application/pdf", file_size=1000
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             self.service._validate_file(mock_file)
@@ -102,10 +103,9 @@ class TestPDFServiceValidation:
 
     def test_validate_file_invalid_extension(self):
         """Test validation fails for non-PDF file extensions."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.txt"
-        mock_file.content_type = "text/plain"
-        mock_file.size = 1000
+        mock_file = create_mock_upload_file(
+            filename="test.txt", content_type="text/plain", file_size=1000
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             self.service._validate_file(mock_file)
@@ -115,10 +115,11 @@ class TestPDFServiceValidation:
 
     def test_validate_file_too_large(self):
         """Test validation fails for files exceeding size limit."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "large.pdf"
-        mock_file.content_type = "application/pdf"
-        mock_file.size = 51 * 1024 * 1024  # 51MB, exceeds 50MB limit
+        mock_file = create_mock_upload_file(
+            filename="large.pdf",
+            content_type="application/pdf",
+            file_size=51 * 1024 * 1024,  # 51MB, exceeds 50MB limit
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             self.service._validate_file(mock_file)
@@ -145,14 +146,15 @@ class TestPDFServiceMetadataExtraction:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = PDFService(upload_dir="test_uploads")
+        self.temp_dir = tempfile.mkdtemp()
+        self.service = PDFService(upload_dir=self.temp_dir)
 
     def teardown_method(self):
         """Clean up test fixtures."""
-        if self.service.upload_dir.exists():
+        if hasattr(self, "temp_dir") and Path(self.temp_dir).exists():
             import shutil
 
-            shutil.rmtree(self.service.upload_dir, ignore_errors=True)
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_extract_pdf_metadata_valid_file(self, sample_pdf_file):
         """Test metadata extraction from a valid PDF file."""
@@ -173,8 +175,8 @@ class TestPDFServiceMetadataExtraction:
         self, mock_pdf_reader, sample_pdf_file
     ):
         """Test metadata extraction handles corrupted PDF files gracefully."""
-        # Mock PdfReader to raise an exception
-        mock_pdf_reader.side_effect = Exception("Corrupted PDF")
+        # Use ErrorSimulator for consistent error creation
+        mock_pdf_reader.side_effect = ErrorSimulator.invalid_pdf_error()
 
         metadata = self.service._extract_pdf_metadata(sample_pdf_file)
 
@@ -228,23 +230,25 @@ class TestPDFServiceUpload:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = PDFService(upload_dir="test_uploads")
+        self.temp_dir = tempfile.mkdtemp()
+        self.service = PDFService(upload_dir=self.temp_dir)
 
     def teardown_method(self):
         """Clean up test fixtures."""
-        if self.service.upload_dir.exists():
+        if hasattr(self, "temp_dir") and Path(self.temp_dir).exists():
             import shutil
 
-            shutil.rmtree(self.service.upload_dir, ignore_errors=True)
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @pytest.mark.asyncio
     async def test_upload_pdf_success(self, sample_pdf_content):
         """Test successful PDF upload."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.pdf"
-        mock_file.content_type = "application/pdf"
-        mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file = create_mock_upload_file(
+            filename="test.pdf",
+            content_type="application/pdf",
+            file_size=len(sample_pdf_content),
+            file_content=sample_pdf_content,
+        )
 
         with patch("magic.from_file", return_value="application/pdf"):
             response = await self.service.upload_pdf(mock_file)
@@ -262,11 +266,12 @@ class TestPDFServiceUpload:
     @pytest.mark.asyncio
     async def test_upload_pdf_invalid_mime_type(self, sample_pdf_content):
         """Test upload failure due to invalid MIME type detected."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.pdf"
-        mock_file.content_type = "application/pdf"
-        mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file = create_mock_upload_file(
+            filename="test.pdf",
+            content_type="application/pdf",
+            file_size=len(sample_pdf_content),
+            file_content=sample_pdf_content,
+        )
 
         with patch("magic.from_file", return_value="text/plain"):
             with pytest.raises(HTTPException) as exc_info:
@@ -278,11 +283,12 @@ class TestPDFServiceUpload:
     @pytest.mark.asyncio
     async def test_upload_pdf_file_write_error(self, sample_pdf_content):
         """Test upload failure due to file write error."""
-        mock_file = Mock(spec=UploadFile)
-        mock_file.filename = "test.pdf"
-        mock_file.content_type = "application/pdf"
-        mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file = create_mock_upload_file(
+            filename="test.pdf",
+            content_type="application/pdf",
+            file_size=len(sample_pdf_content),
+            file_content=sample_pdf_content,
+        )
 
         # Make upload directory read-only to cause write error
         self.service.upload_dir.chmod(0o444)
@@ -303,14 +309,15 @@ class TestPDFServiceFileOperations:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = PDFService(upload_dir="test_uploads")
+        self.temp_dir = tempfile.mkdtemp()
+        self.service = PDFService(upload_dir=self.temp_dir)
 
     def teardown_method(self):
         """Clean up test fixtures."""
-        if self.service.upload_dir.exists():
+        if hasattr(self, "temp_dir") and Path(self.temp_dir).exists():
             import shutil
 
-            shutil.rmtree(self.service.upload_dir, ignore_errors=True)
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_get_pdf_path_success(self, sample_pdf_content):
         """Test successful PDF path retrieval."""
@@ -480,14 +487,15 @@ class TestPDFServiceMetadataRetrieval:
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.service = PDFService(upload_dir="test_uploads")
+        self.temp_dir = tempfile.mkdtemp()
+        self.service = PDFService(upload_dir=self.temp_dir)
 
     def teardown_method(self):
         """Clean up test fixtures."""
-        if self.service.upload_dir.exists():
+        if hasattr(self, "temp_dir") and Path(self.temp_dir).exists():
             import shutil
 
-            shutil.rmtree(self.service.upload_dir, ignore_errors=True)
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_get_pdf_metadata_success(self, sample_pdf_content):
         """Test successful PDF metadata retrieval."""

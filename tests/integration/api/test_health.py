@@ -1,6 +1,6 @@
-from datetime import datetime
-
 from fastapi.testclient import TestClient
+
+from tests.helpers import assert_correlation_id_propagated, assert_timestamp_fields
 
 
 def test_health_check(client: TestClient):
@@ -10,11 +10,14 @@ def test_health_check(client: TestClient):
     assert response.status_code == 200
     data = response.json()
 
-    assert "status" in data
-    assert "timestamp" in data
-    assert "version" in data
-    assert "storage_available" in data
+    # Required health check fields
+    required_fields = ["status", "timestamp", "version", "storage_available"]
+    for field in required_fields:
+        assert (
+            field in data
+        ), f"Missing required field '{field}' in health check response"
 
+    # Validate field values
     assert data["version"] == "0.1.0"
     assert data["status"] in ["healthy", "degraded", "unhealthy"]
     assert isinstance(data["storage_available"], bool)
@@ -23,11 +26,8 @@ def test_health_check(client: TestClient):
     assert "is_healthy" in data
     assert isinstance(data["is_healthy"], bool)
 
-    # Verify timestamp format
-    assert "timestamp" in data
-    timestamp_str = data["timestamp"]
-    # Should be valid ISO format
-    datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+    # Verify timestamp format using helper
+    assert_timestamp_fields(data, "timestamp")
 
 
 def test_root_endpoint(client: TestClient):
@@ -47,7 +47,8 @@ def test_health_check_correlation_id(client: TestClient):
     response = client.get("/api/health", headers={"X-Correlation-ID": correlation_id})
 
     assert response.status_code == 200
-    assert response.headers.get("x-correlation-id") == correlation_id
+    # Use helper to validate correlation ID propagation
+    assert_correlation_id_propagated(response, correlation_id)
 
 
 def test_health_check_status_validation(client: TestClient):
