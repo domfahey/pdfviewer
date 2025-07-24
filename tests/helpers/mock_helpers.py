@@ -636,20 +636,6 @@ class MockFileHelper:
     """Helper for mocking file operations and uploads."""
 
     @staticmethod
-    def create_mock_upload_file(
-        filename: str, content: bytes, content_type: str = "application/pdf"
-    ):
-        """Create a mock UploadFile object."""
-        from fastapi import UploadFile
-        from io import BytesIO
-
-        file_obj = BytesIO(content)
-        upload_file = UploadFile(
-            filename=filename, file=file_obj, headers={"content-type": content_type}
-        )
-        return upload_file
-
-    @staticmethod
     def create_mock_file_response(filename: str, file_size: int, content: bytes = None):
         """Create a mock file response."""
         if content is None:
