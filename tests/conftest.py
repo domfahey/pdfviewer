@@ -311,144 +311,59 @@ def test_client_factory():
 
 
 @pytest.fixture(scope="session")
-def pdf_characteristics_factory():
-    """Factory for creating PDF content with specific characteristics."""
-
-    def _create_pdf_with_characteristics(
-        document_type: str = "simple",
-        pages: int = 1,
-        file_size_target_kb: Optional[int] = None,
-        has_text: bool = True,
-        has_images: bool = False,
-        encrypted: bool = False,
-        **kwargs: Any,
-    ) -> bytes:
-        """Create PDF content with specified characteristics."""
-        if document_type in TestConstants.PDF_SAMPLES:
-            config = TestConstants.PDF_SAMPLES[document_type]
-            # Use config defaults, override with parameters
-            pages = kwargs.get("pages", config.get("expected_pages", pages))
-            has_text = kwargs.get("has_text", config.get("has_text", has_text))
-            has_images = kwargs.get("has_images", config.get("has_images", has_images))
-            encrypted = kwargs.get("encrypted", config.get("encrypted", encrypted))
-
-        # Generate PDF content based on document type
-        if document_type == "simple":
-            return b"""%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
-endobj
-xref
-0 4
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-trailer
-<< /Size 4 /Root 1 0 R >>
-startxref
-175
-%%EOF"""
-        elif document_type == "multi_page":
-            # Create multi-page PDF content
-            base_content = b"""%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids ["""
-
-            for i in range(pages):
-                base_content += f" {i + 3} 0 R".encode()
-
-            base_content += f"] /Count {pages} >>\nendobj\n".encode()
-
-            for i in range(pages):
-                page_obj = f"""
-{i + 3} 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
-endobj"""
-                base_content += page_obj.encode()
-
-            base_content += (
-                b"""
-xref
-0 """
-                + str(pages + 3).encode()
-                + b"""
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-trailer
-<< /Size """
-                + str(pages + 3).encode()
-                + b""" /Root 1 0 R >>
-startxref
-175
-%%EOF"""
-            )
-            return base_content
-        else:
-            # Default to simple PDF
-            return b"""%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
-endobj
-xref
-0 4
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-trailer
-<< /Size 4 /Root 1 0 R >>
-startxref
-175
-%%EOF"""
-
-    return _create_pdf_with_characteristics
-
-
-# Legacy compatibility fixtures removed - use pdf_sample_factory directly
-# Example: pdf_sample_factory("epa_sample") instead of epa_sample_pdf_content
-
-
-# PDF factory fixture for dynamic test data creation (enhanced)
-@pytest.fixture(scope="session")
 def pdf_factory():
-    """Factory for creating test PDFs with different characteristics."""
+    """Unified factory for creating test PDFs with comprehensive characteristics.
+    
+    Replaces both pdf_characteristics_factory and the old pdf_factory to eliminate
+    code duplication and provide a single source of truth for PDF test data generation.
+    """
 
     def _create_pdf(
-        content_type: str = "simple",
+        document_type: str = "simple",
+        content_type: Optional[str] = None,  # For backward compatibility
         pages: int = 1,
         encrypted: bool = False,
-        file_size_kb: Optional[int] = None,
+        file_size_target_kb: Optional[int] = None,
+        file_size_kb: Optional[int] = None,  # For backward compatibility
+        has_text: bool = True,
+        has_images: bool = False,
+        **kwargs: Any,
     ) -> bytes:
         """
         Create a test PDF with specified characteristics.
 
         Args:
-            content_type: Type of PDF content ("simple", "complex", "form")
-            pages: Number of pages
+            document_type: Type of PDF document ("simple", "multi_page", "complex", "form")
+            content_type: Alias for document_type (for backward compatibility)
+            pages: Number of pages to generate
             encrypted: Whether PDF should be encrypted
-            file_size_kb: Target file size in KB (approximate)
+            file_size_target_kb: Target file size in KB (approximate)
+            file_size_kb: Alias for file_size_target_kb (backward compatibility)
+            has_text: Whether PDF should contain text content
+            has_images: Whether PDF should contain images
+            **kwargs: Additional parameters for configuration overrides
         """
-        if content_type == "simple":
-            # Return basic PDF content
-            return b"""%PDF-1.4
+        # Handle backward compatibility parameter mapping
+        if content_type:
+            document_type = content_type
+        if file_size_kb:
+            file_size_target_kb = file_size_kb
+            
+        # Apply configuration from TestConstants if available
+        if document_type in TestConstants.PDF_SAMPLES:
+            config = TestConstants.PDF_SAMPLES[document_type]
+            # Use config defaults, allow parameter overrides
+            pages = kwargs.get("pages", config.get("expected_pages", pages))
+            has_text = kwargs.get("has_text", config.get("has_text", has_text))
+            has_images = kwargs.get("has_images", config.get("has_images", has_images))
+            encrypted = kwargs.get("encrypted", config.get("encrypted", encrypted))
+
+        # Unified PDF generation logic
+        def _generate_pdf_content(doc_type: str, page_count: int) -> bytes:
+            """Generate PDF content based on document type and page count."""
+            if doc_type in ("simple", "complex", "form") and page_count == 1:
+                # Single-page PDF
+                return b"""%PDF-1.4
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
@@ -469,51 +384,69 @@ trailer
 startxref
 175
 %%EOF"""
-        elif content_type == "multi_page":
-            # Create multi-page PDF content
-            base_content = b"""%PDF-1.4
+            else:
+                # Multi-page PDF (handles multi_page type and any page_count > 1)
+                base_content = b"""%PDF-1.4
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
 << /Type /Pages /Kids ["""
 
-            for i in range(pages):
-                base_content += f" {i + 3} 0 R".encode()
+                # Add page references
+                for i in range(page_count):
+                    base_content += f" {i + 3} 0 R".encode()
 
-            base_content += f"] /Count {pages} >>\nendobj\n".encode()
+                base_content += f"] /Count {page_count} >>\nendobj\n".encode()
 
-            for i in range(pages):
-                page_obj = f"""
+                # Add page objects
+                for i in range(page_count):
+                    page_obj = f"""
 {i + 3} 0 obj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
 endobj"""
-                base_content += page_obj.encode()
+                    base_content += page_obj.encode()
 
-            base_content += (
-                b"""
+                # Add xref table and trailer
+                base_content += (
+                    b"""
 xref
 0 """
-                + str(pages + 3).encode()
-                + b"""
+                    + str(page_count + 3).encode()
+                    + b"""
 0000000000 65535 f
 0000000009 00000 n
 0000000058 00000 n
 0000000115 00000 n
 trailer
 << /Size """
-                + str(pages + 3).encode()
-                + b""" /Root 1 0 R >>
+                    + str(page_count + 3).encode()
+                    + b""" /Root 1 0 R >>
 startxref
 175
 %%EOF"""
-            )
-            return base_content
+                )
+                return base_content
 
-        # Default to simple for unknown types
-        return _create_pdf("simple", 1, False, None)
+        # Generate the PDF content
+        pdf_content = _generate_pdf_content(document_type, pages)
+        
+        # TODO: Future enhancements could add:
+        # - Encryption support when encrypted=True
+        # - Text content injection when has_text=True
+        # - Image embedding when has_images=True
+        # - File size padding when file_size_target_kb is specified
+        
+        return pdf_content
 
     return _create_pdf
+
+
+# Backward compatibility aliases
+@pytest.fixture(scope="session")
+def pdf_characteristics_factory(pdf_factory):
+    """Backward compatibility alias for pdf_factory."""
+    return pdf_factory
 
 
 # ==================== PERFORMANCE OPTIMIZATION FIXTURES ====================
