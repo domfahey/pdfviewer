@@ -172,14 +172,35 @@ class ParallelTestUtils:
     """Utilities for parallel test execution."""
 
     @staticmethod
-    def is_parallel_execution():
-        """Check if running in parallel mode."""
-        return hasattr(pytest, "current_worker_id")
+    def is_parallel_execution(config=None):
+        """Check if running in parallel mode.
+        
+        Args:
+            config: pytest config object (pytestconfig or request.config)
+            
+        Returns:
+            bool: True if running under pytest-xdist parallel execution
+        """
+        if config is None:
+            # Fallback: try to detect without config by checking environment
+            import os
+            return os.environ.get("PYTEST_XDIST_WORKER") is not None
+        
+        # Check if xdist plugin is active and we have worker input
+        return (
+            config.pluginmanager.hasplugin("xdist") and 
+            hasattr(config, "workerinput")
+        )
 
     @staticmethod
-    def skip_if_parallel(reason="Not compatible with parallel execution"):
-        """Skip test if running in parallel."""
-        if ParallelTestUtils.is_parallel_execution():
+    def skip_if_parallel(reason="Not compatible with parallel execution", config=None):
+        """Skip test if running in parallel.
+        
+        Args:
+            reason: Reason for skipping the test
+            config: pytest config object (optional)
+        """
+        if ParallelTestUtils.is_parallel_execution(config):
             pytest.skip(reason)
 
     @staticmethod
