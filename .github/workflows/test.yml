@@ -152,7 +152,7 @@ jobs:
       uses: codecov/codecov-action@v5
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
       with:
-        file: artifacts/coverage.xml
+        files: artifacts/coverage.xml
         flags: backend
         name: backend-coverage
         fail_ci_if_error: false
