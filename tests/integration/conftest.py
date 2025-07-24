@@ -42,30 +42,32 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sample_pdf_path() -> Path:
     """Get path to sample PDF file."""
     # Use EPA sample as the default test PDF
     return TEST_DATA_DIR / "epa_sample.pdf"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def large_pdf_path() -> Path:
     """Get path to large PDF file for performance testing."""
     return TEST_DATA_DIR / "large_sample.pdf"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def corrupt_pdf_path() -> Path:
     """Get path to corrupt PDF file for error testing."""
     return TEST_DATA_DIR / "corrupt.pdf"
 
 
-@pytest.fixture
-def test_upload_dir(tmp_path) -> Path:
-    """Create a temporary upload directory for tests."""
-    upload_dir = tmp_path / "uploads"
-    upload_dir.mkdir()
+@pytest.fixture(scope="session")
+def test_upload_dir(tmp_path_factory) -> Path:
+    """Create a session-scoped temporary upload directory for tests."""
+    # Create session-scoped temp directory
+    session_tmp = tmp_path_factory.mktemp("uploads")
+    upload_dir = session_tmp / "test_uploads"
+    upload_dir.mkdir(exist_ok=True)
 
     # Set environment variable for upload directory
     original_upload_dir = os.environ.get("UPLOAD_DIR")
@@ -81,6 +83,33 @@ def test_upload_dir(tmp_path) -> Path:
 
 
 @pytest.fixture
+def isolated_upload_dir(test_upload_dir, request) -> Path:
+    """Create test-specific subdirectory for file isolation."""
+    # Create unique subdirectory for this test
+    test_name = request.node.name.replace("[", "_").replace("]", "_")
+    test_dir = test_upload_dir / test_name
+    test_dir.mkdir(exist_ok=True)
+
+    # Temporarily update upload dir for this test
+    os.environ["UPLOAD_DIR"] = str(test_dir)
+
+    yield test_dir
+
+    # Restore session upload dir
+    os.environ["UPLOAD_DIR"] = str(test_upload_dir)
+
+    # Clean up test-specific files
+    import shutil
+
+    if test_dir.exists():
+        try:
+            shutil.rmtree(test_dir)
+        except (OSError, PermissionError):
+            # If cleanup fails, just log and continue
+            print(f"Warning: Could not clean up {test_dir}")
+
+
+@pytest.fixture(scope="session")
 def mock_pdf_response():
     """Mock PDF analysis response."""
     return {
@@ -106,7 +135,7 @@ def mock_pdf_response():
     }
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_error_response():
     """Mock error response."""
     return {

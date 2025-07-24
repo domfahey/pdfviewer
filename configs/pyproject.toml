@@ -30,12 +30,22 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-xdist>=3.3.1",
     "pytest-benchmark>=4.0.0",
+    "pytest-html>=3.1.0",
+    "pytest-json-report>=1.5.0",
+    "pytest-mock>=3.10.0",
+    "pytest-timeout>=2.1.0",
+    "pytest-sugar>=0.9.7",
+    "pytest-clarity>=1.0.1",
+    "pytest-instafail>=0.4.2",
     "httpx>=0.25.0",
     "ruff>=0.1.0",
     "black>=23.9.0",
     "mypy>=1.6.0",
     "factory-boy>=3.3.0",
     "faker>=19.6.0",
+    "rich>=13.7.0",
+    "tabulate>=0.9.0",
+    "jinja2>=3.1.0",
 ]
 
 [build-system]
@@ -151,7 +161,30 @@ addopts = [
     "--cov-report=html:../artifacts/htmlcov",
     "--cov-report=xml:../artifacts/coverage.xml",
     "--cov-fail-under=80",
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+    "--maxfail=10",
+    "--tb=short",
+    "-v",
 ]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "fast: Fast running tests",
+    "async: Async tests",
+    "performance: Performance tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    "ignore::RuntimeWarning:asyncio.*",
+]
+# Performance optimizations
+timeout = 300
+maxfail = 10
+cache_dir = "../.pytest_cache"
 
 [tool.coverage.run]
 source = ["../backend/app"]

@@ -8,12 +8,46 @@ from pathlib import Path
 import pytest
 from fastapi import status
 from httpx import AsyncClient
+from fastapi.testclient import TestClient
+
+from tests.helpers import perform_full_pdf_workflow, assert_valid_uuid
 
 # from PIL import Image  # Optional: for image validation
 
 
 class TestPDFWorkflow:
     """Test complete PDF processing workflows."""
+
+    def test_full_pdf_workflow_with_helpers(
+        self, client: TestClient, sample_pdf_content: bytes
+    ):
+        """Test complete workflow using helper functions: upload → metadata → retrieve → delete."""
+        filename = "workflow_test.pdf"
+
+        # Use helper to perform complete workflow
+        results = perform_full_pdf_workflow(
+            client, filename, sample_pdf_content, cleanup=True
+        )
+
+        # Validate each step succeeded using the helper results
+        assert "upload" in results
+        assert "metadata" in results
+        assert "retrieve" in results
+        assert "delete" in results
+
+        # Verify upload step details
+        upload_data = results["upload"]
+        assert_valid_uuid(upload_data["file_id"])
+        assert upload_data["filename"] == filename
+
+        # Verify metadata consistency between upload and metadata endpoints
+        metadata_data = results["metadata"]
+        assert metadata_data["page_count"] == upload_data["metadata"]["page_count"]
+        assert metadata_data["file_size"] == upload_data["metadata"]["file_size"]
+
+        # Verify retrieve step
+        assert results["retrieve"]["status"] == "success"
+        assert results["retrieve"]["content_length"] > 0
 
     @pytest.mark.asyncio
     async def test_full_pdf_processing_workflow(

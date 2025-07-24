@@ -2,61 +2,57 @@ import io
 
 from fastapi.testclient import TestClient
 
+from tests.helpers import (
+    upload_pdf_file,
+    assert_upload_success_response,
+    assert_valid_pdf_content,
+    assert_file_size_fields,
+    assert_error_response,
+)
+
 
 def test_upload_valid_pdf(client: TestClient, sample_pdf_content: bytes):
     """Test uploading a valid PDF file."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
+    # Validate PDF content first using helper
+    assert_valid_pdf_content(sample_pdf_content)
 
-    response = client.post("/api/upload", files=files)
+    # Use helper to upload PDF file
+    response = upload_pdf_file(client, "test.pdf", sample_pdf_content)
 
-    assert response.status_code == 200
-    data = response.json()
+    # Use helper to validate response structure
+    data = assert_upload_success_response(response, expected_filename="test.pdf")
 
-    assert "file_id" in data
-    assert "filename" in data
-    assert "file_size" in data
-    assert "mime_type" in data
-    assert "upload_time" in data
-    assert "metadata" in data
+    # Validate file size fields using helper
+    assert_file_size_fields(data, expected_bytes=len(sample_pdf_content))
 
-    assert data["filename"] == "test.pdf"
+    # Check specific Pydantic v2 enhanced fields
     assert data["mime_type"] == "application/pdf"
-    assert data["file_size"] > 0
 
-    # Check Pydantic v2 enhanced response fields
-    assert "file_size_mb" in data
-    assert "upload_time" in data
-    assert "upload_age_hours" in data
-    assert "upload_status" in data
-    assert "processing_priority" in data
-    assert "_poc_info" in data
-
-    # Validate POC info
+    # Validate POC info structure
     poc_info = data["_poc_info"]
     assert poc_info["model_version"] == "2.0"
     assert poc_info["enhanced_validation"] is True
 
-    # Check enhanced metadata with computed fields
+    # Check enhanced metadata fields are present (validation handled by assert_upload_success_response)
     metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-    assert "file_size_mb" in metadata
-    assert "document_complexity_score" in metadata
-    assert "document_category" in metadata
-    assert "is_large_document" in metadata
-    assert metadata["page_count"] > 0
+    enhanced_fields = [
+        "file_size_mb",
+        "document_complexity_score",
+        "document_category",
+        "is_large_document",
+    ]
+    for field in enhanced_fields:
+        assert field in metadata, f"Missing enhanced metadata field: {field}"
 
 
 def test_upload_invalid_file_type(client: TestClient):
-    """Test uploading a non-PDF file."""
+    """Test uploading a non-PDF file using workflow helper."""
+    # Use helper to perform upload workflow expecting failure
     files = {"file": ("test.txt", io.BytesIO(b"Not a PDF"), "text/plain")}
-
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 400
-    data = response.json()
-    assert "detail" in data
+    # Use helper to validate error response
+    assert_error_response(response, 400, "Only PDF files are allowed")
 
 
 def test_upload_no_file(client: TestClient):

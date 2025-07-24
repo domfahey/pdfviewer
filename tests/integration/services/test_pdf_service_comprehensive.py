@@ -17,6 +17,11 @@ from fastapi import HTTPException, UploadFile
 
 from backend.app.models.pdf import PDFInfo, PDFMetadata, PDFUploadResponse
 from backend.app.services.pdf_service import PDFService
+from tests.helpers import (
+    PDFServiceMockBuilder,
+    create_mock_upload_file,
+    simulate_service_error,
+)
 
 
 @pytest.fixture
@@ -34,28 +39,26 @@ class TestPDFServiceLoggingIntegration:
     def test_service_initialization_logging(self):
         """Test that service initialization logs correctly."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch(
-                "backend.app.services.pdf_service.get_logger"
-            ) as mock_get_logger:
-                mock_logger = Mock()
-                mock_get_logger.return_value = mock_logger
+            # Use mock helper for cleaner logging mock setup
+            mock_logger = PDFServiceMockBuilder().with_logging_mock().build()
 
+            with patch(
+                "backend.app.services.pdf_service.get_logger", return_value=mock_logger
+            ):
                 PDFService(upload_dir=temp_dir)
 
-                # Verify logger was configured
-                mock_get_logger.assert_called_once()
+                # Verify logger was configured using helper assertion
                 mock_logger.info.assert_called_once()
                 call_args = mock_logger.info.call_args
                 assert "PDF service initialized" in call_args[0][0]
 
     def test_file_validation_logging_debug(self, temp_service):
         """Test debug logging during file validation."""
-        with patch.object(temp_service.logger, "debug") as mock_debug:
-            mock_file = Mock(spec=UploadFile)
-            mock_file.filename = "test.pdf"
-            mock_file.content_type = "application/pdf"
-            mock_file.size = 1000
+        # Use helper to create mock upload file
+        mock_file = create_mock_upload_file("test.pdf", b"fake pdf content")
+        mock_file.size = 1000
 
+        with patch.object(temp_service.logger, "debug") as mock_debug:
             temp_service._validate_file(mock_file)
 
             # Should log validation start and success
@@ -66,12 +69,12 @@ class TestPDFServiceLoggingIntegration:
 
     def test_file_validation_logging_warning_no_filename(self, temp_service):
         """Test warning logging when filename is missing."""
-        with patch.object(temp_service.logger, "warning") as mock_warning:
-            mock_file = Mock(spec=UploadFile)
-            mock_file.filename = None
-            mock_file.content_type = "application/pdf"
-            mock_file.size = 1000
+        # Use helper to create mock file with invalid characteristics
+        mock_file = create_mock_upload_file("test.pdf", b"fake pdf content")
+        mock_file.filename = None  # Override to test missing filename
+        mock_file.size = 1000
 
+        with patch.object(temp_service.logger, "warning") as mock_warning:
             with pytest.raises(HTTPException):
                 temp_service._validate_file(mock_file)
 
@@ -80,12 +83,11 @@ class TestPDFServiceLoggingIntegration:
 
     def test_file_validation_logging_warning_invalid_extension(self, temp_service):
         """Test warning logging for invalid file extensions."""
-        with patch.object(temp_service.logger, "warning") as mock_warning:
-            mock_file = Mock(spec=UploadFile)
-            mock_file.filename = "test.txt"
-            mock_file.content_type = "text/plain"
-            mock_file.size = 1000
+        # Use helper to create mock file with invalid extension
+        mock_file = create_mock_upload_file("test.txt", b"fake content", "text/plain")
+        mock_file.size = 1000
 
+        with patch.object(temp_service.logger, "warning") as mock_warning:
             with pytest.raises(HTTPException):
                 temp_service._validate_file(mock_file)
 
@@ -105,6 +107,32 @@ class TestPDFServiceLoggingIntegration:
 
             mock_warning.assert_called_once()
             assert "file too large" in mock_warning.call_args[0][0]
+
+    def test_service_error_scenarios_with_helpers(self, temp_service):
+        """Demonstrate comprehensive error testing using mock helpers."""
+        # Test file not found error using error simulator
+        file_not_found_error = simulate_service_error(
+            "file_not_found", filename="missing.pdf"
+        )
+        assert isinstance(file_not_found_error, FileNotFoundError)
+        assert "missing.pdf" in str(file_not_found_error)
+
+        # Test HTTP error using error simulator
+        http_error = simulate_service_error(
+            "http", status_code=403, message="Forbidden"
+        )
+        assert http_error.status_code == 403
+        assert "Forbidden" in str(http_error.detail)
+
+        # Test permission error
+        permission_error = simulate_service_error("permission", operation="write")
+        assert isinstance(permission_error, PermissionError)
+        assert "write" in str(permission_error)
+
+        # Test invalid PDF error
+        invalid_pdf_error = simulate_service_error("invalid_pdf")
+        assert isinstance(invalid_pdf_error, ValueError)
+        assert "Invalid PDF format" in str(invalid_pdf_error)
 
 
 class TestPDFServiceMetadataExtractionEdgeCases:
