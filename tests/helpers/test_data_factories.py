@@ -397,10 +397,10 @@ class APITestScenarioFactory:
 def get_standard_pdf_variations() -> List[Dict[str, Any]]:
     """Get standard PDF variations for parameterized tests."""
     return [
-        PDFDataFactory.create_upload_scenario("integration", "small"),
-        PDFDataFactory.create_upload_scenario("epa", "medium"),
-        PDFDataFactory.create_upload_scenario("anyline", "large"),
-        PDFDataFactory.create_upload_scenario("image_based", "medium"),
+        PDFDataFactory.create_upload_scenario("standard", "small"),
+        PDFDataFactory.create_upload_scenario("government", "medium"),
+        PDFDataFactory.create_upload_scenario("image_rich", "large"),
+        PDFDataFactory.create_upload_scenario("scanned", "medium"),
     ]
 
 
