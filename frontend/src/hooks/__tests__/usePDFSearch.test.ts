@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePDFSearch } from '../usePDFSearch';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
