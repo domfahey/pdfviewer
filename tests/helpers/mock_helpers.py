@@ -6,7 +6,8 @@ test consistency and reduce mock-related code duplication.
 """
 
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from unittest.mock import Mock, patch
 
@@ -372,29 +373,25 @@ def mock_file_operations(file_operations: Dict[str, Any]):
         if not delete_config.get("allow", True):
             raise PermissionError(f"Delete not allowed: {path_str}")
 
-    # Apply patches
-    patches = [
-        patch(
-            "pathlib.Path.exists",
-            side_effect=lambda self: mock_exists_side_effect(str(self)),
-        ),
-        patch(
-            "pathlib.Path.read_bytes",
-            side_effect=lambda self: mock_read_bytes_side_effect(str(self)),
-        ),
-        patch(
-            "pathlib.Path.write_bytes",
-            side_effect=lambda self, content: mock_write_bytes_side_effect(
-                str(self), content
-            ),
-        ),
-        patch(
-            "pathlib.Path.unlink",
-            side_effect=lambda self: mock_unlink_side_effect(str(self)),
-        ),
-    ]
-
-    with contextmanager(lambda: [p.__enter__() for p in patches])():
+    # Apply patches using ExitStack for better context management
+    with ExitStack() as stack:
+        # Create wrapper functions that properly handle the 'self' parameter
+        def exists_wrapper(self):
+            return mock_exists_side_effect(str(self))
+        
+        def read_bytes_wrapper(self):
+            return mock_read_bytes_side_effect(str(self))
+        
+        def write_bytes_wrapper(self, content):
+            return mock_write_bytes_side_effect(str(self), content)
+        
+        def unlink_wrapper(self):
+            return mock_unlink_side_effect(str(self))
+        
+        stack.enter_context(patch.object(Path, "exists", exists_wrapper))
+        stack.enter_context(patch.object(Path, "read_bytes", read_bytes_wrapper))
+        stack.enter_context(patch.object(Path, "write_bytes", write_bytes_wrapper))
+        stack.enter_context(patch.object(Path, "unlink", unlink_wrapper))
         yield
 
 
