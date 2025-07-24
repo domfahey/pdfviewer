@@ -30,13 +30,13 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-xdist>=3.3.1",
     "pytest-benchmark>=4.0.0",
-    "pytest-html>=3.1.0",
+    "pytest-html>=4.1.1",
     "pytest-json-report>=1.5.0",
-    "pytest-mock>=3.10.0",
-    "pytest-timeout>=2.1.0",
-    "pytest-sugar>=0.9.7",
+    "pytest-mock>=3.14.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-sugar>=1.0.0",
     "pytest-clarity>=1.0.1",
-    "pytest-instafail>=0.4.2",
+    "pytest-instafail>=0.5.0",
     "httpx>=0.25.0",
     "ruff>=0.1.0",
     "black>=23.9.0",
@@ -181,10 +181,7 @@ filterwarnings = [
     "ignore::pytest.PytestUnraisableExceptionWarning",
     "ignore::RuntimeWarning:asyncio.*",
 ]
-# Performance optimizations
-timeout = 300
-maxfail = 10
-cache_dir = "../.pytest_cache"
+# Performance optimizations are handled in ini_options above
 
 [tool.coverage.run]
 source = ["../backend/app"]
