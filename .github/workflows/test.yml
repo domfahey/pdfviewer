@@ -33,9 +33,9 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.8.2"
     
     - name: Cache UV dependencies
       uses: actions/cache@v4
@@ -93,10 +93,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
     
     - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      shell: bash
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.8.2"
     
     - name: Cache UV dependencies
       uses: actions/cache@v4
@@ -258,9 +257,9 @@ jobs:
         cache-dependency-path: frontend/package-lock.json
     
     - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.8.2"
     
     - name: Install backend dependencies
       run: |
@@ -320,9 +319,9 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.8.2"
     
     - name: Install dependencies
       run: |
@@ -356,9 +355,9 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "0.8.2"
     
     - name: Install dependencies
       run: |
