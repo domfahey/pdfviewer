@@ -378,16 +378,16 @@ def mock_file_operations(file_operations: Dict[str, Any]):
         # Create wrapper functions that properly handle the 'self' parameter
         def exists_wrapper(self):
             return mock_exists_side_effect(str(self))
-        
+
         def read_bytes_wrapper(self):
             return mock_read_bytes_side_effect(str(self))
-        
+
         def write_bytes_wrapper(self, content):
             return mock_write_bytes_side_effect(str(self), content)
-        
+
         def unlink_wrapper(self):
             return mock_unlink_side_effect(str(self))
-        
+
         stack.enter_context(patch.object(Path, "exists", exists_wrapper))
         stack.enter_context(patch.object(Path, "read_bytes", read_bytes_wrapper))
         stack.enter_context(patch.object(Path, "write_bytes", write_bytes_wrapper))
@@ -590,9 +590,9 @@ def assert_mock_called_with_correlation_id(mock_obj: Mock, correlation_id: str) 
             found_correlation_id = True
             break
 
-    assert (
-        found_correlation_id
-    ), f"Mock was not called with correlation_id '{correlation_id}'"
+    assert found_correlation_id, (
+        f"Mock was not called with correlation_id '{correlation_id}'"
+    )
 
 
 def assert_mock_called_with_file_context(
@@ -621,9 +621,9 @@ def assert_mock_called_with_file_context(
 
             # Check file size if provided
             if file_size is not None and "file_size" in kwargs:
-                assert (
-                    kwargs["file_size"] == file_size
-                ), f"Expected file_size {file_size}, got {kwargs['file_size']}"
+                assert kwargs["file_size"] == file_size, (
+                    f"Expected file_size {file_size}, got {kwargs['file_size']}"
+                )
             break
 
     assert found_file_context, f"Mock was not called with filename '{filename}'"
