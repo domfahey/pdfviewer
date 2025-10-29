@@ -449,79 +449,67 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
         Callable: Decorated function with file operation logging.
 
     """
+    import asyncio
+    import functools
 
     def decorator(func):
-        import asyncio
-        import functools
+        def log_operation(logger_instance, start_time):
+            """Helper to log operation start."""
+            logger_instance.info(f"Starting {operation}")
+            return start_time
+
+        def log_success(logger_instance, start_time):
+            """Helper to log successful operation."""
+            duration = time.perf_counter() - start_time
+            logger_instance.info(
+                f"Completed {operation}",
+                duration_ms=round(duration * 1000, 2),
+                success=True,
+            )
+
+        def log_failure(logger_instance, start_time, error):
+            """Helper to log failed operation."""
+            duration = time.perf_counter() - start_time
+            logger_instance.error(
+                f"Failed {operation}",
+                duration_ms=round(duration * 1000, 2),
+                error=str(error),
+                error_type=type(error).__name__,
+                success=False,
+            )
 
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             operation_logger = log_with_correlation(
-                logger,
-                operation=operation,
-                filename=filename,
-                file_id=file_id,
+                logger, operation=operation, filename=filename, file_id=file_id
             )
-
             start_time = time.perf_counter()
-            operation_logger.info(f"Starting {operation}")
+            log_operation(operation_logger, start_time)
 
             try:
                 result = await func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
+                log_success(operation_logger, start_time)
                 return result
             except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
+                log_failure(operation_logger, start_time, operation_error)
                 raise
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             operation_logger = log_with_correlation(
-                logger,
-                operation=operation,
-                filename=filename,
-                file_id=file_id,
+                logger, operation=operation, filename=filename, file_id=file_id
             )
-
             start_time = time.perf_counter()
-            operation_logger.info(f"Starting {operation}")
+            log_operation(operation_logger, start_time)
 
             try:
                 result = func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
+                log_success(operation_logger, start_time)
                 return result
             except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
+                log_failure(operation_logger, start_time, operation_error)
                 raise
 
-        # Return appropriate wrapper based on function type
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        else:
-            return sync_wrapper
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
     return decorator
