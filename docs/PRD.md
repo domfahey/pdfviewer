@@ -1,6 +1,30 @@
 # Product Requirements Document (PRD)
 ## PDF Viewer Proof of Concept
 
+**Document Version:** 1.3  
+**Last Updated:** 2025-07-20
+
+## Table of Contents
+
+- [1. Executive Summary](#1-executive-summary)
+- [2. Product Vision](#2-product-vision)
+- [3. Target Users](#3-target-users)
+- [4. Core Features](#4-core-features)
+- [5. Technical Requirements](#5-technical-requirements)
+- [6. Technical Specifications](#6-technical-specifications)
+- [7. Performance Requirements](#7-performance-requirements)
+- [8. User Experience Requirements](#8-user-experience-requirements)
+- [9. Security Considerations](#9-security-considerations)
+- [10. Success Metrics](#10-success-metrics)
+- [11. Development Phases](#11-development-phases)
+- [12. Technical Dependencies](#12-technical-dependencies)
+- [13. Risk Assessment](#13-risk-assessment)
+- [14. Future Considerations](#14-future-considerations)
+- [15. Acceptance Criteria](#15-acceptance-criteria)
+- [16. PDF.js Specific Implementation Guidelines](#16-pdfjs-specific-implementation-guidelines)
+- [17. Development and Debugging Workflow](#17-development-and-debugging-workflow)
+- [18. Annotation Implementation Guidelines](#18-annotation-implementation-guidelines)
+
 ### 1. Executive Summary
 
 **Project Name:** Modern PDF Viewer POC  

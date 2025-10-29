@@ -2,6 +2,14 @@
 
 This document tracks potential improvements and refactoring opportunities for the PDF Viewer POC.
 
+## Table of Contents
+
+- [Future Improvements](#future-improvements)
+  - [1. Replace libmagic Dependency](#1-replace-libmagic-dependency)
+  - [2. Docker Configuration](#2-docker-configuration)
+  - [3. CI/CD Pipeline](#3-cicd-pipeline)
+- [Completed Improvements](#completed-improvements)
+
 ## Future Improvements
 
 ### 1. Replace libmagic Dependency
