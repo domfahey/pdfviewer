@@ -65,7 +65,7 @@ async def load_pdf_from_url(
         ) as client:
             # Add retry logic for transient failures
             max_retries = 3
-            last_error = None
+            response = None
 
             for attempt in range(max_retries):
                 try:
@@ -73,7 +73,6 @@ async def load_pdf_from_url(
                     response.raise_for_status()
                     break
                 except (httpx.TimeoutException, httpx.NetworkError) as e:
-                    last_error = e
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)
@@ -82,14 +81,12 @@ async def load_pdf_from_url(
                         status_code=504,
                         detail=f"Timeout downloading PDF after {max_retries} attempts: {str(e)}",
                     )
-            else:
-                if last_error:
-                    raise last_error
-                else:
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Failed to download PDF after all retries",
-                    )
+
+            if response is None:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Failed to download PDF after all retries",
+                )
 
             # Check content type
             content_type = response.headers.get("content-type", "")
