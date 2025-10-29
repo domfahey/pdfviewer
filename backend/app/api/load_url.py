@@ -1,6 +1,7 @@
 """API endpoint for loading PDFs from URLs."""
 
 import asyncio
+import re
 from typing import Annotated
 
 import httpx
@@ -12,6 +13,9 @@ from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
 
 router = APIRouter()
+
+# Compile regex pattern once for performance
+FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
 
 # Global service instance variable
 _pdf_service = None
@@ -102,10 +106,8 @@ async def load_pdf_from_url(
             # Get filename from URL or content-disposition
             filename = "downloaded.pdf"
             if "content-disposition" in response.headers:
-                import re
-
-                matches = re.findall(
-                    r'filename="?([^"]+)"?', response.headers["content-disposition"]
+                matches = FILENAME_PATTERN.findall(
+                    response.headers["content-disposition"]
                 )
                 if matches:
                     filename = matches[0]
