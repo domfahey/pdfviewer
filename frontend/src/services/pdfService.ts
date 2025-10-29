@@ -12,6 +12,20 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
+// Development logging helper - disabled in production
+const DEV_LOGGING = import.meta.env.DEV;
+
+const devLog = (...args: unknown[]) => {
+  if (DEV_LOGGING) {
+    console.log(...args);
+  }
+};
+
+const devError = (...args: unknown[]) => {
+  // Always log errors, even in production
+  console.error(...args);
+};
+
 // Extended canvas interface for PDF rendering state
 interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {
   _isRendering?: boolean;
@@ -35,7 +49,7 @@ export class PDFService {
    */
   static async loadDocument(url: string): Promise<PDFDocumentProxy> {
     try {
-      console.log('🔗 [PDFService] Loading document from URL:', {
+      devLog('🔗 [PDFService] Loading document from URL:', {
         url,
         workerSrc: pdfjsLib.GlobalWorkerOptions.workerSrc,
         version: pdfjsLib.version,
@@ -43,11 +57,11 @@ export class PDFService {
 
       // Check if document is already loaded
       if (this.loadedDocuments.has(url)) {
-        console.log('💾 [PDFService] Document found in cache');
+        devLog('💾 [PDFService] Document found in cache');
         return this.loadedDocuments.get(url)!;
       }
 
-      console.log('⚙️ [PDFService] Creating PDF.js loading task...');
+      devLog('⚙️ [PDFService] Creating PDF.js loading task...');
       const loadingTask = pdfjsLib.getDocument({
         url,
         cMapUrl: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
@@ -55,10 +69,10 @@ export class PDFService {
         enableXfa: true, // Enable XFA form support
       });
 
-      console.log('⏳ [PDFService] Waiting for document to load...');
+      devLog('⏳ [PDFService] Waiting for document to load...');
       const document = await loadingTask.promise;
 
-      console.log('✅ [PDFService] Document loaded successfully:', {
+      devLog('✅ [PDFService] Document loaded successfully:', {
         numPages: document.numPages,
         fingerprint: document.fingerprints?.[0] || 'unknown',
       });
@@ -67,7 +81,7 @@ export class PDFService {
 
       return document;
     } catch (error) {
-      console.error('❌ [PDFService] Error loading PDF document:', {
+      devError('❌ [PDFService] Error loading PDF document:', {
         url,
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -87,7 +101,7 @@ export class PDFService {
    */
   static async getPage(document: PDFDocumentProxy, pageNumber: number): Promise<PDFPageProxy> {
     try {
-      console.log('📄 [PDFService] Getting page from document:', {
+      devLog('📄 [PDFService] Getting page from document:', {
         pageNumber,
         totalPages: document.numPages,
         documentFingerprint: document.fingerprints?.[0] || 'unknown',
@@ -95,14 +109,14 @@ export class PDFService {
 
       const page = await document.getPage(pageNumber);
 
-      console.log('✅ [PDFService] Page retrieved successfully:', {
+      devLog('✅ [PDFService] Page retrieved successfully:', {
         pageNumber: page.pageNumber,
         hasViewport: typeof page.getViewport === 'function',
       });
 
       return page;
     } catch (error) {
-      console.error(`❌ [PDFService] Error loading page ${pageNumber}:`, {
+      devError(`❌ [PDFService] Error loading page ${pageNumber}:`, {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         pageNumber,
@@ -131,7 +145,7 @@ export class PDFService {
       // Check if canvas is already being rendered
       const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
       if (extendedCanvas._isRendering) {
-        console.log('⏭️ [PDFService] Canvas already rendering, skipping duplicate request');
+        devLog('⏭️ [PDFService] Canvas already rendering, skipping duplicate request');
         return;
       }
 
@@ -148,7 +162,7 @@ export class PDFService {
       // Cancel any ongoing render operations on this canvas
       const existingTask = extendedCanvas._pdfRenderTask;
       if (existingTask) {
-        console.log('🔄 [PDFService] Cancelling existing render task');
+        devLog('🔄 [PDFService] Cancelling existing render task');
         await existingTask.cancel();
       }
 
@@ -184,14 +198,14 @@ export class PDFService {
         error.name === 'RenderingCancelledException'
       ) {
         const errorObj = error as { message?: string };
-        console.log('ℹ️ [PDFService] Render cancelled (expected in development):', {
+        devLog('ℹ️ [PDFService] Render cancelled (expected in development):', {
           message: errorObj.message,
           pageNumber: errorObj.message?.match(/page (\d+)/)?.[1] || 'unknown',
         });
         return; // Don't throw error for cancellations
       }
 
-      console.error('❌ [PDFService] Error rendering page to canvas:', error);
+      devError('❌ [PDFService] Error rendering page to canvas:', error);
       throw new Error('Failed to render page');
     }
   }
@@ -212,7 +226,7 @@ export class PDFService {
   ): Promise<void> {
     try {
       if (!textLayerDiv) {
-        console.warn('⚠️ [PDFService] Text layer div is null, skipping text layer rendering');
+        devLog('⚠️ [PDFService] Text layer div is null, skipping text layer rendering');
         return;
       }
 
@@ -239,7 +253,7 @@ export class PDFService {
 
       await textLayer.render();
     } catch (error) {
-      console.error('❌ [PDFService] Error rendering text layer:', error);
+      devError('❌ [PDFService] Error rendering text layer:', error);
       // Don't throw error for text layer - it's not critical
     }
   }
@@ -261,7 +275,7 @@ export class PDFService {
   ): Promise<void> {
     try {
       if (!annotationLayerDiv) {
-        console.warn(
+        devLog(
           '⚠️ [PDFService] Annotation layer div is null, skipping annotation layer rendering'
         );
         return;
@@ -280,12 +294,12 @@ export class PDFService {
 
       // For now, just render basic annotation info
       if (annotations.length > 0) {
-        console.log(`Found ${annotations.length} annotations on page`, annotations);
+        devLog(`Found ${annotations.length} annotations on page`, annotations);
         // TODO: Implement full annotation layer rendering
         // This is a simplified version for the POC
       }
     } catch (error) {
-      console.error('❌ [PDFService] Error rendering annotation layer:', error);
+      devError('❌ [PDFService] Error rendering annotation layer:', error);
       // Don't throw error for annotation layer - it's not critical
     }
   }
