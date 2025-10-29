@@ -1,6 +1,24 @@
 # PDF Viewer Frontend
 
+[![React](https://img.shields.io/badge/React-19.1-blue.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF.svg)](https://vitejs.dev/)
+[![Material-UI](https://img.shields.io/badge/Material--UI-7-blue.svg)](https://mui.com/)
+
 React 19 + TypeScript + Vite frontend for the PDF Viewer POC.
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [Key Technologies](#key-technologies)
+- [Testing](#testing)
+- [Environment Variables](#environment-variables)
+- [Browser Support](#browser-support)
+- [Known Issues](#known-issues)
+- [Development Tips](#development-tips)
 
 ## Features
 

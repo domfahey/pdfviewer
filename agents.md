@@ -1,6 +1,12 @@
-# agents.md
+# AI Agent Guidelines
 
 This file provides guidance for AI agents working with this PDF viewer proof of concept project.
+
+## Table of Contents
+
+- [Project Context](#project-context)
+- [Key Technical Requirements](#key-technical-requirements)
+- [Additional Resources](#additional-resources)
 
 ## Project Context
 
@@ -30,4 +36,6 @@ Modern PDF viewer POC with React 19.1 frontend and FastAPI backend, emphasizing 
 - PDF file validation and sanitization
 - CSP headers implementation
 
-Refer to PRD.md for complete specifications and CLAUDE.md for development commands.
+## Additional Resources
+
+Refer to [PRD.md](docs/PRD.md) for complete specifications and [CLAUDE.md](CLAUDE.md) for development commands.

@@ -1,6 +1,28 @@
 # PDF Viewer POC
 
+[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![React Version](https://img.shields.io/badge/react-19.1-blue.svg)](https://react.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Code Style](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+[![TypeScript](https://img.shields.io/badge/typescript-5.6-blue.svg)](https://www.typescriptlang.org/)
+
 Modern PDF viewer with React 19.1 frontend and FastAPI backend, featuring comprehensive testing infrastructure, ground truth comparison UI, and developer tooling.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Development Commands](#development-commands)
+- [Features](#features)
+- [API Endpoints](#api-endpoints)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Security](#security)
+- [Contributing](#contributing)
+- [Documentation](#documentation)
+- [Limitations](#limitations)
+- [Author](#author)
+- [License](#license)
 
 ## Prerequisites
 
@@ -29,24 +51,42 @@ sudo dnf install file-devel
 
 ## Quick Start
 
-```bash
-# Optional: Install uv for faster Python dependency management
-make setup-uv
+**Three ways to get started:**
 
+### 1. Using Make (Recommended)
+```bash
 # Install dependencies (automatically uses uv if available, falls back to pip)
 make install
 
-# Run development servers
+# Run development servers (in separate terminals)
 make dev-backend   # Backend on http://localhost:8000
 make dev-frontend  # Frontend on http://localhost:5173
+```
 
-# Or use Docker
+### 2. Using Docker
+```bash
 docker-compose up -d
 ```
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+### 3. Manual Setup
+```bash
+# Backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+uvicorn app.main:app --reload
+
+# Frontend (in new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+**Access the application:**
+- 🌐 Frontend: http://localhost:5173
+- 🔧 Backend: http://localhost:8000
+- 📚 API Docs: http://localhost:8000/docs
 
 ## Development Commands
 
@@ -62,19 +102,23 @@ See all commands: `make help`
 
 ## Features
 
-- PDF rendering with virtual scrolling
-- Full-text search with highlighting
-- Load PDFs from URLs or local files
-- Test PDF loader for quick demos
-- Form field extraction with ground truth comparison UI
+### Core Functionality
+- ✅ **PDF Rendering** with virtual scrolling for optimal performance
+- 🔍 **Full-text Search** with highlighting and navigation
+- 📥 **Flexible Loading** from URLs or local file uploads
+- 🧪 **Test PDF Loader** for quick demos and development
+
+### Advanced Features
+- 📋 **Form Field Extraction** with ground truth comparison UI
   - Toggle between extraction-only and comparison views
   - Accuracy metrics (exact, similar, different matches)
   - Visual indicators for match quality
-- Enhanced metadata and validation
-- Material Design UI (MUI v7)
-- Comprehensive test coverage
-- Modern Python 3.11+ type annotations
-- React 19.1 with TypeScript
+- 📊 **Enhanced Metadata** and validation
+- 🎨 **Material Design UI** (MUI v7)
+- ✨ **Modern Stack**
+  - Python 3.11+ with latest type annotations
+  - React 19.1 with TypeScript
+  - Comprehensive test coverage
 
 ## API Endpoints
 
@@ -131,6 +175,7 @@ pdfviewer/
 
 ## Security
 
+**Security Tools:**
 ```bash
 # Install pre-commit hooks
 pre-commit install
@@ -142,31 +187,63 @@ detect-secrets scan
 gitleaks detect
 ```
 
-This project implements:
-- Pre-commit hooks for secret detection
-- Environment variables for all configuration
-- Automatic log sanitization for sensitive data
-- No hardcoded credentials or API keys
-- Git history cleaned of uploaded files
-- Comprehensive `.gitignore` patterns
+**Security Features:**
+- 🔒 Pre-commit hooks for secret detection
+- 🔐 Environment variables for all configuration
+- 🧹 Automatic log sanitization for sensitive data
+- 🚫 No hardcoded credentials or API keys
+- 📜 Git history cleaned of uploaded files
+- 🛡️ Comprehensive `.gitignore` patterns
 
-⚠️ **Note**: Git history was rewritten on 2025-01-21 to remove sensitive files. 
-Collaborators should re-clone the repository.
+> ⚠️ **Important**: Git history was rewritten on 2025-01-21 to remove sensitive files. 
+> Collaborators should re-clone the repository.
+
+See [Security Policy](docs/SECURITY.md) for detailed guidelines.
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch from `main`
+3. **Make** your changes following our coding standards
+4. **Run** quality checks: `make qa`
+5. **Submit** a pull request
+
+**Before contributing:**
+- Review [Contributing Guidelines](docs/CONTRIBUTING.md)
+- Read our [Code of Conduct](CODE_OF_CONDUCT.md)
+- Run `make qa` to ensure code quality
+- Add tests for new features
+- Update documentation as needed
+
+**Need help?** See [SUPPORT.md](SUPPORT.md) for assistance.
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ## Documentation
 
-- [API Reference](docs/API.md)
-- [Technical Guide](docs/TECHNICAL.md)
-- [Performance Optimization](docs/PERFORMANCE.md)
-- [Test Guide](tests/README.md)
-- [Technical Debt](docs/TECHNICAL_DEBT.md)
+📖 **Available Documentation:**
+- [API Reference](docs/API.md) - Complete API endpoint documentation
+- [Technical Guide](docs/TECHNICAL.md) - Setup and development guide
+- [Contributing](docs/CONTRIBUTING.md) - Contribution guidelines
+- [Security Policy](docs/SECURITY.md) - Security practices and reporting
+- [Support](SUPPORT.md) - Getting help and FAQ
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
+- [Test Guide](tests/README.md) - Testing documentation
+- [Technical Debt](docs/TECHNICAL_DEBT.md) - Known issues and improvements
+- [Product Requirements](docs/PRD.md) - Detailed product specifications
+- [Changelog](CHANGELOG.md) - Version history and changes
 
 ## Limitations
 
-- No authentication
-- Single user
-- Ephemeral storage
-- No PDF editing
+**Current Scope (POC):**
+- ❌ No authentication/authorization
+- 👤 Single user only
+- 💾 Ephemeral storage (files cleared on restart)
+- 📝 No PDF editing capabilities
+
+See [Technical Debt](docs/TECHNICAL_DEBT.md) for planned improvements.
 
 ## Author
 

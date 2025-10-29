@@ -61,9 +61,13 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
       try {
         for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
+
+        const normalizedQuery = query.toLowerCase();
+
+
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNum);
+          const page = await document.getPage(pageNumber);
           const textContent = await page.getTextContent();
 
           // Pre-allocate array for better performance
@@ -86,9 +90,9 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             matches.push({
               pageIndex: pageNum - 1,
               matchIndex: matches.length,
-              text: pageText.substring(searchIndex, searchIndex + query.length),
+              text: pageText.substring(currentSearchPosition, currentSearchPosition + query.length),
             });
-            searchIndex += normalizedQuery.length;
+            currentSearchPosition += normalizedQuery.length;
           }
         }
 

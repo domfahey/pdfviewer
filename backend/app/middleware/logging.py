@@ -250,8 +250,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             except UnicodeDecodeError:
                 return f"[BINARY CONTENT: {len(body)} bytes]"
 
-        except Exception as e:
-            return f"[ERROR READING BODY: {str(e)}]"
+        except Exception as read_error:
+            return f"[ERROR READING BODY: {str(read_error)}]"
 
     async def _safe_read_response_body(self, response: Response) -> str | None:
         """Safely read response body with size limits."""
@@ -271,8 +271,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     except UnicodeDecodeError:
                         return f"[BINARY CONTENT: {len(body)} bytes]"
 
-        except Exception as e:
-            return f"[ERROR READING RESPONSE: {str(e)}]"
+        except Exception as response_error:
+            return f"[ERROR READING RESPONSE: {str(response_error)}]"
 
         return None
 
@@ -435,13 +435,13 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as operation_error:
                 duration = time.perf_counter() - start_time
                 operation_logger.error(
                     f"Failed {operation}",
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    error=str(operation_error),
+                    error_type=type(operation_error).__name__,
                     success=False,
                 )
                 raise
@@ -467,13 +467,13 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as operation_error:
                 duration = time.perf_counter() - start_time
                 operation_logger.error(
                     f"Failed {operation}",
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    error=str(operation_error),
+                    error_type=type(operation_error).__name__,
                     success=False,
                 )
                 raise

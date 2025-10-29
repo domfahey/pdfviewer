@@ -2,6 +2,17 @@
 
 Guidance for Claude Code when working with this PDF Viewer POC.
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Key Requirements](#key-requirements)
+- [Quick Reference](#quick-reference)
+- [API Decorators](#api-decorators)
+- [Development Notes](#development-notes)
+- [Git Workflow](#git-workflow)
+- [Important Files](#important-files)
+
 ## Project Overview
 
 PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison UI.
