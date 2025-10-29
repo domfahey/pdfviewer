@@ -96,7 +96,7 @@ class PDFService:
 
         self.logger.debug("File validation passed", **validation_context)
 
-    def _get_pdf_attr(self, pdf_info, attr: str):
+    def _safely_get_metadata_attribute(self, pdf_info, attr: str):
         """Helper to safely get PDF info attributes."""
         return getattr(pdf_info, attr, None) if pdf_info else None
 
@@ -110,8 +110,8 @@ class PDFService:
             file_size_bytes=file_path.stat().st_size,
         ):
             try:
-                with open(file_path, "rb") as pdf_file_handle:
-                    reader = PdfReader(pdf_file_handle)
+                with open(file_path, "rb") as pdf_file_reader:
+                    reader = PdfReader(pdf_file_reader)
 
                     # Get basic info
                     page_count = len(reader.pages)
@@ -119,7 +119,7 @@ class PDFService:
                     encrypted = reader.is_encrypted
 
                     # Get document info
-                    pdf_document_metadata = reader.metadata
+                    document_info = reader.metadata
 
                     # Log metadata extraction details
                     self.logger.debug(
@@ -127,25 +127,25 @@ class PDFService:
                         page_count=page_count,
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
-                        has_metadata=pdf_document_metadata is not None,
-                        title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
-                        author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
+                        has_metadata=document_info is not None,
+                        title=getattr(document_info, "title", None) if document_info else None,
+                        author=getattr(document_info, "author", None) if document_info else None,
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
-                            author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
-                            subject=getattr(pdf_document_metadata, "subject", None) if pdf_document_metadata else None,
-                            creator=getattr(pdf_document_metadata, "creator", None) if pdf_document_metadata else None,
-                            producer=getattr(pdf_document_metadata, "producer", None) if pdf_document_metadata else None,
+                            title=getattr(document_info, "title", None) if document_info else None,
+                            author=getattr(document_info, "author", None) if document_info else None,
+                            subject=getattr(document_info, "subject", None) if document_info else None,
+                            creator=getattr(document_info, "creator", None) if document_info else None,
+                            producer=getattr(document_info, "producer", None) if document_info else None,
                             creation_date=(
-                                getattr(pdf_document_metadata, "creation_date", None) if pdf_document_metadata else None
+                                getattr(document_info, "creation_date", None) if document_info else None
                             ),
                             modification_date=(
-                                getattr(pdf_document_metadata, "modification_date", None)
-                                if pdf_document_metadata
+                                getattr(document_info, "modification_date", None)
+                                if document_info
                                 else None
                             ),
                             page_count=page_count,
@@ -232,12 +232,12 @@ class PDFService:
                     file_id=file_id,
                     file_size=file.size,
                 ) as write_tracker:
-                    async with aiofiles.open(file_path, "wb") as pdf_file:
+                    async with aiofiles.open(file_path, "wb") as pdf_output_file:
                         while True:
                             chunk = await file.read(self.CHUNK_SIZE)
                             if not chunk:
                                 break
-                            await pdf_file.write(chunk)
+                            await pdf_output_file.write(chunk)
 
                 # Cache file.stat() result to avoid multiple filesystem calls
                 file_stat = file_path.stat()
