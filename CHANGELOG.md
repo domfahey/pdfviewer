@@ -5,6 +5,16 @@ All notable changes to the PDF Viewer POC will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Guiding Principles
+
+- Changelogs are for humans, not machines.
+- There should be an entry for every single version.
+- The same types of changes should be grouped.
+- Versions and sections should be linkable.
+- The latest version comes first.
+- The release date of each version is displayed.
+- Mention whether you follow Semantic Versioning.
+
 ## [Unreleased]
 
 ### Added
@@ -44,13 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated to require Python 3.11+ minimum version
   - Added type annotations to critical functions
   - Configured mypy with appropriate overrides
-- **Security enhancements**:
-  - Pre-commit hooks for secret detection (detect-secrets, gitleaks)
-  - Comprehensive `.gitignore` with security patterns
-  - `.env.example` template for safe configuration
-  - CONTRIBUTING.md with security checklist
-  - Removed all uploaded PDFs from git history
-  - Cleaned Python cache files from repository
 - **Test PDF fixtures** and sample files
 - Extended CORS support to ports 5173-5176
 - Search match counter showing "X of Y" results
@@ -83,8 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced logging with request/response tracking
 - Upgraded from React 18 to React 19.1
 - Updated performance test thresholds for real-world PDFs (60s for image-heavy, 30s for standard)
-- **BREAKING**: Rewritten git history to remove sensitive files (collaborators must re-clone)
 - Added automatic `python-magic-bin` installation for Windows compatibility
+- **BREAKING CHANGE**: Rewritten git history to remove sensitive files (collaborators must re-clone)
+
+### Deprecated
+
+### Removed
 
 ### Fixed
 - React double-rendering issues in Strict Mode
@@ -99,6 +106,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PDF rendering cleanup on component unmount
 - Browser compatibility issues
 - Restored PDFExtractedFields panel that was accidentally removed
+
+### Security
+- Pre-commit hooks for secret detection (detect-secrets, gitleaks)
+- Comprehensive `.gitignore` with security patterns
+- `.env.example` template for safe configuration
+- CONTRIBUTING.md with security checklist
+- Removed all uploaded PDFs from git history
+- Cleaned Python cache files from repository
+- Path traversal protection in filename validation
 
 ## [0.1.0] - 2025-07-20
 
@@ -115,8 +131,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker deployment configuration
 - Comprehensive test suite with real PDF samples
 - API documentation with OpenAPI/Swagger
-
-### Features
 - PDF upload with validation (50MB limit)
 - Page navigation and zoom controls (25%-500%)
 - Thumbnail sidebar navigation
@@ -125,10 +139,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keyboard shortcuts support
 - Error boundaries and graceful error handling
 
-### Known Limitations (POC)
-- No authentication/authorization
-- Single-user file storage
-- No persistent storage (uploads cleared on restart)
-- Limited to PDF files only
-- No annotation editing capabilities
-- Search functionality not yet implemented
+[Unreleased]: https://github.com/domfahey/pdfviewer/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/domfahey/pdfviewer/releases/tag/v0.1.0
