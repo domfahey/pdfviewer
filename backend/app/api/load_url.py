@@ -8,6 +8,9 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
+# Regular expression pattern to extract filename from Content-Disposition header
+FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
+
 from ..dependencies import get_pdf_service, init_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
@@ -60,9 +63,6 @@ async def load_pdf_from_url(
                     break
 
                 except (httpx.TimeoutException, httpx.NetworkError) as network_error:
-                    last_error = network_error
-
- main
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)
@@ -112,9 +112,9 @@ async def load_pdf_from_url(
             )
 
             # Use the existing PDF service to process the file
-            result = await pdf_service.upload_pdf(file)
+            upload_response = await pdf_service.upload_pdf(file)
 
-            return result
+            return upload_response
 
     except httpx.HTTPStatusError as http_status_error:
         raise HTTPException(

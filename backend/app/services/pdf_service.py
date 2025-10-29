@@ -100,8 +100,8 @@ class PDFService:
             file_size_bytes=file_path.stat().st_size,
         ) as tracker:
             try:
-                with open(file_path, "rb") as pdf_file:
-                    reader = PdfReader(pdf_file)
+                with open(file_path, "rb") as pdf_file_handle:
+                    reader = PdfReader(pdf_file_handle)
 
                     # Get basic info
                     page_count = len(reader.pages)
@@ -109,7 +109,7 @@ class PDFService:
                     encrypted = reader.is_encrypted
 
                     # Get document info
-                    pdf_info = reader.metadata
+                    pdf_document_metadata = reader.metadata
 
                     # Log metadata extraction details
                     self.logger.debug(
@@ -117,25 +117,25 @@ class PDFService:
                         page_count=page_count,
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
-                        has_metadata=pdf_info is not None,
-                        title=getattr(pdf_info, "title", None) if pdf_info else None,
-                        author=getattr(pdf_info, "author", None) if pdf_info else None,
+                        has_metadata=pdf_document_metadata is not None,
+                        title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                        author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=getattr(pdf_info, "title", None) if pdf_info else None,
-                            author=getattr(pdf_info, "author", None) if pdf_info else None,
-                            subject=getattr(pdf_info, "subject", None) if pdf_info else None,
-                            creator=getattr(pdf_info, "creator", None) if pdf_info else None,
-                            producer=getattr(pdf_info, "producer", None) if pdf_info else None,
+                            title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                            author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
+                            subject=getattr(pdf_document_metadata, "subject", None) if pdf_document_metadata else None,
+                            creator=getattr(pdf_document_metadata, "creator", None) if pdf_document_metadata else None,
+                            producer=getattr(pdf_document_metadata, "producer", None) if pdf_document_metadata else None,
                             creation_date=(
-                                getattr(pdf_info, "creation_date", None) if pdf_info else None
+                                getattr(pdf_document_metadata, "creation_date", None) if pdf_document_metadata else None
                             ),
                             modification_date=(
-                                getattr(pdf_info, "modification_date", None)
-                                if pdf_info
+                                getattr(pdf_document_metadata, "modification_date", None)
+                                if pdf_document_metadata
                                 else None
                             ),
                             page_count=page_count,
@@ -239,9 +239,9 @@ class PDFService:
                     file_id=file_id,
                     file_size=file.size,
                 ) as write_tracker:
-                    async with aiofiles.open(file_path, "wb") as pdf_file:
+                    async with aiofiles.open(file_path, "wb") as output_file_handle:
                         content = await file.read()
-                        await pdf_file.write(content)
+                        await output_file_handle.write(content)
 
                 actual_file_size = file_path.stat().st_size
                 self.logger.debug(
