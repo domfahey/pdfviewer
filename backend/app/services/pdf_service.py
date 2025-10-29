@@ -1,3 +1,9 @@
+"""PDF processing service for file operations and metadata extraction.
+
+This module provides comprehensive PDF handling including upload,
+validation, metadata extraction, and file management.
+"""
+
 import os
 import uuid
 from datetime import UTC, datetime
@@ -18,9 +24,15 @@ from ..utils.logger import (
 
 
 class PDFService:
-    """Service for handling PDF operations with comprehensive logging"""
+    """Service for handling PDF operations with comprehensive logging."""
 
     def __init__(self, upload_dir: str = "uploads"):
+        """Initialize the PDF service.
+
+        Args:
+            upload_dir: Directory path for storing uploaded PDF files. Defaults to "uploads".
+
+        """
         self.upload_dir = Path(upload_dir)
         self.upload_dir.mkdir(exist_ok=True)
         self.max_file_size = 50 * 1024 * 1024  # 50MB
@@ -41,7 +53,7 @@ class PDFService:
         )
 
     def _validate_file(self, file: UploadFile) -> None:
-        """Validate uploaded file with detailed logging"""
+        """Validate uploaded file with detailed logging."""
         validation_context = {
             "filename": file.filename,
             "content_type": file.content_type,
@@ -80,16 +92,16 @@ class PDFService:
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
-        """Extract metadata from PDF file with comprehensive logging"""
+        """Extract metadata from PDF file with comprehensive logging."""
         with PerformanceTracker(
             "PDF metadata extraction",
             self.logger,
             file_path=str(file_path),
             file_size_bytes=file_path.stat().st_size,
-        ) as _:
+        ) as tracker:
             try:
-                with open(file_path, "rb") as f:
-                    reader = PdfReader(f)
+                with open(file_path, "rb") as pdf_file:
+                    reader = PdfReader(pdf_file)
 
                     # Get basic info
                     page_count = len(reader.pages)
@@ -97,7 +109,7 @@ class PDFService:
                     encrypted = reader.is_encrypted
 
                     # Get document info
-                    info = reader.metadata
+                    pdf_info = reader.metadata
 
                     # Log metadata extraction details
                     self.logger.debug(
@@ -105,25 +117,25 @@ class PDFService:
                         page_count=page_count,
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
-                        has_metadata=info is not None,
-                        title=getattr(info, "title", None) if info else None,
-                        author=getattr(info, "author", None) if info else None,
+                        has_metadata=pdf_info is not None,
+                        title=getattr(pdf_info, "title", None) if pdf_info else None,
+                        author=getattr(pdf_info, "author", None) if pdf_info else None,
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=getattr(info, "title", None) if info else None,
-                            author=getattr(info, "author", None) if info else None,
-                            subject=getattr(info, "subject", None) if info else None,
-                            creator=getattr(info, "creator", None) if info else None,
-                            producer=getattr(info, "producer", None) if info else None,
+                            title=getattr(pdf_info, "title", None) if pdf_info else None,
+                            author=getattr(pdf_info, "author", None) if pdf_info else None,
+                            subject=getattr(pdf_info, "subject", None) if pdf_info else None,
+                            creator=getattr(pdf_info, "creator", None) if pdf_info else None,
+                            producer=getattr(pdf_info, "producer", None) if pdf_info else None,
                             creation_date=(
-                                getattr(info, "creation_date", None) if info else None
+                                getattr(pdf_info, "creation_date", None) if pdf_info else None
                             ),
                             modification_date=(
-                                getattr(info, "modification_date", None)
-                                if info
+                                getattr(pdf_info, "modification_date", None)
+                                if pdf_info
                                 else None
                             ),
                             page_count=page_count,
@@ -147,12 +159,12 @@ class PDFService:
 
                     return metadata
 
-            except Exception as e:
+            except Exception as extraction_error:
                 # Log the specific error but continue with fallback
                 log_exception_context(
                     self.logger,
                     "PDF metadata extraction",
-                    e,
+                    extraction_error,
                     file_path=str(file_path),
                     fallback_used=True,
                 )
@@ -186,7 +198,7 @@ class PDFService:
                 return fallback_metadata
 
     async def upload_pdf(self, file: UploadFile) -> PDFUploadResponse:
-        """Upload and process PDF file with comprehensive logging"""
+        """Upload and process PDF file with comprehensive logging."""
         # Start timing the entire upload operation
         with PerformanceTracker(
             "PDF file upload",
@@ -226,10 +238,10 @@ class PDFService:
                     self.logger,
                     file_id=file_id,
                     file_size=file.size,
-                ) as _:
-                    async with aiofiles.open(file_path, "wb") as f:
+                ) as write_tracker:
+                    async with aiofiles.open(file_path, "wb") as pdf_file:
                         content = await file.read()
-                        await f.write(content)
+                        await pdf_file.write(content)
 
                 actual_file_size = file_path.stat().st_size
                 self.logger.debug(
@@ -245,7 +257,7 @@ class PDFService:
                     "MIME type verification",
                     self.logger,
                     file_id=file_id,
-                ) as _:
+                ) as mime_tracker:
                     mime_type = magic.from_file(str(file_path), mime=True)
 
                 if mime_type not in self.allowed_mime_types:
@@ -315,12 +327,12 @@ class PDFService:
             except HTTPException:
                 # Re-raise HTTP exceptions (these are expected errors)
                 raise
-            except Exception as e:
+            except Exception as upload_error:
                 # Log unexpected errors
                 log_exception_context(
                     self.logger,
                     "PDF file upload",
-                    e,
+                    upload_error,
                     file_id=file_id,
                     filename=file.filename,
                     file_path=str(file_path),
@@ -328,10 +340,10 @@ class PDFService:
 
                 self.file_logger.upload_failed(
                     file.filename or "unknown",
-                    str(e),
+                    str(upload_error),
                     upload_tracker.duration_ms or 0,
                     file_id=file_id,
-                    error_type=type(e).__name__,
+                    error_type=type(upload_error).__name__,
                 )
 
                 # Clean up file if something went wrong
@@ -349,11 +361,11 @@ class PDFService:
                         )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to process file: {str(e)}"
+                    status_code=500, detail=f"Failed to process file: {str(upload_error)}"
                 )
 
     def get_pdf_path(self, file_id: str) -> Path:
-        """Get file path for PDF with logging"""
+        """Get file path for PDF with logging."""
         self.logger.debug("Getting PDF path", file_id=file_id)
 
         if file_id not in self._file_metadata:
@@ -375,7 +387,7 @@ class PDFService:
         return file_path
 
     def get_pdf_metadata(self, file_id: str) -> PDFMetadata:
-        """Get PDF metadata with logging"""
+        """Get PDF metadata with logging."""
         self.logger.debug("Getting PDF metadata", file_id=file_id)
 
         if file_id not in self._file_metadata:
@@ -393,7 +405,7 @@ class PDFService:
         return metadata
 
     def delete_pdf(self, file_id: str) -> bool:
-        """Delete PDF file with comprehensive logging"""
+        """Delete PDF file with comprehensive logging."""
         with PerformanceTracker(
             "PDF file deletion",
             self.logger,
@@ -443,12 +455,12 @@ class PDFService:
                 self.logger.info("PDF file deleted successfully", file_id=file_id)
                 return True
 
-            except Exception as e:
+            except Exception as deletion_error:
                 # Log deletion failure
                 log_exception_context(
                     self.logger,
                     "PDF file deletion",
-                    e,
+                    deletion_error,
                     file_id=file_id,
                     file_path=str(file_path),
                 )
@@ -456,17 +468,17 @@ class PDFService:
                 self.file_logger.deletion_logged(
                     file_id,
                     success=False,
-                    error=str(e),
-                    error_type=type(e).__name__,
+                    error=str(deletion_error),
+                    error_type=type(deletion_error).__name__,
                     duration_ms=delete_tracker.duration_ms,
                 )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to delete file: {str(e)}"
+                    status_code=500, detail=f"Failed to delete file: {str(deletion_error)}"
                 )
 
     def list_files(self) -> dict[str, PDFInfo]:
-        """List all uploaded files with logging"""
+        """List all uploaded files with logging."""
         file_count = len(self._file_metadata)
         total_size = sum(info.file_size for info in self._file_metadata.values())
 
@@ -486,7 +498,7 @@ class PDFService:
         return self._file_metadata.copy()
 
     def get_service_stats(self) -> dict[str, int | float | str]:
-        """Get service statistics for monitoring and debugging"""
+        """Get service statistics for monitoring and debugging."""
         files = list(self._file_metadata.values())
         total_size = sum(f.file_size for f in files)
         page_counts = [f.metadata.page_count if f.metadata else 0 for f in files]

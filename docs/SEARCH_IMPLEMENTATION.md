@@ -1,5 +1,14 @@
 # PDF Search Implementation
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Components](#key-components)
+- [Features](#features)
+- [Usage](#usage)
+- [Technical Details](#technical-details)
+- [Future Enhancements](#future-enhancements)
+
 ## Overview
 Implemented full-text search functionality for the PDF viewer using PDF.js text extraction capabilities.
 

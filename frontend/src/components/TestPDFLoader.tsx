@@ -100,9 +100,9 @@ export const TestPDFLoader: React.FC<TestPDFLoaderProps> = ({ onLoadSuccess }) =
       }
 
       setSuccess(`Successfully loaded: ${testPDF.name}`);
-    } catch (err) {
-      console.error('Error loading test PDF:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load PDF');
+    } catch (error) {
+      console.error('Error loading test PDF:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load PDF');
     } finally {
       setLoading(false);
     }

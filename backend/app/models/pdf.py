@@ -1,4 +1,11 @@
+"""Pydantic models for PDF file handling and metadata.
+
+This module defines data models for PDF upload responses, metadata,
+and file information using Pydantic v2.
+"""
+
 from datetime import UTC, datetime
+import re
 from typing import Annotated, Any
 
 from pydantic import (
@@ -10,6 +17,12 @@ from pydantic import (
     field_validator,
     model_serializer,
     model_validator,
+)
+
+# Compile regex patterns once for performance
+UUID_V4_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    re.IGNORECASE
 )
 
 
@@ -365,12 +378,7 @@ class PDFUploadResponse(BaseModel):
         v = v.strip()
 
         # UUID v4 format validation
-        import re
-
-        uuid_pattern = (
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-        )
-        if not re.match(uuid_pattern, v, re.IGNORECASE):
+        if not UUID_V4_PATTERN.match(v):
             raise ValueError("File ID must be a valid UUID v4 format")
 
         # Return lowercase for consistency
@@ -449,7 +457,12 @@ class PDFUploadResponse(BaseModel):
 
     @model_serializer
     def serialize_model(self) -> dict[str, Any]:
-        """Custom model serializer for POC API responses."""
+        """Serialize model for POC API responses with all fields.
+
+        Returns:
+            dict: Serialized model data including computed fields.
+
+        """
         # Get the default serialized data
         data = {
             "file_id": self.file_id,
@@ -532,7 +545,12 @@ class PDFInfo(BaseModel):
 
     @model_serializer
     def serialize_for_internal_use(self) -> dict[str, Any]:
-        """Custom serializer optimized for internal API responses."""
+        """Serialize model optimized for internal API responses.
+
+        Returns:
+            dict: Lightweight serialized data for internal use.
+
+        """
         return {
             "file_id": self.file_id,
             "filename": self.filename,
@@ -660,7 +678,12 @@ class ErrorResponse(BaseModel):
 
     @model_serializer
     def serialize_error_response(self) -> dict[str, Any]:
-        """Custom serializer for error responses with POC debugging info."""
+        """Serialize error responses with POC debugging information.
+
+        Returns:
+            dict: Error response data with debugging context.
+
+        """
         data: dict[str, Any] = {
             "error": self.serialize_error_fields(self.error),
             "detail": self.serialize_error_fields(self.detail),

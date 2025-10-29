@@ -1,5 +1,18 @@
 # Security Policy
 
+[![Security](https://img.shields.io/badge/security-best%20practices-brightgreen.svg)](docs/SECURITY.md)
+
+## Table of Contents
+
+- [Reporting Security Vulnerabilities](#reporting-security-vulnerabilities)
+- [Security Measures](#security-measures)
+  - [Code Security](#code-security)
+  - [Repository Security](#repository-security)
+  - [Infrastructure Security](#infrastructure-security)
+- [Security Checklist for Contributors](#security-checklist-for-contributors)
+- [Tools](#tools)
+- [Incident Response](#incident-response)
+
 ## Reporting Security Vulnerabilities
 
 If you discover a security vulnerability, please email the author at domfahey@gmail.com with:

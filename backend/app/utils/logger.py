@@ -1,5 +1,4 @@
-"""
-Logging utilities and helper functions for the PDF Viewer API.
+"""Logging utilities and helper functions for the PDF Viewer API.
 
 This module provides convenient functions and classes for common
 logging patterns used throughout the application.
@@ -15,8 +14,7 @@ from ..core.logging import get_logger
 
 
 class PerformanceTracker:
-    """
-    Context manager and utility class for tracking operation performance.
+    """Context manager and utility class for tracking operation performance.
 
     Can be used as a context manager or decorator to automatically
     log performance metrics for operations.
@@ -30,8 +28,7 @@ class PerformanceTracker:
         min_duration_ms: float = 0.0,
         **context: Any,
     ):
-        """
-        Initialize performance tracker.
+        """Initialize performance tracker.
 
         Args:
             operation_name: Name of the operation being tracked
@@ -39,6 +36,7 @@ class PerformanceTracker:
             log_start: Whether to log when operation starts
             min_duration_ms: Only log if duration exceeds this threshold
             **context: Additional context to include in logs
+
         """
         self.operation_name = operation_name
         self.logger = logger_instance or get_logger(__name__)
@@ -49,10 +47,24 @@ class PerformanceTracker:
         self.end_time: float | None = None
 
     def __enter__(self) -> "PerformanceTracker":
+        """Enter context manager and start timing.
+
+        Returns:
+            PerformanceTracker: Self for use in with statements.
+
+        """
         self.start()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager and stop timing.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception value if an exception occurred, None otherwise.
+            exc_tb: Exception traceback if an exception occurred, None otherwise.
+
+        """
         self.stop(
             exception=exc_type is not None, error=str(exc_val) if exc_val else None
         )
@@ -68,8 +80,7 @@ class PerformanceTracker:
             )
 
     def stop(self, exception: bool = False, error: str | None = None) -> float:
-        """
-        Stop timing and log the results.
+        """Stop timing and log the results.
 
         Args:
             exception: Whether the operation ended with an exception
@@ -77,6 +88,7 @@ class PerformanceTracker:
 
         Returns:
             Duration in milliseconds
+
         """
         if self.start_time is None:
             raise RuntimeError(
@@ -118,14 +130,17 @@ def log_function_call(
     log_result: bool = False,
     min_duration_ms: float = 0.0,
 ):
-    """
-    Decorator to automatically log function calls with performance tracking.
+    """Automatically log function calls with performance tracking.
 
     Args:
-        operation_name: Custom operation name (defaults to function name)
-        log_args: Whether to log function arguments
-        log_result: Whether to log function result
-        min_duration_ms: Only log if duration exceeds threshold
+        operation_name: Custom operation name (defaults to function name).
+        log_args: Whether to log function arguments.
+        log_result: Whether to log function result.
+        min_duration_ms: Only log if duration exceeds threshold.
+
+    Returns:
+        Callable: Decorated function with call logging and performance tracking.
+
     """
 
     def decorator(func):
@@ -147,8 +162,8 @@ def log_function_call(
                     if log_result:
                         func_logger.debug(f"{op_name} result", result=str(result))
                     return result
-                except Exception as e:
-                    tracker.context["error_type"] = type(e).__name__
+                except Exception as function_error:
+                    tracker.context["error_type"] = type(function_error).__name__
                     raise
 
         @functools.wraps(func)
@@ -166,8 +181,8 @@ def log_function_call(
                     if log_result:
                         func_logger.debug(f"{op_name} result", result=str(result))
                     return result
-                except Exception as e:
-                    tracker.context["error_type"] = type(e).__name__
+                except Exception as function_error:
+                    tracker.context["error_type"] = type(function_error).__name__
                     raise
 
         # Return appropriate wrapper
@@ -182,8 +197,7 @@ def log_function_call(
 
 
 def log_dict_safely(data: dict[str, Any], max_length: int = 1000) -> dict[str, Any]:
-    """
-    Safely convert a dictionary for logging by truncating long values.
+    """Safely convert a dictionary for logging by truncating long values.
 
     Args:
         data: Dictionary to process
@@ -191,6 +205,7 @@ def log_dict_safely(data: dict[str, Any], max_length: int = 1000) -> dict[str, A
 
     Returns:
         Dictionary safe for logging
+
     """
     safe_dict = {}
     for key, value in data.items():
@@ -211,14 +226,14 @@ def log_exception_context(
     exception: Exception,
     **context: Any,
 ) -> None:
-    """
-    Log an exception with rich context information.
+    """Log an exception with rich context information.
 
     Args:
         logger_instance: Logger to use
         operation: Description of what was happening when exception occurred
         exception: The exception that was raised
         **context: Additional context to include
+
     """
     logger_instance.error(
         f"Exception during {operation}",
@@ -230,14 +245,19 @@ def log_exception_context(
 
 
 class FileOperationLogger:
-    """
-    Specialized logger for file operations with consistent context.
+    """Specialized logger for file operations with consistent context.
 
     Provides methods for logging common file operations like upload,
     download, processing, and deletion with standard context fields.
     """
 
     def __init__(self, base_logger: structlog.stdlib.BoundLogger | None = None):
+        """Initialize the file operation logger.
+
+        Args:
+            base_logger: Optional base logger instance. If not provided, creates a new logger.
+
+        """
         self.logger = base_logger or get_logger(__name__)
 
     def upload_started(self, filename: str, file_size: int, **context: Any) -> None:

@@ -10,7 +10,7 @@ import tempfile
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import HTTPException, UploadFile
@@ -258,7 +258,7 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("aiofiles.open", side_effect=IOError("Disk full")):
+        with patch("aiofiles.open", side_effect=OSError("Disk full")):
             with pytest.raises(HTTPException) as exc_info:
                 await temp_service.upload_pdf(mock_file)
 

@@ -22,6 +22,14 @@ interface FileUploadProps {
   className?: string;
 }
 
+/**
+ * File upload component with drag-and-drop support.
+ * Displays upload progress and handles errors gracefully.
+ *
+ * @param props - Component properties
+ * @param props.onUploadSuccess - Callback function called when upload succeeds
+ * @param props.className - Optional CSS class name for styling
+ */
 export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
   const { uploading, uploadProgress, error, uploadFile, clearError } = useFileUpload();
   const [isDragOver, setIsDragOver] = useState(false);

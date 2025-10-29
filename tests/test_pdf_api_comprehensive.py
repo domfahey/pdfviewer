@@ -6,8 +6,9 @@ that aren't covered by the basic workflow tests.
 """
 
 import io
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 

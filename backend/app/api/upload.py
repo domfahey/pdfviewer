@@ -1,3 +1,8 @@
+"""PDF upload API endpoints.
+
+This module handles PDF file uploads with validation and processing.
+"""
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from ..dependencies import get_pdf_service, init_pdf_service
@@ -18,8 +23,7 @@ async def upload_pdf(
     file: UploadFile = File(..., description="PDF file to upload"),
     pdf_service: PDFService = Depends(get_pdf_service),
 ) -> PDFUploadResponse:
-    """
-    Upload a PDF file for viewing.
+    """Upload a PDF file for viewing.
 
     - **file**: PDF file to upload (max 50MB)
 
@@ -67,6 +71,6 @@ async def upload_pdf(
 
         return result
 
-    except Exception as e:
-        api_logger.log_processing_error(e, filename=file.filename)
+    except Exception as upload_error:
+        api_logger.log_processing_error(upload_error, filename=file.filename)
         raise

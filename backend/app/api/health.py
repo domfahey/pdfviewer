@@ -1,4 +1,7 @@
+"""Health check API endpoints for service monitoring."""
+
 import os
+import re
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -8,6 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 from ..utils.api_logging import APILogger, log_api_call
 
 router = APIRouter()
+
+# Compile regex pattern once for performance
+SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$")
 
 
 class HealthResponse(BaseModel):
@@ -94,10 +100,7 @@ class HealthResponse(BaseModel):
         v = v.strip()
 
         # Semantic versioning pattern validation
-        import re
-
-        semver_pattern = r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$"
-        if not re.match(semver_pattern, v):
+        if not SEMVER_PATTERN.match(v):
             raise ValueError(
                 "Version must follow semantic versioning (e.g., '1.0.0' or '1.0.0-beta')"
             )
@@ -131,7 +134,7 @@ class HealthResponse(BaseModel):
 @router.get("/health", response_model=HealthResponse)
 @log_api_call("health_check", log_params=False, log_response=True, log_timing=True)
 async def health_check() -> HealthResponse:
-    """Health check endpoint"""
+    """Health check endpoint."""
     api_logger = APILogger("health_check")
 
     api_logger.log_request_received()
@@ -146,20 +149,20 @@ async def health_check() -> HealthResponse:
         os.makedirs(upload_dir, exist_ok=True)
         # Try to write a test file
         test_file = os.path.join(upload_dir, ".health_check")
-        with open(test_file, "w") as f:
-            f.write("ok")
+        with open(test_file, "w") as test_file_handle:
+            test_file_handle.write("ok")
         os.remove(test_file)
 
         api_logger.log_processing_success(
             upload_dir=upload_dir, storage_check="passed", storage_available=True
         )
 
-    except Exception as e:
+    except Exception as storage_error_exception:
         storage_available = False
-        storage_error = str(e)
+        storage_error = str(storage_error_exception)
 
         api_logger.log_processing_error(
-            e, upload_dir=upload_dir, storage_check="failed", storage_available=False
+            storage_error_exception, upload_dir=upload_dir, storage_check="failed", storage_available=False
         )
 
     # Enhanced health status determination for POC
@@ -175,10 +178,10 @@ async def health_check() -> HealthResponse:
             timestamp=datetime.now(UTC),
             storage_available=storage_available,
         )
-    except Exception as e:
+    except Exception as response_error:
         # If response creation fails, log and return minimal response
         api_logger.log_processing_error(
-            e, health_status=health_status, response_creation="failed"
+            response_error, health_status=health_status, response_creation="failed"
         )
         # Fallback response
         response = HealthResponse(

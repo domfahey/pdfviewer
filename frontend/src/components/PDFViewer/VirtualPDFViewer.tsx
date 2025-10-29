@@ -22,6 +22,7 @@ interface PageRenderData {
 const VIEWPORT_OVERSCAN = 2; // Number of pages to render outside viewport
 const DEFAULT_PAGE_HEIGHT = 800;
 const DEFAULT_PAGE_WIDTH = 600;
+const MEMORY_CLEANUP_DELAY = 2000; // Reduced from 5000ms to 2000ms
 
 export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
   pdfDocument,
@@ -240,6 +241,19 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
     return pageData.reduce((total, page) => total + page.height + 20, 0);
   }, [pageData]);
 
+  // Memoize page positions to avoid recalculation in render
+  const pagePositions = useMemo(() => {
+    const positions: number[] = [];
+    let currentY = 20; // Initial top padding
+    
+    for (let i = 0; i < pageData.length; i++) {
+      positions.push(currentY);
+      currentY += pageData[i].height + 20;
+    }
+    
+    return positions;
+  }, [pageData]);
+
   // Memory cleanup for non-visible pages
   useEffect(() => {
     const cleanup = () => {
@@ -259,8 +273,8 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
       );
     };
 
-    // Cleanup non-visible pages after a delay
-    const timeoutId = setTimeout(cleanup, 5000);
+    // Cleanup non-visible pages after a delay (reduced from 5s to 2s)
+    const timeoutId = setTimeout(cleanup, MEMORY_CLEANUP_DELAY);
     return () => clearTimeout(timeoutId);
   }, [visiblePages]);
 
@@ -287,10 +301,8 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
         }}
       >
         {pageData.map((page, index) => {
-          let yPosition = 20; // Initial top padding
-          for (let i = 0; i < index; i++) {
-            yPosition += pageData[i].height + 20;
-          }
+          // Use memoized positions instead of recalculating
+          const yPosition = pagePositions[index] || 20;
 
           return (
             <div
