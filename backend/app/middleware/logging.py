@@ -207,11 +207,18 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 filtered[key] = value
         return filtered
 
-    def _should_log_body(self, request: Request) -> bool:
-        """Determine if request body should be logged."""
-        content_type = request.headers.get("content-type", "")
-        content_length = request.headers.get("content-length")
-
+    def _should_log_body_content(
+        self, content_type: str, content_length: str | None
+    ) -> bool:
+        """Determine if body content should be logged based on type and size.
+        
+        Args:
+            content_type: The content type header value
+            content_length: The content length header value
+            
+        Returns:
+            True if body should be logged, False otherwise
+        """
         # Don't log large files
         if content_length and int(content_length) > self.max_body_size:
             return False
@@ -220,18 +227,19 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         binary_types = ["image/", "video/", "audio/", "application/pdf", "application/octet-stream"]
         return not any(binary_type in content_type.lower() for binary_type in binary_types)
 
+    def _should_log_body(self, request: Request) -> bool:
+        """Determine if request body should be logged."""
+        return self._should_log_body_content(
+            request.headers.get("content-type", ""),
+            request.headers.get("content-length")
+        )
+
     def _should_log_response_body(self, response: Response) -> bool:
         """Determine if response body should be logged."""
-        content_type = response.headers.get("content-type", "")
-        content_length = response.headers.get("content-length")
-
-        # Don't log large responses
-        if content_length and int(content_length) > self.max_body_size:
-            return False
-
-        # Don't log binary content or file downloads
-        binary_types = ["image/", "video/", "audio/", "application/pdf", "application/octet-stream"]
-        return not any(binary_type in content_type.lower() for binary_type in binary_types)
+        return self._should_log_body_content(
+            response.headers.get("content-type", ""),
+            response.headers.get("content-length")
+        )
 
     async def _safe_read_body(self, request: Request) -> str | None:
         """Safely read request body with size limits."""

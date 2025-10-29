@@ -26,6 +26,20 @@ UUID_V4_PATTERN = re.compile(
 )
 
 
+def _validate_non_empty_string(value: str, field_name: str) -> None:
+    """Helper to validate that a string is not empty or whitespace.
+    
+    Args:
+        value: The string value to validate
+        field_name: Name of the field being validated (for error messages)
+        
+    Raises:
+        ValueError: If the string is empty or contains only whitespace
+    """
+    if not value or value.isspace():
+        raise ValueError(f"{field_name} cannot be empty or whitespace")
+
+
 class PDFMetadata(BaseModel):
     """PDF metadata model with enhanced validation for POC development."""
 
@@ -245,8 +259,7 @@ class PDFUploadResponse(BaseModel):
     def validate_filename(cls, v: str) -> str:
         """Enhanced filename validation with security and POC constraints."""
         # Basic requirements
-        if not v or v.isspace():
-            raise ValueError("Filename cannot be empty or whitespace")
+        _validate_non_empty_string(v, "Filename")
 
         if not v.lower().endswith(".pdf"):
             raise ValueError("Filename must have .pdf extension")
@@ -272,8 +285,7 @@ class PDFUploadResponse(BaseModel):
     @classmethod
     def validate_mime_type(cls, v: str) -> str:
         """Enhanced MIME type validation for POC security."""
-        if not v or v.isspace():
-            raise ValueError("MIME type cannot be empty")
+        _validate_non_empty_string(v, "MIME type")
 
         # Normalize the MIME type
         v = v.strip().lower()
@@ -397,8 +409,7 @@ class ErrorResponse(BaseModel):
     @classmethod
     def validate_error_message(cls, v: str) -> str:
         """Enhanced error message validation."""
-        if not v or v.isspace():
-            raise ValueError("Error message cannot be empty")
+        _validate_non_empty_string(v, "Error message")
 
         # Remove extra whitespace but preserve single spaces
         v = " ".join(v.split())
