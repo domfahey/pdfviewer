@@ -42,7 +42,7 @@
 **Analysis**: Similar `catch (error)` blocks with console.error
 
 **Example Pattern**:
-```typescript
+```javascript
 catch (error) {
   console.error('Error context:', error);
   // Handle error specific to component
@@ -81,7 +81,7 @@ catch (error) {
 **Analysis**: Found cleanup patterns in `useEffect` hooks
 
 **Example**:
-```typescript
+```javascript
 useEffect(() => {
   // Setup logic
   return () => {
