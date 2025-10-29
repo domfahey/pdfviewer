@@ -281,11 +281,20 @@ class APILogger:
         
         Args:
             level: Log level ('info' or 'error')
-            action: Action description (e.g., 'received', 'started', 'completed')
+            action: Action description (e.g., 'Request received', 'Validation started')
+                   Should be a complete phrase that reads well with "for {operation}"
             **context: Additional context to bind to the logger
+            
+        Raises:
+            AttributeError: If level is not a valid logger method
         """
+        # Validate level to provide clear error messages
+        valid_levels = ('info', 'error', 'warning', 'debug')
+        if level not in valid_levels:
+            raise ValueError(f"Invalid log level '{level}'. Must be one of {valid_levels}")
+        
         log_method = getattr(self.logger.bind(**context), level)
-        log_method(f"{action.capitalize()} for {self.operation}")
+        log_method(f"{action} for {self.operation}")
 
     def log_request_received(self, **context):
         """Log that a request has been received."""
