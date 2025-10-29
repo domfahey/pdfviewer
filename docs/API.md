@@ -1,6 +1,26 @@
 # API Reference
 
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-2.5+-blue.svg)](https://docs.pydantic.dev/)
+
 Base URL: `http://localhost:8000/api`
+
+## Table of Contents
+
+- [Interactive Documentation](#interactive-documentation)
+- [Endpoints](#endpoints)
+  - [Upload PDF](#upload-pdf)
+  - [Load from URL](#load-from-url)
+  - [Get PDF](#get-pdf)
+  - [Get Metadata](#get-metadata)
+  - [Delete PDF](#delete-pdf)
+  - [Health Check](#health-check)
+- [Response Example](#response-example)
+- [Error Response](#error-response)
+- [Examples](#examples)
+- [Status Codes](#status-codes)
+- [Headers](#headers)
+- [Type Safety](#type-safety)
 
 ## Interactive Documentation
 

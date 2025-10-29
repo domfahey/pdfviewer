@@ -1,5 +1,24 @@
 # Technical Guide
 
+## Table of Contents
+
+- [Setup](#setup)
+  - [Prerequisites](#prerequisites)
+  - [System Dependencies](#system-dependencies)
+  - [Install & Run](#install--run)
+- [Development](#development)
+  - [Quality Assurance](#quality-assurance)
+  - [Testing](#testing)
+  - [Type Safety](#type-safety)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
+- [Logging](#logging)
+- [Docker Commands](#docker-commands)
+- [Key Features](#key-features)
+- [Test Infrastructure](#test-infrastructure)
+- [Security Practices](#security-practices)
+- [Production Notes](#production-notes)
+
 ## Setup
 
 ### Prerequisites

@@ -1,6 +1,27 @@
 # PDF Viewer POC
 
+[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![React Version](https://img.shields.io/badge/react-19.1-blue.svg)](https://react.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Code Style](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+[![TypeScript](https://img.shields.io/badge/typescript-5.6-blue.svg)](https://www.typescriptlang.org/)
+
 Modern PDF viewer with React 19.1 frontend and FastAPI backend, featuring comprehensive testing infrastructure, ground truth comparison UI, and developer tooling.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Development Commands](#development-commands)
+- [Features](#features)
+- [API Endpoints](#api-endpoints)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Security](#security)
+- [Documentation](#documentation)
+- [Limitations](#limitations)
+- [Author](#author)
+- [License](#license)
 
 ## Prerequisites
 
