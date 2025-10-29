@@ -230,11 +230,14 @@ class PDFService:
                 # Extract metadata
                 metadata = self._extract_pdf_metadata(file_path)
 
+                # Get file size once
+                file_size = file_path.stat().st_size
+
                 # Store file info
                 pdf_info = PDFInfo(
                     file_id=file_id,
                     filename=file.filename,
-                    file_size=file_path.stat().st_size,
+                    file_size=file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
@@ -242,7 +245,6 @@ class PDFService:
                 self._file_metadata[file_id] = pdf_info
 
                 # Log successful completion
-                file_size = file_path.stat().st_size
                 self.file_logger.upload_completed(
                     file_id,
                     file.filename,
@@ -255,7 +257,7 @@ class PDFService:
                 response = PDFUploadResponse(
                     file_id=file_id,
                     filename=file.filename,
-                    file_size=file_path.stat().st_size,
+                    file_size=file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
