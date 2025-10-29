@@ -14,6 +14,9 @@ interface SearchState {
   isSearching: boolean;
 }
 
+// Debounce delay for search operations (ms)
+const SEARCH_DEBOUNCE_DELAY = 300;
+
 export const usePDFSearch = (document: PDFDocumentProxy | null) => {
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
@@ -23,8 +26,9 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
   });
 
   const searchAbortController = useRef<AbortController | null>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const searchInDocument = useCallback(
+  const performSearch = useCallback(
     async (query: string) => {
       if (!document || !query.trim()) {
         setSearchState({
@@ -53,33 +57,34 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
       }));
 
       const matches: SearchMatch[] = [];
+      const normalizedQuery = query.toLowerCase();
 
       try {
-        const normalizedQuery = query.toLowerCase();
-
         for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
           if (signal.aborted) break;
 
           const page = await document.getPage(pageNum);
           const textContent = await page.getTextContent();
 
-          // Combine all text items into a single string for searching
-          let pageText = '';
-          const textItems = textContent.items;
-
-          for (const item of textItems) {
+          // Pre-allocate array for better performance
+          const textParts: string[] = new Array(textContent.items.length);
+          
+          for (let i = 0; i < textContent.items.length; i++) {
+            const item = textContent.items[i];
             if ('str' in item) {
-              pageText += item.str + ' ';
+              textParts[i] = item.str;
             }
           }
 
-          // Search for matches in the page text
+          // Join once instead of concatenating in loop
+          const pageText = textParts.join(' ');
           const normalizedPageText = pageText.toLowerCase();
+          
+          // Find all matches in this page
           let searchIndex = 0;
-
           while ((searchIndex = normalizedPageText.indexOf(normalizedQuery, searchIndex)) !== -1) {
             matches.push({
-              pageIndex: pageNum - 1, // Convert to 0-based index
+              pageIndex: pageNum - 1,
               matchIndex: matches.length,
               text: pageText.substring(searchIndex, searchIndex + query.length),
             });
@@ -108,6 +113,21 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     [document]
   );
 
+  const searchInDocument = useCallback(
+    (query: string) => {
+      // Clear existing debounce timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      // Debounce the search to avoid excessive processing
+      debounceTimer.current = setTimeout(() => {
+        performSearch(query);
+      }, SEARCH_DEBOUNCE_DELAY);
+    },
+    [performSearch]
+  );
+
   const nextMatch = useCallback(() => {
     setSearchState(prev => ({
       ...prev,
@@ -129,6 +149,11 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
   }, []);
 
   const clearSearch = useCallback(() => {
+    // Clear debounce timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
     if (searchAbortController.current) {
       searchAbortController.current.abort();
     }
