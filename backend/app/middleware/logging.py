@@ -217,19 +217,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return False
 
         # Don't log binary content
-        if any(
-            binary_type in content_type.lower()
-            for binary_type in [
-                "image/",
-                "video/",
-                "audio/",
-                "application/pdf",
-                "application/octet-stream",
-            ]
-        ):
-            return False
-
-        return True
+        binary_types = ["image/", "video/", "audio/", "application/pdf", "application/octet-stream"]
+        return not any(binary_type in content_type.lower() for binary_type in binary_types)
 
     def _should_log_response_body(self, response: Response) -> bool:
         """Determine if response body should be logged."""
@@ -241,33 +230,14 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return False
 
         # Don't log binary content or file downloads
-        if any(
-            binary_type in content_type.lower()
-            for binary_type in [
-                "image/",
-                "video/",
-                "audio/",
-                "application/pdf",
-                "application/octet-stream",
-            ]
-        ):
-            return False
-
-        return True
+        binary_types = ["image/", "video/", "audio/", "application/pdf", "application/octet-stream"]
+        return not any(binary_type in content_type.lower() for binary_type in binary_types)
 
     async def _safe_read_body(self, request: Request) -> str | None:
         """Safely read request body with size limits."""
         try:
             body = await request.body()
-            if len(body) > self.max_body_size:
-                return f"[BODY TOO LARGE: {len(body)} bytes]"
-
-            # Try to decode as text
-            try:
-                return body.decode("utf-8")
-            except UnicodeDecodeError:
-                return f"[BINARY CONTENT: {len(body)} bytes]"
-
+            return self._decode_body(body)
         except Exception as read_error:
             return f"[ERROR READING BODY: {str(read_error)}]"
 
@@ -278,21 +248,23 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             if hasattr(response, "body_iterator") or hasattr(response, "path"):
                 return "[STREAMING/FILE RESPONSE]"
 
-            if hasattr(response, "body"):
-                body = response.body
-                if isinstance(body, bytes):
-                    if len(body) > self.max_body_size:
-                        return f"[BODY TOO LARGE: {len(body)} bytes]"
-
-                    try:
-                        return body.decode("utf-8")
-                    except UnicodeDecodeError:
-                        return f"[BINARY CONTENT: {len(body)} bytes]"
+            if hasattr(response, "body") and isinstance(response.body, bytes):
+                return self._decode_body(response.body)
 
         except Exception as response_error:
             return f"[ERROR READING RESPONSE: {str(response_error)}]"
 
         return None
+
+    def _decode_body(self, body: bytes) -> str:
+        """Decode body bytes to string."""
+        if len(body) > self.max_body_size:
+            return f"[BODY TOO LARGE: {len(body)} bytes]"
+
+        try:
+            return body.decode("utf-8")
+        except UnicodeDecodeError:
+            return f"[BINARY CONTENT: {len(body)} bytes]"
 
     def _sanitize_body(self, body: str, content_type: str | None) -> str:
         """Sanitize body content for logging."""
@@ -361,11 +333,6 @@ def set_correlation_id(correlation_id: str | None) -> None:
     correlation_id_var.set(correlation_id)
 
 
-def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger instance."""
-    return structlog.get_logger(name)
-
-
 def log_with_correlation(
     logger_instance: structlog.stdlib.BoundLogger, **extra_context
 ):
@@ -382,59 +349,6 @@ def log_with_correlation(
     context = {"correlation_id": get_correlation_id()}
     context.update(extra_context)
     return logger_instance.bind(**context)
-
-
-class RequestContextLogger:
-    """Context manager to automatically add request context to logs.
-
-    Usage:
-        with RequestContextLogger(logger, request) as log:
-            log.info("Processing file upload")
-    """
-
-    def __init__(self, logger_instance: structlog.stdlib.BoundLogger, request: Request):
-        """Initialize the request context logger.
-
-        Args:
-            logger_instance: The base logger instance to bind context to.
-            request: The HTTP request to extract context from.
-
-        """
-        self.logger = logger_instance
-        self.request = request
-        self.context_logger: structlog.stdlib.BoundLogger | None = None
-
-    def __enter__(self) -> structlog.stdlib.BoundLogger:
-        """Enter context and bind request information to logger.
-
-        Returns:
-            structlog.stdlib.BoundLogger: Logger with request context bound.
-
-        """
-        context = {
-            "method": self.request.method,
-            "path": self.request.url.path,
-            "correlation_id": get_correlation_id(),
-            "user_agent": self.request.headers.get("user-agent", "unknown"),
-        }
-        self.context_logger = self.logger.bind(**context)
-        return self.context_logger
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit context and log any exceptions.
-
-        Args:
-            exc_type: Exception type if an exception occurred, None otherwise.
-            exc_val: Exception value if an exception occurred, None otherwise.
-            exc_tb: Exception traceback if an exception occurred, None otherwise.
-
-        """
-        if exc_type is not None and self.context_logger:
-            self.context_logger.error(
-                "Exception in request context",
-                exc_type=exc_type.__name__,
-                exc_value=str(exc_val),
-            )
 
 
 def log_file_operation(operation: str, filename: str, file_id: str | None = None):
@@ -454,6 +368,22 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
         import asyncio
         import functools
 
+        def _log_operation(operation_logger, start_time, success, error=None):
+            """Helper to log operation result."""
+            duration = time.perf_counter() - start_time
+            log_data = {
+                "duration_ms": round(duration * 1000, 2),
+                "success": success,
+            }
+            if error:
+                log_data.update({
+                    "error": str(error),
+                    "error_type": type(error).__name__,
+                })
+                operation_logger.error(f"Failed {operation}", **log_data)
+            else:
+                operation_logger.info(f"Completed {operation}", **log_data)
+
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             operation_logger = log_with_correlation(
@@ -468,22 +398,10 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
 
             try:
                 result = await func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
+                _log_operation(operation_logger, start_time, True)
                 return result
             except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
+                _log_operation(operation_logger, start_time, False, operation_error)
                 raise
 
         @functools.wraps(func)
@@ -500,22 +418,10 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
 
             try:
                 result = func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
+                _log_operation(operation_logger, start_time, True)
                 return result
             except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
+                _log_operation(operation_logger, start_time, False, operation_error)
                 raise
 
         # Return appropriate wrapper based on function type

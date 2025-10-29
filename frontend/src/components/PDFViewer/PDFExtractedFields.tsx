@@ -75,13 +75,6 @@ const MOCK_EXTRACTED_FIELDS = {
       groundTruth: 'j.smith@email.com',
       accuracy: 'different' as const,
     },
-    {
-      label: 'Phone',
-      value: '+1 (555) 123-4567',
-      confidence: 0.88,
-      groundTruth: '5551234567',
-      accuracy: 'similar' as const,
-    },
   ],
   business: [
     {
@@ -97,13 +90,6 @@ const MOCK_EXTRACTED_FIELDS = {
       confidence: 0.85,
       groundTruth: 'Senior Manager',
       accuracy: 'exact' as const,
-    },
-    {
-      label: 'Department',
-      value: 'Operations',
-      confidence: 0.8,
-      // No ground truth for this field
-      accuracy: 'no-truth' as const,
     },
   ],
   dates: [
@@ -121,13 +107,6 @@ const MOCK_EXTRACTED_FIELDS = {
       groundTruth: '2025-01-15',
       accuracy: 'exact' as const,
     },
-    {
-      label: 'Created Date',
-      value: '2024-01-10',
-      confidence: 0.87,
-      groundTruth: '2024-01-12',
-      accuracy: 'different' as const,
-    },
   ],
   financial: [
     {
@@ -143,13 +122,6 @@ const MOCK_EXTRACTED_FIELDS = {
       confidence: 0.91,
       groundTruth: '$1,234.56',
       accuracy: 'exact' as const,
-    },
-    {
-      label: 'Net Amount',
-      value: '$11,111.11',
-      confidence: 0.94,
-      groundTruth: '$11,211.11',
-      accuracy: 'different' as const,
     },
   ],
 };
@@ -234,19 +206,12 @@ export const PDFExtractedFields: React.FC<PDFExtractedFieldsProps> = ({
 
   // Calculate accuracy metrics
   const calculateAccuracyMetrics = () => {
-    const allFields = [
-      ...MOCK_EXTRACTED_FIELDS.personal,
-      ...MOCK_EXTRACTED_FIELDS.business,
-      ...MOCK_EXTRACTED_FIELDS.dates,
-      ...MOCK_EXTRACTED_FIELDS.financial,
-    ];
-
+    const allFields = Object.values(MOCK_EXTRACTED_FIELDS).flat();
     const withGroundTruth = allFields.filter(f => f.accuracy !== 'no-truth');
     const exact = withGroundTruth.filter(f => f.accuracy === 'exact').length;
     const similar = withGroundTruth.filter(f => f.accuracy === 'similar').length;
     const different = withGroundTruth.filter(f => f.accuracy === 'different').length;
     const total = withGroundTruth.length;
-
     const accuracy = total > 0 ? ((exact + similar * 0.5) / total) * 100 : 0;
 
     return { exact, similar, different, total, accuracy };

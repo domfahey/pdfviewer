@@ -5,15 +5,12 @@ This module handles PDF file uploads with validation and processing.
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from ..dependencies import get_pdf_service, init_pdf_service
+from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import APILogger, log_api_call, log_file_operation
 
 router = APIRouter()
-
-# Re-export init function for backward compatibility
-__all__ = ["router", "init_pdf_service"]
 
 
 @router.post("/upload", response_model=PDFUploadResponse)

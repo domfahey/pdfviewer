@@ -6,16 +6,13 @@ This module provides endpoints for retrieving, viewing, and managing PDF files.
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
-from ..dependencies import get_pdf_service, init_pdf_service
+from ..dependencies import get_pdf_service
 from ..models.pdf import PDFMetadata
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import APILogger, log_api_call
 from ..utils.validation import validate_file_id
 
 router = APIRouter()
-
-# Re-export init function for backward compatibility
-__all__ = ["router", "init_pdf_service"]
 
 
 @router.get("/pdf/{file_id}", response_class=FileResponse)

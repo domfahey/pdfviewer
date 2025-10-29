@@ -18,9 +18,6 @@ from ..utils.api_logging import log_api_call
 
 router = APIRouter()
 
-# Re-export init function for backward compatibility
-__all__ = ["router", "init_pdf_service"]
-
 
 class LoadPDFRequest(BaseModel):
     """Request model for loading PDF from URL."""
