@@ -18,6 +18,7 @@ dependencies = [
     "structlog>=23.2.0",
     "rich>=13.7.0",
     "types-requests>=2.32.4.20250611",
+    "types-aiofiles>=23.2.0",
 ]
 requires-python = ">=3.11"
 readme = "../README.md"
