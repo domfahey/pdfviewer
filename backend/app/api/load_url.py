@@ -18,6 +18,9 @@ router = APIRouter()
 # Re-export init function for backward compatibility
 __all__ = ["router", "init_pdf_service"]
 
+# Pattern for extracting filename from Content-Disposition header
+FILENAME_PATTERN = re.compile(r'filename="?([^";\r\n]+)"?')
+
 
 class LoadPDFRequest(BaseModel):
     """Request model for loading PDF from URL."""
@@ -60,9 +63,6 @@ async def load_pdf_from_url(
                     break
 
                 except (httpx.TimeoutException, httpx.NetworkError) as network_error:
-                    last_error = network_error
-
- main
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)
