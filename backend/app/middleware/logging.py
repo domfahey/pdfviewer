@@ -45,21 +45,21 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.correlation_header = correlation_header
 
-        # Use environment variables with defaults
+        # Use environment variables with defaults - disabled by default for performance
         self.log_request_bodies = (
             log_request_bodies
             if log_request_bodies is not None
             else (
-                os.getenv("LOG_REQUEST_BODIES", "true").lower()
-                == "true"  # Debug mode default
+                os.getenv("LOG_REQUEST_BODIES", "false").lower()
+                == "true"  # Changed default to false
             )
         )
         self.log_response_bodies = (
             log_response_bodies
             if log_response_bodies is not None
             else (
-                os.getenv("LOG_RESPONSE_BODIES", "true").lower()
-                == "true"  # Debug mode default
+                os.getenv("LOG_RESPONSE_BODIES", "false").lower()
+                == "true"  # Changed default to false
             )
         )
         self.max_body_size = int(os.getenv("MAX_BODY_LOG_SIZE", str(max_body_size)))

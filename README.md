@@ -157,6 +157,7 @@ Collaborators should re-clone the repository.
 
 - [API Reference](docs/API.md)
 - [Technical Guide](docs/TECHNICAL.md)
+- [Performance Optimization](docs/PERFORMANCE.md)
 - [Test Guide](tests/README.md)
 - [Technical Debt](docs/TECHNICAL_DEBT.md)
 
