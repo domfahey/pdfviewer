@@ -333,11 +333,6 @@ def set_correlation_id(correlation_id: str | None) -> None:
     correlation_id_var.set(correlation_id)
 
 
-def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger instance."""
-    return structlog.get_logger(name)
-
-
 def log_with_correlation(
     logger_instance: structlog.stdlib.BoundLogger, **extra_context
 ):

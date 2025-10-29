@@ -133,29 +133,11 @@ class PDFMetadata(BaseModel):
 
         return v
 
-    @field_validator("page_count")
-    @classmethod
-    def validate_page_count(cls, v: int) -> int:
-        """Enhanced page count validation for POC constraints."""
-        if v <= 0:
-            raise ValueError("Page count must be positive")
-        if v > 10000:
-            raise ValueError("Page count exceeds POC limit of 10,000 pages")
-        return v
+    # page_count validation is already handled by Field constraints
+    # (gt=0, le=10000)
 
-    @field_validator("file_size")
-    @classmethod
-    def validate_file_size(cls, v: int) -> int:
-        """Enhanced file size validation with POC-specific constraints."""
-        if v <= 0:
-            raise ValueError("File size must be positive")
-        if v > 100_000_000:  # 100MB POC limit
-            raise ValueError("File size exceeds POC limit of 100MB")
-        # Warn about very small files that might be corrupted
-        if v < 1024:  # Less than 1KB
-            # Note: We don't raise an error here, just validate it's positive
-            pass
-        return v
+    # file_size validation is already handled by Field constraints
+    # (gt=0, le=100_000_000)
 
     @model_validator(mode="after")
     def validate_date_consistency(self) -> "PDFMetadata":
@@ -306,24 +288,12 @@ class PDFUploadResponse(BaseModel):
     @field_validator("file_id")
     @classmethod
     def validate_file_id(cls, v: str) -> str:
-        """Enhanced UUID validation with format checking."""
-        if not v or v.isspace():
-            raise ValueError("File ID cannot be empty")
-
-        # Remove any whitespace
-        v = v.strip()
-
-        # UUID v4 format validation
-        if not UUID_V4_PATTERN.match(v):
-            raise ValueError("File ID must be a valid UUID v4 format")
-
-        # Return lowercase for consistency
-        return v.lower()
+        """Normalize UUID to lowercase for consistency."""
+        return v.strip().lower()
 
     @model_validator(mode="after")
     def validate_upload_constraints(self) -> "PDFUploadResponse":
-        """POC-specific validation for upload constraints."""
-        # Ensure file size and metadata are consistent if metadata exists
+        """Ensure file size consistency between upload response and metadata."""
         if self.metadata and self.metadata.file_size != self.file_size:
             raise ValueError("File size mismatch between upload response and metadata")
 
@@ -444,14 +414,12 @@ class ErrorResponse(BaseModel):
     @field_validator("error_code")
     @classmethod
     def validate_error_code(cls, v: str | None) -> str | None:
-        """Enhanced error code validation with POC standards."""
+        """Validate error code format (uppercase letters and underscores only)."""
         if v is None:
             return v
 
         # Remove whitespace and convert to uppercase
         v = v.strip().upper()
-
-        # Must be uppercase with underscores only
         if not v.replace("_", "").isalpha():
             raise ValueError("Error code must contain only letters and underscores")
 
