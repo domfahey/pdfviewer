@@ -13,6 +13,20 @@ interface PDFPageProps {
   onPageError?: (error: string) => void;
 }
 
+/**
+ * Individual PDF page component.
+ * Handles rendering of the page canvas, text layer for selection,
+ * annotation layer, and search highlighting.
+ *
+ * @param props - Component properties
+ * @param props.page - The PDF page object to render
+ * @param props.scale - The scale factor for rendering
+ * @param props.className - Optional CSS class name for styling
+ * @param props.searchQuery - Optional search query for highlighting
+ * @param props.isCurrentSearchPage - Whether this page contains the current search match
+ * @param props.onPageRender - Optional callback when page finishes rendering
+ * @param props.onPageError - Optional callback when page rendering fails
+ */
 export const PDFPage: React.FC<PDFPageProps> = ({
   page,
   scale,

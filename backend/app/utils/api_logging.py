@@ -1,5 +1,4 @@
-"""
-API logging decorators and utilities for enhanced request/response logging.
+"""API logging decorators and utilities for enhanced request/response logging.
 
 This module provides decorators and utilities for detailed API endpoint logging,
 including parameter validation, response logging, and performance metrics.
@@ -30,15 +29,18 @@ def log_api_call(
     log_timing: bool = True,
     sensitive_params: list[str] | None = None,
 ):
-    """
-    Decorator for detailed API endpoint logging.
+    """Provide detailed logging for API endpoint calls.
 
     Args:
-        operation: Name of the operation being performed
-        log_params: Whether to log function parameters
-        log_response: Whether to log response data
-        log_timing: Whether to log execution timing
-        sensitive_params: List of parameter names to redact from logs
+        operation: Name of the operation being performed.
+        log_params: Whether to log function parameters.
+        log_response: Whether to log response data.
+        log_timing: Whether to log execution timing.
+        sensitive_params: List of parameter names to redact from logs.
+
+    Returns:
+        Callable: Decorated function with API logging.
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -130,13 +132,16 @@ def log_file_operation(
     file_param: str = "file",
     log_file_details: bool = True,
 ):
-    """
-    Decorator specifically for file operations.
+    """Log file operations with consistent context and details.
 
     Args:
-        operation: Name of the file operation
-        file_param: Name of the file parameter in function kwargs
-        log_file_details: Whether to log file details (name, size, type)
+        operation: Name of the file operation.
+        file_param: Name of the file parameter in function kwargs.
+        log_file_details: Whether to log file details (name, size, type).
+
+    Returns:
+        Callable: Decorated function with file operation logging.
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -208,8 +213,7 @@ def log_file_operation(
 def _sanitize_params(
     params: dict[str, Any], sensitive_keys: list[str]
 ) -> dict[str, Any]:
-    """
-    Sanitize parameters for logging by redacting sensitive information.
+    """Sanitize parameters for logging by redacting sensitive information.
 
     Args:
         params: Dictionary of parameters to sanitize
@@ -217,6 +221,7 @@ def _sanitize_params(
 
     Returns:
         Sanitized parameters dictionary
+
     """
     sanitized = {}
     for key, value in params.items():
@@ -233,14 +238,14 @@ def _sanitize_params(
 
 
 def _sanitize_response(response_data: dict[str, Any]) -> dict[str, Any]:
-    """
-    Sanitize response data for logging.
+    """Sanitize response data for logging.
 
     Args:
         response_data: Response data to sanitize
 
     Returns:
         Sanitized response data
+
     """
     # Define sensitive fields that should be redacted
     sensitive_fields = ["password", "token", "secret", "key", "auth"]
@@ -258,17 +263,15 @@ def _sanitize_response(response_data: dict[str, Any]) -> dict[str, Any]:
 
 
 class APILogger:
-    """
-    Specialized logger for API operations with context binding.
-    """
+    """Specialized logger for API operations with context binding."""
 
     def __init__(self, operation: str, correlation_id: str | None = None):
-        """
-        Initialize API logger with operation context.
+        """Initialize API logger with operation context.
 
         Args:
             operation: Name of the API operation
             correlation_id: Optional correlation ID (auto-detected if not provided)
+
         """
         self.operation = operation
         self.operation_name = operation  # For test compatibility

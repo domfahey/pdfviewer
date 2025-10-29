@@ -34,6 +34,18 @@ interface PDFViewerProps {
   useVirtualScrolling?: boolean;
 }
 
+/**
+ * Main PDF viewer component with comprehensive features.
+ * Supports page navigation, zoom, search, thumbnails, metadata display,
+ * and extracted field comparison. Can use virtual scrolling for performance.
+ *
+ * @param props - Component properties
+ * @param props.fileUrl - URL of the PDF file to display
+ * @param props.metadata - Optional PDF metadata for display
+ * @param props.className - Optional CSS class name for styling
+ * @param props.initialFitMode - Initial zoom/fit mode (default: fit to width)
+ * @param props.useVirtualScrolling - Whether to use virtual scrolling for performance
+ */
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
   metadata,

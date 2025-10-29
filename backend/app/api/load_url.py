@@ -22,12 +22,23 @@ _pdf_service = None
 
 
 def init_pdf_service(service: PDFService) -> None:
+    """Initialize the global PDF service instance.
+
+    Args:
+        service: The PDFService instance to use for all operations.
+
+    """
     global _pdf_service
     _pdf_service = service
 
 
-# Dependency to get PDF service
 def get_pdf_service() -> PDFService:
+    """Get the PDF service instance for dependency injection.
+
+    Returns:
+        PDFService: The initialized PDF service instance or a new instance as fallback.
+
+    """
     if _pdf_service is None:
         # Fallback to creating new instance if not initialized
         from ..services.pdf_service import PDFService
@@ -52,8 +63,7 @@ async def load_pdf_from_url(
     request: LoadPDFRequest,
     pdf_service: PDFService = Depends(get_pdf_service),
 ) -> PDFUploadResponse:
-    """
-    Load a PDF file from a URL for viewing.
+    """Load a PDF file from a URL for viewing.
 
     - **url**: URL of the PDF to load
 

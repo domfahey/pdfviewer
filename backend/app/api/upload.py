@@ -1,3 +1,8 @@
+"""PDF upload API endpoints.
+
+This module handles PDF file uploads with validation and processing.
+"""
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from ..models.pdf import PDFUploadResponse
@@ -11,12 +16,23 @@ _pdf_service = None
 
 
 def init_pdf_service(service: PDFService) -> None:
+    """Initialize the global PDF service instance.
+
+    Args:
+        service: The PDFService instance to use for all operations.
+
+    """
     global _pdf_service
     _pdf_service = service
 
 
-# Dependency to get PDF service
 def get_pdf_service() -> PDFService:
+    """Get the PDF service instance for dependency injection.
+
+    Returns:
+        PDFService: The initialized PDF service instance or a new instance as fallback.
+
+    """
     if _pdf_service is None:
         # Fallback to creating new instance if not initialized
         return PDFService()
@@ -30,8 +46,7 @@ async def upload_pdf(
     file: UploadFile = File(..., description="PDF file to upload"),
     pdf_service: PDFService = Depends(get_pdf_service),
 ) -> PDFUploadResponse:
-    """
-    Upload a PDF file for viewing.
+    """Upload a PDF file for viewing.
 
     - **file**: PDF file to upload (max 50MB)
 

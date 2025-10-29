@@ -19,6 +19,12 @@ interface UsePDFDocumentReturn {
   cleanup: () => void;
 }
 
+/**
+ * Custom hook for managing PDF document state and operations.
+ * Provides document loading, page navigation, scaling, and metadata management.
+ *
+ * @returns Object containing document state and control functions
+ */
 export const usePDFDocument = (): UsePDFDocumentReturn => {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPageState] = useState(1);

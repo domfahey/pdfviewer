@@ -14,9 +14,13 @@ interface SearchState {
   isSearching: boolean;
 }
 
-// Debounce delay for search operations (ms)
-const SEARCH_DEBOUNCE_DELAY = 300;
-
+/**
+ * Custom hook for full-text PDF search functionality.
+ * Provides search across all pages with match navigation and highlighting.
+ *
+ * @param document - The loaded PDF document to search, or null if not loaded
+ * @returns Object containing search state and control functions
+ */
 export const usePDFSearch = (document: PDFDocumentProxy | null) => {
   const [searchState, setSearchState] = useState<SearchState>({
     query: '',
