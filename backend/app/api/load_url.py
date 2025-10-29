@@ -8,18 +8,12 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
-from ..dependencies import get_pdf_service, init_pdf_service
+from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
 
 router = APIRouter()
-
-# Re-export init function for backward compatibility
-__all__ = ["router", "init_pdf_service"]
-
-# Pattern for extracting filename from Content-Disposition header
-FILENAME_PATTERN = re.compile(r'filename="?([^";\r\n]+)"?')
 
 
 class LoadPDFRequest(BaseModel):
@@ -63,6 +57,8 @@ async def load_pdf_from_url(
                     break
 
                 except (httpx.TimeoutException, httpx.NetworkError) as network_error:
+                    last_error = network_error
+
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)

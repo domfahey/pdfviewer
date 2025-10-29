@@ -20,8 +20,6 @@ from backend.app.middleware.logging import (
     add_correlation_id,
     correlation_id_var,
     get_correlation_id,
-    get_logger,
-    log_file_operation,
     log_with_correlation,
     set_correlation_id,
 )
@@ -636,18 +634,6 @@ class TestCorrelationIDFunctions:
 class TestLoggerFunctions:
     """Test logger utility functions."""
 
-    def test_get_logger_default_name(self):
-        """Test get_logger with default name."""
-        logger = get_logger()
-        assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-
-    def test_get_logger_custom_name(self):
-        """Test get_logger with custom name."""
-        logger = get_logger("custom.module")
-        assert logger is not None
-
     def test_log_with_correlation(self):
         """Test log_with_correlation function."""
         set_correlation_id("test-correlation-id")
@@ -705,100 +691,6 @@ class TestRequestContextLogger:
         mock_bound_logger.error.assert_called_once()
         error_call = mock_bound_logger.error.call_args
         assert "Exception in request context" in error_call[0][0]
-
-
-class TestLogFileOperationDecorator:
-    """Test log_file_operation decorator."""
-
-    @pytest.mark.asyncio
-    async def test_log_file_operation_async_success(self):
-        """Test log_file_operation decorator with successful async function."""
-        with patch(
-            "backend.app.middleware.logging.log_with_correlation"
-        ) as mock_log_with_correlation:
-            mock_logger = Mock()
-            mock_log_with_correlation.return_value = mock_logger
-
-            @log_file_operation("test_operation", "test.pdf", "file-123")
-            async def async_function(param):
-                await AsyncMock()()  # Simulate async work
-                return f"processed {param}"
-
-            result = await async_function("test_param")
-
-            assert result == "processed test_param"
-
-            # Verify logging calls
-            mock_log_with_correlation.assert_called()
-            mock_logger.info.assert_called()
-            info_calls = mock_logger.info.call_args_list
-
-            # Should have start and completion logs
-            assert len(info_calls) >= 2
-            assert "Starting test_operation" in info_calls[0][0][0]
-            assert "Completed test_operation" in info_calls[1][0][0]
-
-    @pytest.mark.asyncio
-    async def test_log_file_operation_async_error(self):
-        """Test log_file_operation decorator with async function error."""
-        with patch(
-            "backend.app.middleware.logging.log_with_correlation"
-        ) as mock_log_with_correlation:
-            mock_logger = Mock()
-            mock_log_with_correlation.return_value = mock_logger
-
-            @log_file_operation("test_operation", "test.pdf")
-            async def failing_async_function():
-                raise ValueError("Async test error")
-
-            with pytest.raises(ValueError):
-                await failing_async_function()
-
-            # Verify error logging
-            mock_logger.error.assert_called_once()
-            error_call = mock_logger.error.call_args
-            assert "Failed test_operation" in error_call[0][0]
-
-    def test_log_file_operation_sync_success(self):
-        """Test log_file_operation decorator with successful sync function."""
-        with patch(
-            "backend.app.middleware.logging.log_with_correlation"
-        ) as mock_log_with_correlation:
-            mock_logger = Mock()
-            mock_log_with_correlation.return_value = mock_logger
-
-            @log_file_operation("sync_operation", "test.pdf")
-            def sync_function(param):
-                return f"sync processed {param}"
-
-            result = sync_function("test_param")
-
-            assert result == "sync processed test_param"
-
-            # Verify logging calls
-            mock_logger.info.assert_called()
-            info_calls = mock_logger.info.call_args_list
-
-            # Should have start and completion logs
-            assert len(info_calls) >= 2
-
-    def test_log_file_operation_sync_error(self):
-        """Test log_file_operation decorator with sync function error."""
-        with patch(
-            "backend.app.middleware.logging.log_with_correlation"
-        ) as mock_log_with_correlation:
-            mock_logger = Mock()
-            mock_log_with_correlation.return_value = mock_logger
-
-            @log_file_operation("sync_operation", "test.pdf")
-            def failing_sync_function():
-                raise ValueError("Sync test error")
-
-            with pytest.raises(ValueError):
-                failing_sync_function()
-
-            # Verify error logging
-            mock_logger.error.assert_called_once()
 
 
 class TestLoggingMiddlewareIntegration:

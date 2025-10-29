@@ -361,11 +361,6 @@ def set_correlation_id(correlation_id: str | None) -> None:
     correlation_id_var.set(correlation_id)
 
 
-def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger instance."""
-    return structlog.get_logger(name)
-
-
 def log_with_correlation(
     logger_instance: structlog.stdlib.BoundLogger, **extra_context
 ):
@@ -435,37 +430,3 @@ class RequestContextLogger:
                 exc_type=exc_type.__name__,
                 exc_value=str(exc_val),
             )
-
-
-def log_file_operation(operation: str, filename: str, file_id: str | None = None):
-    """Log file operations with consistent context and tracking.
-
-    This is now a wrapper around the unified performance_logger decorator.
-    The duplicate implementation has been removed to reduce code duplication.
-
-    Args:
-        operation: Description of the file operation.
-        filename: Name of the file being operated on.
-        file_id: Optional file ID for tracking.
-
-    Returns:
-        Callable: Decorated function with file operation logging.
-
-    """
-    from ..utils.decorators import performance_logger
-
-    def decorator(func):
-        # Create a logger with file-specific context
-        operation_logger = log_with_correlation(
-            logger,
-            operation=operation,
-            filename=filename,
-            file_id=file_id,
-        )
-
-        return performance_logger(
-            operation=operation,
-            logger=operation_logger,
-        )(func)
-
-    return decorator

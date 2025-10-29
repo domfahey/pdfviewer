@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api import health, load_url, pdf, upload
 from .core.logging import configure_logging, get_logger
+from .dependencies import init_pdf_service
 from .middleware.logging import LoggingMiddleware
 from .services.pdf_service import PDFService
 
@@ -80,10 +81,8 @@ app.add_middleware(
 )
 logger.info("CORS middleware configured")
 
-# Initialize shared service in routers
-upload.init_pdf_service(pdf_service)
-pdf.init_pdf_service(pdf_service)
-load_url.init_pdf_service(pdf_service)
+# Initialize shared service
+init_pdf_service(pdf_service)
 
 # Include API routers
 app.include_router(health.router, prefix="/api", tags=["health"])

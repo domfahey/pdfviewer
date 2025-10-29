@@ -17,9 +17,6 @@ from ..middleware.logging import get_correlation_id
 logger = structlog.get_logger(__name__)
 
 
-from ..core.logging import get_logger
-
-
 def log_api_call(
     operation: str,
     log_params: bool = True,
@@ -276,7 +273,7 @@ class APILogger:
         self.correlation_id = correlation_id or get_correlation_id()
         self.start_time = time.perf_counter()
         self.context: dict[str, Any] = {}
-        self.logger = get_logger(__name__).bind(
+        self.logger = structlog.get_logger(__name__).bind(
             operation=operation,
             correlation_id=self.correlation_id,
         )
