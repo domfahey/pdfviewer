@@ -132,6 +132,9 @@ def log_function_call(
 ):
     """Automatically log function calls with performance tracking.
 
+    This is now a wrapper around the unified performance_logger decorator
+    from backend.app.utils.decorators to eliminate code duplication.
+
     Args:
         operation_name: Custom operation name (defaults to function name).
         log_args: Whether to log function arguments.
@@ -142,56 +145,19 @@ def log_function_call(
         Callable: Decorated function with call logging and performance tracking.
 
     """
+    from .decorators import performance_logger
 
     def decorator(func):
         op_name = operation_name or f"{func.__module__}.{func.__name__}"
         func_logger = get_logger(func.__module__)
 
-        @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            context = {"function": func.__name__}
-            if log_args:
-                context["args"] = str(args)
-                context["kwargs"] = kwargs
-
-            with PerformanceTracker(
-                op_name, func_logger, min_duration_ms=min_duration_ms, **context
-            ) as tracker:
-                try:
-                    result = await func(*args, **kwargs)
-                    if log_result:
-                        func_logger.debug(f"{op_name} result", result=str(result))
-                    return result
-                except Exception as function_error:
-                    tracker.context["error_type"] = type(function_error).__name__
-                    raise
-
-        @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            context = {"function": func.__name__}
-            if log_args:
-                context["args"] = str(args)
-                context["kwargs"] = kwargs
-
-            with PerformanceTracker(
-                op_name, func_logger, min_duration_ms=min_duration_ms, **context
-            ) as tracker:
-                try:
-                    result = func(*args, **kwargs)
-                    if log_result:
-                        func_logger.debug(f"{op_name} result", result=str(result))
-                    return result
-                except Exception as function_error:
-                    tracker.context["error_type"] = type(function_error).__name__
-                    raise
-
-        # Return appropriate wrapper
-        import asyncio
-
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        else:
-            return sync_wrapper
+        return performance_logger(
+            operation=op_name,
+            logger=func_logger,
+            log_args=log_args,
+            log_result=log_result,
+            min_duration_ms=min_duration_ms,
+        )(func)
 
     return decorator
 

@@ -17,9 +17,7 @@ from ..middleware.logging import get_correlation_id
 logger = structlog.get_logger(__name__)
 
 
-def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger instance."""
-    return structlog.get_logger(name)
+from ..core.logging import get_logger
 
 
 def log_api_call(

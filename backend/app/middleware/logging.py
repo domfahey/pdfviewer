@@ -440,6 +440,9 @@ class RequestContextLogger:
 def log_file_operation(operation: str, filename: str, file_id: str | None = None):
     """Log file operations with consistent context and tracking.
 
+    This is now a wrapper around the unified performance_logger decorator.
+    The duplicate implementation has been removed to reduce code duplication.
+
     Args:
         operation: Description of the file operation.
         filename: Name of the file being operated on.
@@ -449,67 +452,20 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
         Callable: Decorated function with file operation logging.
 
     """
-    import asyncio
-    import functools
+    from ..utils.decorators import performance_logger
 
     def decorator(func):
-        def log_operation(logger_instance, start_time):
-            """Helper to log operation start."""
-            logger_instance.info(f"Starting {operation}")
-            return start_time
+        # Create a logger with file-specific context
+        operation_logger = log_with_correlation(
+            logger,
+            operation=operation,
+            filename=filename,
+            file_id=file_id,
+        )
 
-        def log_success(logger_instance, start_time):
-            """Helper to log successful operation."""
-            duration = time.perf_counter() - start_time
-            logger_instance.info(
-                f"Completed {operation}",
-                duration_ms=round(duration * 1000, 2),
-                success=True,
-            )
-
-        def log_failure(logger_instance, start_time, error):
-            """Helper to log failed operation."""
-            duration = time.perf_counter() - start_time
-            logger_instance.error(
-                f"Failed {operation}",
-                duration_ms=round(duration * 1000, 2),
-                error=str(error),
-                error_type=type(error).__name__,
-                success=False,
-            )
-
-        @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            operation_logger = log_with_correlation(
-                logger, operation=operation, filename=filename, file_id=file_id
-            )
-            start_time = time.perf_counter()
-            log_operation(operation_logger, start_time)
-
-            try:
-                result = await func(*args, **kwargs)
-                log_success(operation_logger, start_time)
-                return result
-            except Exception as operation_error:
-                log_failure(operation_logger, start_time, operation_error)
-                raise
-
-        @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            operation_logger = log_with_correlation(
-                logger, operation=operation, filename=filename, file_id=file_id
-            )
-            start_time = time.perf_counter()
-            log_operation(operation_logger, start_time)
-
-            try:
-                result = func(*args, **kwargs)
-                log_success(operation_logger, start_time)
-                return result
-            except Exception as operation_error:
-                log_failure(operation_logger, start_time, operation_error)
-                raise
-
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+        return performance_logger(
+            operation=operation,
+            logger=operation_logger,
+        )(func)
 
     return decorator
