@@ -15,6 +15,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ['pdfjs-dist/build/pdf.worker.min.mjs'],
   },
+  // @ts-ignore - test config is for vitest
   test: {
     globals: true,
     environment: 'jsdom',
