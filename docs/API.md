@@ -92,26 +92,44 @@ GET /api/health
 
 ## Examples
 
+### Upload a PDF File
 ```bash
-# Upload
-curl -X POST http://localhost:8000/api/upload -F "file=@doc.pdf"
+curl -X POST http://localhost:8000/api/upload \
+  -F "file=@document.pdf"
+```
 
-# Load URL
+### Load PDF from URL
+```bash
 curl -X POST http://localhost:8000/api/load-url \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/doc.pdf"}'
+  -d '{"url": "https://example.com/document.pdf"}'
+```
 
-# Get metadata
+### Get PDF Metadata
+```bash
 curl http://localhost:8000/api/metadata/{file_id}
 ```
 
+### Download PDF
+```bash
+curl -O http://localhost:8000/api/pdf/{file_id}
+```
+
+### Delete PDF
+```bash
+curl -X DELETE http://localhost:8000/api/pdf/{file_id}
+```
+
 ## Status Codes
-- 200: Success
-- 400: Bad request (invalid file type, etc.)
-- 404: Not found
-- 413: File too large (>50MB)
-- 422: Validation error
-- 500: Server error
+
+| Code | Description |
+|------|-------------|
+| `200` | ✅ Success |
+| `400` | ❌ Bad request (invalid file type, etc.) |
+| `404` | 🔍 Not found |
+| `413` | 📦 File too large (>50MB) |
+| `422` | ⚠️ Validation error |
+| `500` | 🔥 Server error |
 
 ## Headers
 

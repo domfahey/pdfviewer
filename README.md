@@ -18,6 +18,7 @@ Modern PDF viewer with React 19.1 frontend and FastAPI backend, featuring compre
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Security](#security)
+- [Contributing](#contributing)
 - [Documentation](#documentation)
 - [Limitations](#limitations)
 - [Author](#author)
@@ -198,6 +199,24 @@ gitleaks detect
 > Collaborators should re-clone the repository.
 
 See [Security Policy](docs/SECURITY.md) for detailed guidelines.
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch from `main`
+3. **Make** your changes following our coding standards
+4. **Run** quality checks: `make qa`
+5. **Submit** a pull request
+
+**Before contributing:**
+- Review [Contributing Guidelines](docs/CONTRIBUTING.md)
+- Run `make qa` to ensure code quality
+- Add tests for new features
+- Update documentation as needed
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ## Documentation
 
