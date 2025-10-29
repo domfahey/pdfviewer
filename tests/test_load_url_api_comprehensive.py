@@ -12,7 +12,9 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app.api.load_url import LoadPDFRequest, get_pdf_service, init_pdf_service
+from backend.app.dependencies import get_pdf_service, init_pdf_service
+from backend.app.api.load_url import LoadPDFRequest
+from backend.app.services.pdf_service import PDFService
 from backend.app.models.pdf import PDFUploadResponse
 from backend.app.services.pdf_service import PDFService
 
@@ -20,20 +22,20 @@ from backend.app.services.pdf_service import PDFService
 @pytest.fixture(autouse=True)
 def reset_load_url_service_state():
     """Reset PDF service global state before each test."""
-    from backend.app.api import load_url
+    from backend.app.dependencies import reset_pdf_service
 
-    load_url._pdf_service = None
+    reset_pdf_service()
 
     yield
 
-    load_url._pdf_service = None
+    reset_pdf_service()
 
 
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.api.load_url import init_pdf_service
     from backend.app.services.pdf_service import PDFService
+    from backend.app.dependencies import init_pdf_service
 
     service = PDFService(upload_dir="uploads")
     init_pdf_service(service)
