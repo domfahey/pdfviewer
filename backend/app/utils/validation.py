@@ -1,7 +1,5 @@
 """Common validation utilities for API endpoints."""
 
-from typing import Any
-
 from fastapi import HTTPException
 
 from .api_logging import APILogger

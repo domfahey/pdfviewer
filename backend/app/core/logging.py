@@ -5,7 +5,6 @@ and different output formats for development vs production environments.
 """
 
 import logging
-import logging.config
 import sys
 from typing import Any
 
