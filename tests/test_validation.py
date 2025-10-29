@@ -22,18 +22,15 @@ class TestValidateFileId:
         result = validate_file_id("  test-123  ")
         assert result == "test-123"
 
-    def test_validate_file_id_empty_string(self):
-        """Test validation rejects empty string."""
+    @pytest.mark.parametrize(
+        "file_id",
+        ["", "   "],
+        ids=["empty_string", "whitespace_only"],
+    )
+    def test_validate_file_id_invalid(self, file_id):
+        """Test validation rejects empty or whitespace-only strings."""
         with pytest.raises(HTTPException) as exc_info:
-            validate_file_id("")
-
-        assert exc_info.value.status_code == 400
-        assert "File ID is required" in exc_info.value.detail
-
-    def test_validate_file_id_whitespace_only(self):
-        """Test validation rejects whitespace-only string."""
-        with pytest.raises(HTTPException) as exc_info:
-            validate_file_id("   ")
+            validate_file_id(file_id)
 
         assert exc_info.value.status_code == 400
         assert "File ID is required" in exc_info.value.detail
@@ -72,29 +69,22 @@ class TestValidateRequiredString:
         result = validate_required_string("  test-value  ", "field_name")
         assert result == "test-value"
 
-    def test_validate_required_string_empty(self):
-        """Test validation rejects empty string."""
+    @pytest.mark.parametrize(
+        "value,field_name",
+        [
+            ("", "username"),
+            (None, "email"),
+            ("   ", "password"),
+        ],
+        ids=["empty_string", "none_value", "whitespace_only"],
+    )
+    def test_validate_required_string_invalid(self, value, field_name):
+        """Test validation rejects empty, None, or whitespace-only strings."""
         with pytest.raises(HTTPException) as exc_info:
-            validate_required_string("", "username")
+            validate_required_string(value, field_name)
 
         assert exc_info.value.status_code == 400
-        assert "username is required" in exc_info.value.detail
-
-    def test_validate_required_string_none(self):
-        """Test validation rejects None."""
-        with pytest.raises(HTTPException) as exc_info:
-            validate_required_string(None, "email")
-
-        assert exc_info.value.status_code == 400
-        assert "email is required" in exc_info.value.detail
-
-    def test_validate_required_string_whitespace_only(self):
-        """Test validation rejects whitespace-only string."""
-        with pytest.raises(HTTPException) as exc_info:
-            validate_required_string("   ", "password")
-
-        assert exc_info.value.status_code == 400
-        assert "password is required" in exc_info.value.detail
+        assert f"{field_name} is required" in exc_info.value.detail
 
     def test_validate_required_string_with_logger(self):
         """Test validation logs error when logger provided."""
