@@ -18,15 +18,15 @@ from backend.app.services.pdf_service import PDFService
 @pytest.fixture(autouse=True)
 def reset_pdf_service_state():
     """Reset PDF service global state before each test."""
-    # Reset the global service instance in the dependencies module
-    from backend.app import dependencies
+    # Reset the global service instance using public API
+    from backend.app.dependencies import reset_pdf_service
 
-    dependencies._pdf_service = None
+    reset_pdf_service()
 
     yield
 
     # Cleanup after test
-    dependencies._pdf_service = None
+    reset_pdf_service()
 
 
 @pytest.fixture

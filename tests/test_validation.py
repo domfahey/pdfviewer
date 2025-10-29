@@ -103,7 +103,8 @@ class TestValidateRequiredString:
         with pytest.raises(HTTPException):
             validate_required_string("", "test_field", mock_logger)
 
-        # Verify logger was called with field name
+        # Verify logger was called with expected message
         mock_logger.log_validation_error.assert_called_once()
         call_args = mock_logger.log_validation_error.call_args
-        assert "Empty test_field provided" in call_args[0]
+        # Check the first positional argument contains the expected message
+        assert "Empty test_field provided" in call_args.args[0]

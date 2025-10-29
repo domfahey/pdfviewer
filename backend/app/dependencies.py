@@ -18,6 +18,15 @@ def init_pdf_service(service: PDFService) -> None:
     _pdf_service = service
 
 
+def reset_pdf_service() -> None:
+    """Reset the global PDF service instance.
+    
+    This is primarily used for testing to ensure clean state between tests.
+    """
+    global _pdf_service
+    _pdf_service = None
+
+
 def get_pdf_service() -> PDFService:
     """FastAPI dependency to get the PDF service instance.
     
