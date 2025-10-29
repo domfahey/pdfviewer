@@ -84,13 +84,13 @@ export const useFileUpload = (): UseFileUploadReturn => {
       }, 500);
 
       return response;
-    } catch (err) {
+    } catch (error) {
       console.error('❌ [FileUpload] Upload failed:', {
-        error: err,
-        message: err instanceof Error ? err.message : 'Upload failed',
-        stack: err instanceof Error ? err.stack : undefined,
+        error: error,
+        message: error instanceof Error ? error.message : 'Upload failed',
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(error instanceof Error ? error.message : 'Upload failed');
       setUploading(false);
       setUploadProgress(0);
       return null;
