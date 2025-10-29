@@ -2,6 +2,19 @@
 
 This directory contains integration tests for the PDF Viewer application, testing the complete system including frontend, backend, and their interactions.
 
+## Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Running Integration Tests](#running-integration-tests)
+  - [API Integration Tests](#api-integration-tests)
+  - [E2E Tests (Playwright)](#e2e-tests-playwright)
+- [Test Categories](#test-categories)
+- [Environment Variables](#environment-variables)
+- [Performance Benchmarks](#performance-benchmarks)
+- [Writing New Integration Tests](#writing-new-integration-tests)
+- [CI/CD Integration](#cicd-integration)
+- [Troubleshooting](#troubleshooting)
+
 ## Directory Structure
 
 ```

@@ -1,5 +1,21 @@
 # Contributing Guidelines
 
+## Table of Contents
+
+- [Git Best Practices](#git-best-practices)
+  - [Commit Messages](#commit-messages)
+  - [Branch Strategy](#branch-strategy)
+  - [Before Committing](#before-committing)
+  - [Security Checklist](#security-checklist)
+  - [What NOT to Commit](#what-not-to-commit)
+  - [Pull Request Process](#pull-request-process)
+- [Development Setup](#development-setup)
+  - [System Dependencies](#system-dependencies)
+  - [Pre-commit Hooks](#pre-commit-hooks)
+  - [Environment Variables](#environment-variables)
+  - [Troubleshooting](#troubleshooting)
+- [Repository History](#repository-history)
+
 ## Git Best Practices
 
 ### Commit Messages
@@ -16,7 +32,7 @@ Update dependencies to latest versions
 ```
 
 ### Branch Strategy
-- Create feature branches from `master`
+- Create feature branches from `main`
 - Use descriptive branch names: `feature/pdf-search`, `fix/memory-leak`
 - Keep branches small and focused
 - Delete branches after merging
