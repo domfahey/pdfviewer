@@ -212,9 +212,12 @@ We welcome contributions! Here's how to get started:
 
 **Before contributing:**
 - Review [Contributing Guidelines](docs/CONTRIBUTING.md)
+- Read our [Code of Conduct](CODE_OF_CONDUCT.md)
 - Run `make qa` to ensure code quality
 - Add tests for new features
 - Update documentation as needed
+
+**Need help?** See [SUPPORT.md](SUPPORT.md) for assistance.
 
 See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
@@ -225,6 +228,8 @@ See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 - [Technical Guide](docs/TECHNICAL.md) - Setup and development guide
 - [Contributing](docs/CONTRIBUTING.md) - Contribution guidelines
 - [Security Policy](docs/SECURITY.md) - Security practices and reporting
+- [Support](SUPPORT.md) - Getting help and FAQ
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 - [Test Guide](tests/README.md) - Testing documentation
 - [Technical Debt](docs/TECHNICAL_DEBT.md) - Known issues and improvements
 - [Product Requirements](docs/PRD.md) - Detailed product specifications
