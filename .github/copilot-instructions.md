@@ -2,6 +2,20 @@
 
 Welcome to the PDF Viewer POC repository! This file provides guidance for GitHub Copilot coding agent when working on this project.
 
+## Quick Start
+
+**Essential Commands:**
+```bash
+make install          # First-time setup (installs all dependencies)
+make qa              # Validate code before committing (format, lint, type, test)
+make dev-backend     # Start backend server at http://localhost:8000
+make dev-frontend    # Start frontend server at http://localhost:5173
+```
+
+**Before Every Commit:**
+1. `make qa` - Run full quality assurance suite
+2. `pre-commit run --all-files` - Check for secrets and style issues
+
 ## Project Overview
 
 Modern PDF viewer proof-of-concept with React 19.1 frontend and FastAPI backend. Key features include full-text search with highlighting, URL loading, form field extraction, and ground truth comparison UI.
@@ -65,6 +79,48 @@ make test-e2e        # End-to-end tests (requires servers running)
 1. Run `make qa` to ensure code quality
 2. Verify tests pass: `make test`
 3. Check for secrets: `pre-commit run --all-files`
+
+## Dependency Management
+
+### Adding Dependencies
+
+**Python (Backend):**
+- Preferred: Use `uv` for faster dependency management: `uv pip install <package>`
+- Fallback: Use `pip` if `uv` is not available: `pip install <package>`
+- Update `configs/pyproject.toml` with the new dependency
+- Run `make install` to ensure consistency across environments
+- **Security**: ALWAYS check dependencies for known vulnerabilities before adding
+
+**JavaScript/TypeScript (Frontend):**
+- Use `npm install <package>` from the `frontend/` directory
+- Prefer exact versions for stability: `npm install <package>@<version> --save-exact`
+- Update `frontend/package.json` automatically via npm
+- Run `npm audit` to check for security vulnerabilities
+
+### Updating Dependencies
+
+**Backend:**
+```bash
+# Update a specific package
+uv pip install --upgrade <package>  # or pip install --upgrade <package>
+
+# Update all packages (careful!)
+uv pip install --upgrade -r configs/pyproject.toml
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm update <package>        # Update specific package
+npm outdated               # Check for outdated packages
+npm audit fix              # Fix security vulnerabilities
+```
+
+**Best Practices:**
+- Test thoroughly after updating dependencies
+- Update one dependency at a time when possible
+- Check breaking changes in CHANGELOG files
+- Run full test suite: `make test`
 
 ## Coding Standards
 
