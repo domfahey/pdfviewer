@@ -17,9 +17,12 @@ describe('ApiService', () => {
     file_id: 'test-file-123',
     filename: 'test.pdf',
     file_size: 1024000,
+    mime_type: 'application/pdf',
+    upload_time: '2025-01-01T00:00:00Z',
     metadata: {
       page_count: 10,
       file_size: 1024000,
+      encrypted: false,
       title: 'Test Document',
     },
   };
@@ -27,6 +30,7 @@ describe('ApiService', () => {
   const mockMetadata: PDFMetadata = {
     page_count: 10,
     file_size: 1024000,
+    encrypted: false,
     title: 'Test Document',
     author: 'Test Author',
   };
