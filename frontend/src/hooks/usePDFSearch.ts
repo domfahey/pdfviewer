@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { devError } from '../utils/devLogger';
 
 // Search debounce delay in milliseconds to avoid excessive processing
 const SEARCH_DEBOUNCE_DELAY_MS = 300;
@@ -16,9 +17,6 @@ interface SearchState {
   currentMatchIndex: number;
   isSearching: boolean;
 }
-
-// Search debounce delay in milliseconds
-const SEARCH_DEBOUNCE_DELAY = 300;
 
 /**
  * Custom hook for full-text PDF search functionality.
@@ -73,7 +71,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNum);
+          const page = await document.getPage(pageNumber);
           const textContent = await page.getTextContent();
 
           // Pre-allocate array for better performance
@@ -112,7 +110,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         }
       } catch (error) {
         if (!signal.aborted) {
-          console.error('Error searching PDF:', error);
+          devError('Error searching PDF:', error);
           setSearchState(prev => ({
             ...prev,
             isSearching: false,

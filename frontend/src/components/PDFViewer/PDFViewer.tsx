@@ -20,6 +20,7 @@ import { VirtualPDFViewer } from './VirtualPDFViewer';
 import { PDFMetadataPanel } from './PDFMetadataPanel';
 import { PDFExtractedFields } from './PDFExtractedFields';
 import type { PDFMetadata } from '../../types/pdf.types';
+import { devLog, devError } from '../../utils/devLogger';
 
 interface FitMode {
   mode: 'width' | 'height' | 'page' | 'custom';
@@ -95,14 +96,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // Load the PDF document
   useEffect(() => {
     if (fileUrl) {
-      console.log('📄 [PDFViewer] Loading document:', {
+      devLog('📄 [PDFViewer] Loading document:', {
         fileUrl,
         metadata,
         timestamp: new Date().toISOString(),
       });
       loadDocument(fileUrl, metadata);
     } else {
-      console.log('⚠️ [PDFViewer] No fileUrl provided');
+      devLog('⚠️ [PDFViewer] No fileUrl provided');
     }
   }, [fileUrl, metadata, loadDocument]);
 
@@ -110,11 +111,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   useEffect(() => {
     const loadPage = async () => {
       if (!document) {
-        console.log('⏭️ [PDFViewer] No document available for page loading');
+        devLog('⏭️ [PDFViewer] No document available for page loading');
         return;
       }
 
-      console.log('📄 [PDFViewer] Loading page:', {
+      devLog('📄 [PDFViewer] Loading page:', {
         currentPage,
         totalPages,
         documentExists: !!document,
@@ -125,13 +126,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
       try {
         const page = await PDFService.getPage(document, currentPage);
-        console.log('✅ [PDFViewer] Page loaded successfully:', {
+        devLog('✅ [PDFViewer] Page loaded successfully:', {
           pageNumber: page.pageNumber,
           pageExists: !!page,
         });
         setCurrentPageObj(page);
       } catch (error) {
-        console.error('❌ [PDFViewer] Failed to load page:', {
+        devError('❌ [PDFViewer] Failed to load page:', {
           currentPage,
           error: error,
           message: error instanceof Error ? error.message : 'Failed to load page',
@@ -282,7 +283,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const handleSearch = useCallback(
     (query: string) => {
-      console.log('🔍 [PDFViewer] Searching for:', query);
+      devLog('🔍 [PDFViewer] Searching for:', query);
       search(query);
     },
     [search]
@@ -295,7 +296,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       // Navigate to the page with the current match
       const targetPage = currentMatch.pageIndex + 1; // Convert back to 1-based
       if (targetPage !== currentPage) {
-        console.log('🔍 [PDFViewer] Navigating to search result page:', targetPage);
+        devLog('🔍 [PDFViewer] Navigating to search result page:', targetPage);
         setCurrentPage(targetPage);
       }
     }
