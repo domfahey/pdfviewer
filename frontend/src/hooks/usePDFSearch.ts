@@ -57,10 +57,10 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
       try {
         const normalizedQuery = query.toLowerCase();
 
-        for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
+        for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNum);
+          const page = await document.getPage(pageNumber);
           const textContent = await page.getTextContent();
 
           // Combine all text items into a single string for searching
@@ -75,15 +75,15 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
           // Search for matches in the page text
           const normalizedPageText = pageText.toLowerCase();
-          let searchIndex = 0;
+          let currentSearchPosition = 0;
 
-          while ((searchIndex = normalizedPageText.indexOf(normalizedQuery, searchIndex)) !== -1) {
+          while ((currentSearchPosition = normalizedPageText.indexOf(normalizedQuery, currentSearchPosition)) !== -1) {
             matches.push({
-              pageIndex: pageNum - 1, // Convert to 0-based index
+              pageIndex: pageNumber - 1, // Convert to 0-based index
               matchIndex: matches.length,
-              text: pageText.substring(searchIndex, searchIndex + query.length),
+              text: pageText.substring(currentSearchPosition, currentSearchPosition + query.length),
             });
-            searchIndex += normalizedQuery.length;
+            currentSearchPosition += normalizedQuery.length;
           }
         }
 

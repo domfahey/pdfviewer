@@ -100,8 +100,8 @@ export const PDFMetadataPanel: React.FC<PDFMetadataPanelProps> = ({
       }
 
       setMetadata(pdfMetadata);
-    } catch (err) {
-      console.error('Error extracting PDF metadata:', err);
+    } catch (error) {
+      console.error('Error extracting PDF metadata:', error);
       setError('Failed to extract PDF metadata');
     } finally {
       setLoading(false);
@@ -119,10 +119,10 @@ export const PDFMetadataPanel: React.FC<PDFMetadataPanelProps> = ({
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
-    const k = 1024;
+    const bytesPerKilobyte = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const sizeUnitIndex = Math.floor(Math.log(bytes) / Math.log(bytesPerKilobyte));
+    return parseFloat((bytes / Math.pow(bytesPerKilobyte, sizeUnitIndex)).toFixed(2)) + ' ' + sizes[sizeUnitIndex];
   };
 
   const formatDate = (date: Date): string => {
