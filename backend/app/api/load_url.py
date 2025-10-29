@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, HttpUrl
 # Regular expression pattern to extract filename from Content-Disposition header
 FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
 
-from ..dependencies import get_pdf_service, init_pdf_service
+from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call

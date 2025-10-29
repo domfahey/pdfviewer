@@ -4,7 +4,6 @@ This module provides convenient functions and classes for common
 logging patterns used throughout the application.
 """
 
-import functools
 import time
 from typing import Any
 

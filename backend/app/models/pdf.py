@@ -6,7 +6,7 @@ and file information using Pydantic v2.
 
 from datetime import UTC, datetime
 import re
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
@@ -15,7 +15,6 @@ from pydantic import (
     computed_field,
     field_serializer,
     field_validator,
-    model_serializer,
     model_validator,
 )
 

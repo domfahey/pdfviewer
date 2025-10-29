@@ -33,7 +33,4 @@ async def upload_pdf(
     if not file.filename or file.filename.strip() == "":
         raise HTTPException(status_code=400, detail="No filename provided")
 
-    try:
-        return await pdf_service.upload_pdf(file)
-    except Exception as upload_error:
-        raise
+    return await pdf_service.upload_pdf(file)
