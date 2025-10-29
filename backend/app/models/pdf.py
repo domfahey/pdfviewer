@@ -133,29 +133,11 @@ class PDFMetadata(BaseModel):
 
         return v
 
-    @field_validator("page_count")
-    @classmethod
-    def validate_page_count(cls, v: int) -> int:
-        """Enhanced page count validation for POC constraints."""
-        if v <= 0:
-            raise ValueError("Page count must be positive")
-        if v > 10000:
-            raise ValueError("Page count exceeds POC limit of 10,000 pages")
-        return v
+    # page_count validation is already handled by Field constraints
+    # (gt=0, le=10000)
 
-    @field_validator("file_size")
-    @classmethod
-    def validate_file_size(cls, v: int) -> int:
-        """Enhanced file size validation with POC-specific constraints."""
-        if v <= 0:
-            raise ValueError("File size must be positive")
-        if v > 100_000_000:  # 100MB POC limit
-            raise ValueError("File size exceeds POC limit of 100MB")
-        # Warn about very small files that might be corrupted
-        if v < 1024:  # Less than 1KB
-            # Note: We don't raise an error here, just validate it's positive
-            pass
-        return v
+    # file_size validation is already handled by Field constraints
+    # (gt=0, le=100_000_000)
 
     @model_validator(mode="after")
     def validate_date_consistency(self) -> "PDFMetadata":
@@ -184,60 +166,42 @@ class PDFMetadata(BaseModel):
     @property
     def document_complexity_score(self) -> float:
         """Calculate document complexity score for POC monitoring (0-100)."""
-        score = 0.0
-
         # Page count factor (0-40 points)
-        if self.page_count <= 10:
-            score += 5
-        elif self.page_count <= 50:
-            score += 15
-        elif self.page_count <= 200:
-            score += 30
-        else:
-            score += 40
+        page_scores = [(10, 5), (50, 15), (200, 30), (float('inf'), 40)]
+        page_score = next(
+            score for limit, score in page_scores if self.page_count <= limit
+        )
 
         # File size factor (0-30 points)
-        size_mb = self.file_size_mb
-        if size_mb <= 1:
-            score += 5
-        elif size_mb <= 10:
-            score += 15
-        elif size_mb <= 50:
-            score += 25
-        else:
-            score += 30
+        size_scores = [(1, 5), (10, 15), (50, 25), (float('inf'), 30)]
+        size_score = next(
+            score for limit, score in size_scores if self.file_size_mb <= limit
+        )
 
-        # Encryption factor (0-20 points)
-        if self.encrypted:
-            score += 20
-
-        # Metadata richness factor (0-10 points)
+        # Encryption factor (0-20 points) + Metadata richness (0-10 points)
+        encryption_score = 20 if self.encrypted else 0
         metadata_fields = [
-            self.title,
-            self.author,
-            self.subject,
-            self.creator,
-            self.producer,
+            self.title, self.author, self.subject, self.creator, self.producer
         ]
-        filled_fields = sum(1 for field in metadata_fields if field)
-        score += (filled_fields / len(metadata_fields)) * 10
+        metadata_score = (
+            sum(1 for field in metadata_fields if field) / len(metadata_fields)
+        ) * 10
 
-        return round(min(score, 100.0), 1)
+        total_score = page_score + size_score + encryption_score + metadata_score
+        return round(min(total_score, 100.0), 1)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def document_category(self) -> str:
         """Categorize document for POC analysis."""
-        if self.page_count == 1:
-            return "single-page"
-        elif self.page_count <= 10:
-            return "short-document"
-        elif self.page_count <= 50:
-            return "medium-document"
-        elif self.page_count <= 200:
-            return "long-document"
-        else:
-            return "very-long-document"
+        categories = [
+            (1, "single-page"),
+            (10, "short-document"),
+            (50, "medium-document"),
+            (200, "long-document"),
+            (float('inf'), "very-long-document"),
+        ]
+        return next(cat for limit, cat in categories if self.page_count <= limit)
 
     @field_serializer("creation_date", "modification_date")
     def serialize_dates(self, value: datetime | None) -> str | None:
@@ -370,34 +334,14 @@ class PDFUploadResponse(BaseModel):
     @field_validator("file_id")
     @classmethod
     def validate_file_id(cls, v: str) -> str:
-        """Enhanced UUID validation with format checking."""
-        if not v or v.isspace():
-            raise ValueError("File ID cannot be empty")
-
-        # Remove any whitespace
-        v = v.strip()
-
-        # UUID v4 format validation
-        if not UUID_V4_PATTERN.match(v):
-            raise ValueError("File ID must be a valid UUID v4 format")
-
-        # Return lowercase for consistency
-        return v.lower()
+        """Normalize UUID to lowercase for consistency."""
+        return v.strip().lower()
 
     @model_validator(mode="after")
     def validate_upload_constraints(self) -> "PDFUploadResponse":
-        """POC-specific validation for upload constraints."""
-        # Ensure file size and metadata are consistent if metadata exists
+        """Ensure file size consistency between upload response and metadata."""
         if self.metadata and self.metadata.file_size != self.file_size:
             raise ValueError("File size mismatch between upload response and metadata")
-
-        # POC constraint: Warn about large files that might cause performance issues
-        large_file_threshold = 50_000_000  # 50MB
-        if self.file_size > large_file_threshold:
-            # In a real app, this might be logged as a warning
-            # For POC, we allow it but could add monitoring
-            pass
-
         return self
 
     @computed_field  # type: ignore[prop-decorator]
@@ -424,28 +368,18 @@ class PDFUploadResponse(BaseModel):
     def upload_status(self) -> str:
         """Status based on upload age for POC monitoring."""
         age_hours = self.upload_age_hours
-        if age_hours < 1:
-            return "fresh"
-        elif age_hours < 24:
-            return "recent"
-        elif age_hours < 168:  # 1 week
-            return "aging"
-        else:
-            return "old"
+        statuses = [(1, "fresh"), (24, "recent"), (168, "aging"), (float('inf'), "old")]
+        return next(status for limit, status in statuses if age_hours < limit)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def processing_priority(self) -> str:
         """Suggested processing priority for POC workflows."""
-        # Base priority on file size and complexity
-        if self.file_size_mb > 50:  # Large files
-            return "low"  # Process during off-peak
-        elif self.file_size_mb > 10:  # Medium files
-            if self.metadata and self.metadata.page_count > 100:
-                return "low"  # Complex medium files
-            return "normal"
-        else:  # Small files
-            return "high"  # Quick to process
+        if self.file_size_mb > 50:
+            return "low"  # Large files - process during off-peak
+        if self.file_size_mb > 10 and self.metadata and self.metadata.page_count > 100:
+            return "low"  # Complex medium files
+        return "high" if self.file_size_mb <= 10 else "normal"
 
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
@@ -521,20 +455,19 @@ class PDFInfo(BaseModel):
         if not self.metadata:
             return 0.0
 
-        # Bytes per page ratio
         bytes_per_page = self.file_size / self.metadata.page_count
-
-        # Efficiency score (lower bytes per page = higher efficiency)
-        if bytes_per_page < 50_000:  # < 50KB per page = very efficient
-            return 1.0
-        elif bytes_per_page < 100_000:  # < 100KB per page = good
-            return 0.8
-        elif bytes_per_page < 200_000:  # < 200KB per page = average
-            return 0.6
-        elif bytes_per_page < 500_000:  # < 500KB per page = poor
-            return 0.4
-        else:  # > 500KB per page = very poor
-            return 0.2
+        efficiency_thresholds = [
+            (50_000, 1.0),   # < 50KB per page = very efficient
+            (100_000, 0.8),  # < 100KB per page = good
+            (200_000, 0.6),  # < 200KB per page = average
+            (500_000, 0.4),  # < 500KB per page = poor
+            (float('inf'), 0.2),  # > 500KB per page = very poor
+        ]
+        return next(
+            score
+            for limit, score in efficiency_thresholds
+            if bytes_per_page < limit
+        )
 
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
@@ -632,23 +565,13 @@ class ErrorResponse(BaseModel):
     @field_validator("error_code")
     @classmethod
     def validate_error_code(cls, v: str | None) -> str | None:
-        """Enhanced error code validation with POC standards."""
+        """Validate error code format (uppercase letters and underscores only)."""
         if v is None:
             return v
 
-        # Remove whitespace
         v = v.strip().upper()
-
-        # Must be uppercase with underscores only
         if not v.replace("_", "").isalpha():
             raise ValueError("Error code must contain only letters and underscores")
-
-        # POC standard: Should start with category prefix
-        valid_prefixes = ["FILE_", "VALIDATION_", "API_", "AUTH_", "SYSTEM_"]
-        if not any(v.startswith(prefix) for prefix in valid_prefixes):
-            # For POC, we'll be lenient but could enforce this
-            pass
-
         return v
 
     @model_validator(mode="after")
