@@ -60,13 +60,13 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
       if (docMetadata) {
         setMetadata(docMetadata);
       }
-    } catch (err) {
+    } catch (error) {
       console.error('❌ [usePDFDocument] Document load failed:', {
-        error: err,
-        message: err instanceof Error ? err.message : 'Failed to load document',
+        error: error,
+        message: error instanceof Error ? error.message : 'Failed to load document',
         url,
       });
-      setError(err instanceof Error ? err.message : 'Failed to load document');
+      setError(error instanceof Error ? error.message : 'Failed to load document');
       setDocument(null);
       setTotalPages(0);
     } finally {

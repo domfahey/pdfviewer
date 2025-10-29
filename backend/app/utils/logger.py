@@ -162,8 +162,8 @@ def log_function_call(
                     if log_result:
                         func_logger.debug(f"{op_name} result", result=str(result))
                     return result
-                except Exception as e:
-                    tracker.context["error_type"] = type(e).__name__
+                except Exception as function_error:
+                    tracker.context["error_type"] = type(function_error).__name__
                     raise
 
         @functools.wraps(func)
@@ -181,8 +181,8 @@ def log_function_call(
                     if log_result:
                         func_logger.debug(f"{op_name} result", result=str(result))
                     return result
-                except Exception as e:
-                    tracker.context["error_type"] = type(e).__name__
+                except Exception as function_error:
+                    tracker.context["error_type"] = type(function_error).__name__
                     raise
 
         # Return appropriate wrapper

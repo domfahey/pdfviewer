@@ -130,13 +130,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           pageExists: !!page,
         });
         setCurrentPageObj(page);
-      } catch (err) {
+      } catch (error) {
         console.error('❌ [PDFViewer] Failed to load page:', {
           currentPage,
-          error: err,
-          message: err instanceof Error ? err.message : 'Failed to load page',
+          error: error,
+          message: error instanceof Error ? error.message : 'Failed to load page',
         });
-        setPageError(err instanceof Error ? err.message : 'Failed to load page');
+        setPageError(error instanceof Error ? error.message : 'Failed to load page');
         setCurrentPageObj(null);
       } finally {
         setPageLoading(false);
