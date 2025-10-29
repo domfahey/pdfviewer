@@ -14,6 +14,9 @@ interface SearchState {
   isSearching: boolean;
 }
 
+// Search debounce delay in milliseconds
+const SEARCH_DEBOUNCE_DELAY = 300;
+
 /**
  * Custom hook for full-text PDF search functionality.
  * Provides search across all pages with match navigation and highlighting.
@@ -65,13 +68,9 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
       try {
         for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
-
-        const normalizedQuery = query.toLowerCase();
-
-
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNumber);
+          const page = await document.getPage(pageNum);
           const textContent = await page.getTextContent();
 
           // Pre-allocate array for better performance
@@ -94,9 +93,9 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             matches.push({
               pageIndex: pageNum - 1,
               matchIndex: matches.length,
-              text: pageText.substring(currentSearchPosition, currentSearchPosition + query.length),
+              text: pageText.substring(searchIndex, searchIndex + query.length),
             });
-            currentSearchPosition += normalizedQuery.length;
+            searchIndex += normalizedQuery.length;
           }
         }
 
