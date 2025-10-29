@@ -4,6 +4,14 @@ from typing import Callable
 
 from .services.pdf_service import PDFService
 
+# Public API
+__all__ = [
+    "init_pdf_service",
+    "get_pdf_service", 
+    "reset_pdf_service",
+    "create_service_dependency",
+]
+
 # Global service instance variable
 _pdf_service: PDFService | None = None
 

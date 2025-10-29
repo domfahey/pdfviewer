@@ -6,6 +6,12 @@ from fastapi import HTTPException
 
 from .api_logging import APILogger
 
+# Public API
+__all__ = [
+    "validate_file_id",
+    "validate_required_string",
+]
+
 
 def validate_file_id(file_id: str, api_logger: APILogger | None = None) -> str:
     """Validate that a file ID is not empty.
