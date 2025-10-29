@@ -65,31 +65,32 @@ async def load_pdf_from_url(
         ) as client:
             # Add retry logic for transient failures
             max_retries = 3
-            last_error = None
+            response = None
 
             for attempt in range(max_retries):
                 try:
                     response = await client.get(str(request.url))
                     response.raise_for_status()
                     break
-                except (httpx.TimeoutException, httpx.NetworkError) as e:
-                    last_error = e
+
+                except (httpx.TimeoutException, httpx.NetworkError) as network_error:
+                    last_error = network_error
+
+ main
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)
                         continue
                     raise HTTPException(
                         status_code=504,
-                        detail=f"Timeout downloading PDF after {max_retries} attempts: {str(e)}",
+                        detail=f"Timeout downloading PDF after {max_retries} attempts: {str(network_error)}",
                     )
-            else:
-                if last_error:
-                    raise last_error
-                else:
-                    raise HTTPException(
-                        status_code=502,
-                        detail="Failed to download PDF after all retries",
-                    )
+
+            if response is None:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Failed to download PDF after all retries",
+                )
 
             # Check content type
             content_type = response.headers.get("content-type", "")
@@ -131,16 +132,16 @@ async def load_pdf_from_url(
 
             return result
 
-    except httpx.HTTPStatusError as e:
+    except httpx.HTTPStatusError as http_status_error:
         raise HTTPException(
             status_code=502,
-            detail=f"Failed to download PDF from URL: {e.response.status_code}",
+            detail=f"Failed to download PDF from URL: {http_status_error.response.status_code}",
         )
-    except httpx.RequestError as e:
+    except httpx.RequestError as request_error:
         raise HTTPException(
-            status_code=502, detail=f"Failed to connect to URL: {str(e)}"
+            status_code=502, detail=f"Failed to connect to URL: {str(request_error)}"
         )
-    except Exception as e:
+    except Exception as error:
         raise HTTPException(
-            status_code=500, detail=f"Failed to load PDF from URL: {str(e)}"
+            status_code=500, detail=f"Failed to load PDF from URL: {str(error)}"
         )

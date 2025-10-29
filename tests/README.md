@@ -1,6 +1,24 @@
 # PDF Viewer Test Suite
 
+[![Testing](https://img.shields.io/badge/testing-pytest%20%7C%20vitest%20%7C%20playwright-blue.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-80%25%20threshold-green.svg)](tests/)
+
 This directory contains comprehensive tests for the PDF Viewer application following best practices for test organization and execution.
+
+## Table of Contents
+
+- [Test Structure](#test-structure)
+- [Running Tests](#running-tests)
+  - [Using Make Commands (Recommended)](#using-make-commands-recommended)
+  - [Manual Commands](#manual-commands)
+- [Test Categories](#test-categories)
+- [Best Practices](#best-practices)
+- [Coverage Requirements](#coverage-requirements)
+- [CI/CD Integration](#cicd-integration)
+- [Debugging Tests](#debugging-tests)
+- [Performance Testing](#performance-testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
 ## Test Structure
 

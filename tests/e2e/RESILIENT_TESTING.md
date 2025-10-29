@@ -2,6 +2,15 @@
 
 This guide provides best practices for writing E2E tests that are resilient to timeouts and network issues.
 
+## Table of Contents
+
+- [Common Timeout Issues and Solutions](#common-timeout-issues-and-solutions)
+- [Best Practices](#best-practices)
+- [Running Resilient Tests](#running-resilient-tests)
+- [Debugging Timeout Issues](#debugging-timeout-issues)
+- [Common Patterns](#common-patterns)
+- [Monitoring Test Reliability](#monitoring-test-reliability)
+
 ## Common Timeout Issues and Solutions
 
 ### 1. External URL Dependencies

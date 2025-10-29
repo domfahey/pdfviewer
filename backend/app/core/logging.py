@@ -54,7 +54,7 @@ def configure_logging(
     if json_logs:
         # Production: JSON output
         structlog.configure(
-            processors=shared_processors  # type: ignore[arg-type]
+            processors=shared_processors
             + [
                 structlog.processors.dict_tracebacks,
                 structlog.processors.JSONRenderer(),
@@ -74,7 +74,7 @@ def configure_logging(
     else:
         # Development: Rich console output
         structlog.configure(
-            processors=shared_processors + [structlog.dev.ConsoleRenderer(colors=True)],  # type: ignore[arg-type]
+            processors=shared_processors + [structlog.dev.ConsoleRenderer(colors=True)],
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
             wrapper_class=structlog.stdlib.BoundLogger,
@@ -209,14 +209,14 @@ def log_performance(operation: str):
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as performance_error:
                 duration = time.perf_counter() - start_time
                 logger.error(
                     f"{operation} failed",
                     operation=operation,
                     function=func.__name__,
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
+                    error=str(performance_error),
                     success=False,
                 )
                 raise
@@ -237,14 +237,14 @@ def log_performance(operation: str):
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as performance_error:
                 duration = time.perf_counter() - start_time
                 logger.error(
                     f"{operation} failed",
                     operation=operation,
                     function=func.__name__,
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
+                    error=str(performance_error),
                     success=False,
                 )
                 raise

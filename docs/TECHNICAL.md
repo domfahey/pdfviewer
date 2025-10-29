@@ -1,5 +1,24 @@
 # Technical Guide
 
+## Table of Contents
+
+- [Setup](#setup)
+  - [Prerequisites](#prerequisites)
+  - [System Dependencies](#system-dependencies)
+  - [Install & Run](#install--run)
+- [Development](#development)
+  - [Quality Assurance](#quality-assurance)
+  - [Testing](#testing)
+  - [Type Safety](#type-safety)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
+- [Logging](#logging)
+- [Docker Commands](#docker-commands)
+- [Key Features](#key-features)
+- [Test Infrastructure](#test-infrastructure)
+- [Security Practices](#security-practices)
+- [Production Notes](#production-notes)
+
 ## Setup
 
 ### Prerequisites
@@ -27,25 +46,35 @@ sudo yum install file-devel
 
 ### Install & Run
 
+**Using Make (Recommended):**
 ```bash
-# Quick setup
 make install          # Install all dependencies
-make dev-backend      # Start backend
-make dev-frontend     # Start frontend
+make dev-backend      # Start backend (http://localhost:8000)
+make dev-frontend     # Start frontend (http://localhost:5173)
+```
 
-# Manual setup
+**Manual Setup:**
+```bash
+# Backend
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]" -c configs/pyproject.toml
 cd backend && uvicorn app.main:app --reload
 
-# Docker
+# Frontend (in new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+**Docker:**
+```bash
 docker-compose up -d
 ```
 
-URLs:
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+**Access URLs:**
+- 🌐 Frontend: http://localhost:5173
+- 🔧 Backend: http://localhost:8000
+- 📚 API Docs: http://localhost:8000/docs
 
 ## Development
 
@@ -63,17 +92,23 @@ make test     # Run tests
 
 ### Testing
 ```bash
+# Quick smoke tests
+make test-smoke       # Quick validation (~1 min)
+
 # Test categories
-make test-smoke       # Quick validation
 make test-unit        # Unit tests only
 make test-integration # API integration tests
-make test-e2e        # End-to-end tests
+make test-e2e        # End-to-end tests (requires running servers)
+
+# Coverage
 make test-coverage   # With coverage reports
+make test-coverage-report  # Open coverage in browser
 
 # Advanced testing
-make test-watch      # Watch mode
-make test-debug      # Debug mode
-make test-parallel   # Parallel execution
+make test-watch      # Watch mode (TDD workflow)
+make test-debug      # Debug mode with breakpoints
+make test-parallel   # Parallel execution (faster)
+make test-failed     # Re-run only failed tests
 ```
 
 ### Type Safety

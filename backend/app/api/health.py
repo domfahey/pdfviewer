@@ -146,20 +146,20 @@ async def health_check() -> HealthResponse:
         os.makedirs(upload_dir, exist_ok=True)
         # Try to write a test file
         test_file = os.path.join(upload_dir, ".health_check")
-        with open(test_file, "w") as f:
-            f.write("ok")
+        with open(test_file, "w") as test_file_handle:
+            test_file_handle.write("ok")
         os.remove(test_file)
 
         api_logger.log_processing_success(
             upload_dir=upload_dir, storage_check="passed", storage_available=True
         )
 
-    except Exception as e:
+    except Exception as storage_error_exception:
         storage_available = False
-        storage_error = str(e)
+        storage_error = str(storage_error_exception)
 
         api_logger.log_processing_error(
-            e, upload_dir=upload_dir, storage_check="failed", storage_available=False
+            storage_error_exception, upload_dir=upload_dir, storage_check="failed", storage_available=False
         )
 
     # Enhanced health status determination for POC
@@ -175,10 +175,10 @@ async def health_check() -> HealthResponse:
             timestamp=datetime.now(UTC),
             storage_available=storage_available,
         )
-    except Exception as e:
+    except Exception as response_error:
         # If response creation fails, log and return minimal response
         api_logger.log_processing_error(
-            e, health_status=health_status, response_creation="failed"
+            response_error, health_status=health_status, response_creation="failed"
         )
         # Fallback response
         response = HealthResponse(

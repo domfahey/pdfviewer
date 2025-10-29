@@ -65,13 +65,13 @@ async def get_pdf_file(
 
         return response
 
-    except HTTPException as e:
-        api_logger.log_processing_error(e, file_id=file_id, status_code=e.status_code)
+    except HTTPException as http_error:
+        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
         raise
-    except Exception as e:
-        api_logger.log_processing_error(e, file_id=file_id)
+    except Exception as error:
+        api_logger.log_processing_error(error, file_id=file_id)
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve file: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve file: {str(error)}"
         )
 
 
@@ -118,13 +118,13 @@ async def get_pdf_metadata(
 
         return metadata
 
-    except HTTPException as e:
-        api_logger.log_processing_error(e, file_id=file_id, status_code=e.status_code)
+    except HTTPException as http_error:
+        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
         raise
-    except Exception as e:
-        api_logger.log_processing_error(e, file_id=file_id)
+    except Exception as error:
+        api_logger.log_processing_error(error, file_id=file_id)
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve metadata: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve metadata: {str(error)}"
         )
 
 
@@ -173,9 +173,9 @@ async def delete_pdf_file(
             )
             raise HTTPException(status_code=500, detail="Failed to delete file")
 
-    except HTTPException as e:
-        api_logger.log_processing_error(e, file_id=file_id, status_code=e.status_code)
+    except HTTPException as http_error:
+        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
         raise
-    except Exception as e:
-        api_logger.log_processing_error(e, file_id=file_id)
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+    except Exception as error:
+        api_logger.log_processing_error(error, file_id=file_id)
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(error)}")
