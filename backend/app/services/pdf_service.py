@@ -85,7 +85,10 @@ class PDFService:
             )
             raise HTTPException(
                 status_code=413,
-                detail=f"File too large. Maximum size is {self.max_file_size / (1024 * 1024):.1f}MB",
+                detail=(
+                    f"File too large. Maximum size is "
+                    f"{self.max_file_size / (1024 * 1024):.1f}MB"
+                ),
             )
 
         self.logger.debug("File validation passed", **validation_context)
@@ -209,7 +212,9 @@ class PDFService:
                         await pdf_file.write(content)
 
                 # Verify MIME type
-                with PerformanceTracker("MIME type verification", self.logger, file_id=file_id):
+                with PerformanceTracker(
+                    "MIME type verification", self.logger, file_id=file_id
+                ):
                     mime_type = magic.from_file(str(file_path), mime=True)
 
                 if mime_type not in self.allowed_mime_types:
@@ -237,13 +242,14 @@ class PDFService:
                 self._file_metadata[file_id] = pdf_info
 
                 # Log successful completion
+                file_size = file_path.stat().st_size
                 self.file_logger.upload_completed(
                     file_id,
                     file.filename,
                     upload_tracker.duration_ms or 0,
                     mime_type=mime_type,
                     page_count=metadata.page_count,
-                    file_size_mb=round(actual_file_size / (1024 * 1024), 2),
+                    file_size_mb=round(file_size / (1024 * 1024), 2),
                 )
 
                 response = PDFUploadResponse(

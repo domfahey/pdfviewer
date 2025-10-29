@@ -133,9 +133,11 @@ class PDFMetadata(BaseModel):
 
         return v
 
-    # page_count validation is already handled by Field constraints (gt=0, le=10000)
+    # page_count validation is already handled by Field constraints
+    # (gt=0, le=10000)
 
-    # file_size validation is already handled by Field constraints (gt=0, le=100_000_000)
+    # file_size validation is already handled by Field constraints
+    # (gt=0, le=100_000_000)
 
     @model_validator(mode="after")
     def validate_date_consistency(self) -> "PDFMetadata":
@@ -166,16 +168,24 @@ class PDFMetadata(BaseModel):
         """Calculate document complexity score for POC monitoring (0-100)."""
         # Page count factor (0-40 points)
         page_scores = [(10, 5), (50, 15), (200, 30), (float('inf'), 40)]
-        page_score = next(score for limit, score in page_scores if self.page_count <= limit)
+        page_score = next(
+            score for limit, score in page_scores if self.page_count <= limit
+        )
 
         # File size factor (0-30 points)
         size_scores = [(1, 5), (10, 15), (50, 25), (float('inf'), 30)]
-        size_score = next(score for limit, score in size_scores if self.file_size_mb <= limit)
+        size_score = next(
+            score for limit, score in size_scores if self.file_size_mb <= limit
+        )
 
         # Encryption factor (0-20 points) + Metadata richness (0-10 points)
         encryption_score = 20 if self.encrypted else 0
-        metadata_fields = [self.title, self.author, self.subject, self.creator, self.producer]
-        metadata_score = (sum(1 for field in metadata_fields if field) / len(metadata_fields)) * 10
+        metadata_fields = [
+            self.title, self.author, self.subject, self.creator, self.producer
+        ]
+        metadata_score = (
+            sum(1 for field in metadata_fields if field) / len(metadata_fields)
+        ) * 10
 
         total_score = page_score + size_score + encryption_score + metadata_score
         return round(min(total_score, 100.0), 1)
@@ -453,7 +463,11 @@ class PDFInfo(BaseModel):
             (500_000, 0.4),  # < 500KB per page = poor
             (float('inf'), 0.2),  # > 500KB per page = very poor
         ]
-        return next(score for limit, score in efficiency_thresholds if bytes_per_page < limit)
+        return next(
+            score
+            for limit, score in efficiency_thresholds
+            if bytes_per_page < limit
+        )
 
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
