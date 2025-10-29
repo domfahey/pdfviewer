@@ -289,26 +289,18 @@ class TestPDFServiceUpload:
 class TestPDFServiceFileOperations:
     """Test PDF file operations (get, delete, list)."""
 
-    def test_get_pdf_path_success(self, pdf_service, sample_pdf_content):
+    def test_get_pdf_path_success(self, pdf_service, sample_pdf_content, create_pdf_info):
         """Test successful PDF path retrieval."""
         # Add a file to metadata and create the actual file
         file_id = str(uuid.uuid4())
         file_path = pdf_service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
-        # Add to metadata (simplified - normally done by upload_pdf)
-        from datetime import datetime
-
-        from backend.app.models.pdf import PDFInfo, PDFMetadata
-
-        metadata = PDFMetadata(page_count=1, file_size=len(sample_pdf_content))
-        pdf_info = PDFInfo(
+        # Add to metadata using factory fixture
+        pdf_info = create_pdf_info(
             file_id=file_id,
             filename="test.pdf",
             file_size=len(sample_pdf_content),
-            mime_type="application/pdf",
-            upload_time=datetime.now(UTC),
-            metadata=metadata,
         )
         pdf_service._file_metadata[file_id] = pdf_info
 
