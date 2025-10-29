@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -8,6 +9,9 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 from ..utils.api_logging import APILogger, log_api_call
 
 router = APIRouter()
+
+# Compile regex pattern once for performance
+SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$")
 
 
 class HealthResponse(BaseModel):
@@ -94,10 +98,7 @@ class HealthResponse(BaseModel):
         v = v.strip()
 
         # Semantic versioning pattern validation
-        import re
-
-        semver_pattern = r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*)?$"
-        if not re.match(semver_pattern, v):
+        if not SEMVER_PATTERN.match(v):
             raise ValueError(
                 "Version must follow semantic versioning (e.g., '1.0.0' or '1.0.0-beta')"
             )

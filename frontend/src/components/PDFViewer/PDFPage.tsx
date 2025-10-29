@@ -31,30 +31,16 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   const isMountedRef = useRef(true);
 
   const renderPage = useCallback(async () => {
-    // Wait a tiny bit to handle React 18 Strict Mode double effects
-    await new Promise(resolve => setTimeout(resolve, 0));
-
     // Skip render if component is not mounted
     if (!isMountedRef.current) {
-      console.log('⏭️ [PDFPage] Skipping render, component not mounted');
       return;
     }
 
     if (!canvasRef.current) {
-      console.warn('⚠️ [PDFPage] Canvas ref not available, skipping render');
       return;
     }
 
     try {
-      console.log('🎨 [PDFPage] Starting page render:', {
-        pageNumber: page.pageNumber,
-        scale,
-        canvasExists: !!canvasRef.current,
-        textLayerExists: !!textLayerRef.current,
-        annotationLayerExists: !!annotationLayerRef.current,
-        isMounted: isMountedRef.current,
-      });
-
       // Render canvas layer (required)
       await PDFService.renderPageToCanvas(page, canvasRef.current, scale);
 
@@ -75,17 +61,16 @@ export const PDFPage: React.FC<PDFPageProps> = ({
 
       // Only call success callback if component is still mounted
       if (isMountedRef.current) {
-        console.log('✅ [PDFPage] Page render completed successfully');
         onPageRender?.();
       }
     } catch (error) {
-      // Only log errors if not caused by unmounting and it's a real error
+      // Only report errors if component is still mounted
       if (isMountedRef.current) {
-        console.error('❌ [PDFPage] Error rendering page:', error);
+        console.error('Error rendering PDF page:', error);
         onPageError?.(error instanceof Error ? error.message : 'Failed to render page');
       }
     }
-  }, [scale, onPageError, onPageRender, page]); // Exclude page.pageNumber as it's redundant with page
+  }, [scale, onPageError, onPageRender, page]);
 
   useEffect(() => {
     renderPage();
@@ -101,7 +86,6 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     const annotationLayer = annotationLayerRef.current;
 
     return () => {
-      console.log('🧹 [PDFPage] Component unmounting, cleaning up');
       isMountedRef.current = false;
 
       // Cancel any ongoing render tasks
@@ -112,7 +96,6 @@ export const PDFPage: React.FC<PDFPageProps> = ({
       if (canvas) {
         const extendedCanvas = canvas as ExtendedCanvas;
         if (extendedCanvas._pdfRenderTask) {
-          console.log('🛑 [PDFPage] Cancelling render task on unmount');
           extendedCanvas._pdfRenderTask.cancel();
           extendedCanvas._pdfRenderTask = null;
           extendedCanvas._isRendering = false;

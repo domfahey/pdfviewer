@@ -12,9 +12,9 @@ from .core.logging import configure_logging, get_logger
 from .middleware.logging import LoggingMiddleware
 from .services.pdf_service import PDFService
 
-# Configure logging first thing - default to DEBUG for development
+# Configure logging first thing - use INFO by default, DEBUG only when explicitly requested
 configure_logging(
-    level=os.getenv("LOG_LEVEL", "DEBUG"),  # Debug mode by default
+    level=os.getenv("LOG_LEVEL", "INFO"),  # Changed from DEBUG to INFO for production readiness
     json_logs=os.getenv("JSON_LOGS", "false").lower() == "true",
     enable_correlation_id=True,
 )
