@@ -5,26 +5,13 @@
 
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
+import { devLog, devError } from '../utils/devLogger';
 
 // Configure PDF.js worker - use local worker for reliability
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url
 ).toString();
-
-// Development logging helper - disabled in production
-const DEV_LOGGING = import.meta.env.DEV;
-
-const devLog = (...args: unknown[]) => {
-  if (DEV_LOGGING) {
-    console.log(...args);
-  }
-};
-
-const devError = (...args: unknown[]) => {
-  // Always log errors, even in production
-  console.error(...args);
-};
 
 // Extended canvas interface for PDF rendering state
 interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {

@@ -2,20 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { PDFService } from '../services/pdfService';
 import type { PDFMetadata } from '../types/pdf.types';
-
-// Development logging helper - disabled in production
-const DEV_LOGGING = import.meta.env.DEV;
-
-const devLog = (...args: unknown[]) => {
-  if (DEV_LOGGING) {
-    console.log(...args);
-  }
-};
-
-const devError = (...args: unknown[]) => {
-  // Always log errors, even in production
-  console.error(...args);
-};
+import { devLog, devError } from '../utils/devLogger';
 
 interface UsePDFDocumentReturn {
   document: PDFDocumentProxy | null;

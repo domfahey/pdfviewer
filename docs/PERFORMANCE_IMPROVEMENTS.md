@@ -64,6 +64,7 @@ setPageData(prev => prev.map((p, i) =>
 **Files Changed:**
 - `frontend/src/services/pdfService.ts`
 - `frontend/src/hooks/usePDFDocument.ts`
+- `frontend/src/utils/devLogger.ts` (new shared utility)
 
 **Performance Impact:**
 - **Before:** ~2-5ms per console.log with objects
@@ -72,20 +73,22 @@ setPageData(prev => prev.map((p, i) =>
 
 **Code Changes:**
 ```typescript
-// Development logging helper
+// Shared development logging utility (utils/devLogger.ts)
 const DEV_LOGGING = import.meta.env.DEV;
 
-const devLog = (...args: unknown[]) => {
+export const devLog = (...args: unknown[]): void => {
   if (DEV_LOGGING) {
     console.log(...args);
   }
 };
 
-const devError = (...args: unknown[]) => {
+export const devError = (...args: unknown[]): void => {
   console.error(...args); // Always log errors
 };
 
-// Replace all console.log with devLog
+// Usage in services and hooks
+import { devLog, devError } from '../utils/devLogger';
+
 devLog('📖 Loading document...'); // Only in dev
 devError('❌ Failed to load'); // Always logged
 ```
@@ -114,19 +117,20 @@ devError('❌ Failed to load'); // Always logged
 
 **Code Changes:**
 ```python
-# Before (inefficient)
-async with aiofiles.open(file_path, "wb") as pdf_file:
-    content = await file.read()  # Loads entire file
-    await pdf_file.write(content)
+class PDFService:
+    """Service for handling PDF operations."""
+    
+    # Configuration constant at class level for easy adjustment
+    CHUNK_SIZE = 1024 * 1024  # 1MB chunks
 
-# After (optimized)
-CHUNK_SIZE = 1024 * 1024  # 1MB chunks
-async with aiofiles.open(file_path, "wb") as pdf_file:
-    while True:
-        chunk = await file.read(CHUNK_SIZE)
-        if not chunk:
-            break
-        await pdf_file.write(chunk)
+    async def upload_pdf(self, file: UploadFile):
+        # Use class constant for chunked reading
+        async with aiofiles.open(file_path, "wb") as pdf_file:
+            while True:
+                chunk = await file.read(self.CHUNK_SIZE)
+                if not chunk:
+                    break
+                await pdf_file.write(chunk)
 ```
 
 ### 4. File.stat() Call Caching (Backend) 📊
@@ -227,11 +231,12 @@ npm run preview
 
 ### Backend Chunked Upload
 
-Chunk size can be adjusted in `pdf_service.py`:
+Chunk size is configurable as a class constant in `pdf_service.py`:
 ```python
-CHUNK_SIZE = 1024 * 1024  # 1MB (recommended)
-# Increase for faster upload on high-memory systems:
-# CHUNK_SIZE = 4 * 1024 * 1024  # 4MB
+class PDFService:
+    CHUNK_SIZE = 1024 * 1024  # 1MB (recommended)
+    # Increase for faster upload on high-memory systems:
+    # CHUNK_SIZE = 4 * 1024 * 1024  # 4MB
 ```
 
 ## Verification

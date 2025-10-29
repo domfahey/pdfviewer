@@ -177,6 +177,7 @@ Documented but not implemented (not critical for POC):
 - frontend/src/components/PDFViewer/VirtualPDFViewer.tsx (canvas caching)
 - frontend/src/services/pdfService.ts (dev-only logging)
 - frontend/src/hooks/usePDFDocument.ts (dev-only logging)
+- frontend/src/utils/devLogger.ts (new shared logging utility)
 
 **Backend:**
 - backend/app/services/pdf_service.py (chunked upload, stat() caching)

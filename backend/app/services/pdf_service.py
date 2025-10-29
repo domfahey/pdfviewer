@@ -26,6 +26,9 @@ from ..utils.logger import (
 class PDFService:
     """Service for handling PDF operations with comprehensive logging."""
 
+    # Configuration constants
+    CHUNK_SIZE = 1024 * 1024  # 1MB chunks for file upload streaming
+
     def __init__(self, upload_dir: str = "uploads"):
         """Initialize the PDF service.
 
@@ -234,8 +237,6 @@ class PDFService:
             try:
                 # Save file using chunked reading for better memory efficiency
                 # This prevents loading entire large PDFs into memory at once
-                CHUNK_SIZE = 1024 * 1024  # 1MB chunks
-                
                 with PerformanceTracker(
                     "File write operation",
                     self.logger,
@@ -244,7 +245,7 @@ class PDFService:
                 ) as write_tracker:
                     async with aiofiles.open(file_path, "wb") as pdf_file:
                         while True:
-                            chunk = await file.read(CHUNK_SIZE)
+                            chunk = await file.read(self.CHUNK_SIZE)
                             if not chunk:
                                 break
                             await pdf_file.write(chunk)
