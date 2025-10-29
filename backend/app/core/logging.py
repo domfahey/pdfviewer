@@ -209,14 +209,14 @@ def log_performance(operation: str):
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as performance_error:
                 duration = time.perf_counter() - start_time
                 logger.error(
                     f"{operation} failed",
                     operation=operation,
                     function=func.__name__,
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
+                    error=str(performance_error),
                     success=False,
                 )
                 raise
@@ -237,14 +237,14 @@ def log_performance(operation: str):
                     success=True,
                 )
                 return result
-            except Exception as e:
+            except Exception as performance_error:
                 duration = time.perf_counter() - start_time
                 logger.error(
                     f"{operation} failed",
                     operation=operation,
                     function=func.__name__,
                     duration_ms=round(duration * 1000, 2),
-                    error=str(e),
+                    error=str(performance_error),
                     success=False,
                 )
                 raise
