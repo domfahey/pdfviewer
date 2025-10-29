@@ -88,10 +88,17 @@ class PDFService:
             )
             raise HTTPException(
                 status_code=413,
-                detail=f"File too large. Maximum size is {self.max_file_size / (1024 * 1024):.1f}MB",
+                detail=(
+                    f"File too large. Maximum size is "
+                    f"{self.max_file_size / (1024 * 1024):.1f}MB"
+                ),
             )
 
         self.logger.debug("File validation passed", **validation_context)
+
+    def _get_pdf_attr(self, pdf_info, attr: str):
+        """Helper to safely get PDF info attributes."""
+        return getattr(pdf_info, attr, None) if pdf_info else None
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
@@ -101,10 +108,10 @@ class PDFService:
             self.logger,
             file_path=str(file_path),
             file_size_bytes=file_path.stat().st_size,
-        ) as tracker:
+        ):
             try:
-                with open(file_path, "rb") as pdf_file:
-                    reader = PdfReader(pdf_file)
+                with open(file_path, "rb") as pdf_file_handle:
+                    reader = PdfReader(pdf_file_handle)
 
                     # Get basic info
                     page_count = len(reader.pages)
@@ -112,7 +119,7 @@ class PDFService:
                     encrypted = reader.is_encrypted
 
                     # Get document info
-                    pdf_info = reader.metadata
+                    pdf_document_metadata = reader.metadata
 
                     # Log metadata extraction details
                     self.logger.debug(
@@ -120,25 +127,25 @@ class PDFService:
                         page_count=page_count,
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
-                        has_metadata=pdf_info is not None,
-                        title=getattr(pdf_info, "title", None) if pdf_info else None,
-                        author=getattr(pdf_info, "author", None) if pdf_info else None,
+                        has_metadata=pdf_document_metadata is not None,
+                        title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                        author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=getattr(pdf_info, "title", None) if pdf_info else None,
-                            author=getattr(pdf_info, "author", None) if pdf_info else None,
-                            subject=getattr(pdf_info, "subject", None) if pdf_info else None,
-                            creator=getattr(pdf_info, "creator", None) if pdf_info else None,
-                            producer=getattr(pdf_info, "producer", None) if pdf_info else None,
+                            title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                            author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
+                            subject=getattr(pdf_document_metadata, "subject", None) if pdf_document_metadata else None,
+                            creator=getattr(pdf_document_metadata, "creator", None) if pdf_document_metadata else None,
+                            producer=getattr(pdf_document_metadata, "producer", None) if pdf_document_metadata else None,
                             creation_date=(
-                                getattr(pdf_info, "creation_date", None) if pdf_info else None
+                                getattr(pdf_document_metadata, "creation_date", None) if pdf_document_metadata else None
                             ),
                             modification_date=(
-                                getattr(pdf_info, "modification_date", None)
-                                if pdf_info
+                                getattr(pdf_document_metadata, "modification_date", None)
+                                if pdf_document_metadata
                                 else None
                             ),
                             page_count=page_count,
@@ -163,7 +170,7 @@ class PDFService:
                     return metadata
 
             except Exception as extraction_error:
-                # Log the specific error but continue with fallback
+                # Log the specific error and return fallback metadata
                 log_exception_context(
                     self.logger,
                     "PDF metadata extraction",
@@ -172,32 +179,16 @@ class PDFService:
                     fallback_used=True,
                 )
 
-                # Return basic metadata if extraction fails
-                try:
-                    fallback_metadata = PDFMetadata(
-                        page_count=1,  # Default fallback
-                        file_size=file_path.stat().st_size,
-                        encrypted=False,
-                    )
-                except Exception as fallback_error:
-                    # If even fallback fails, use absolute minimal metadata
-                    self.logger.error(
-                        "Fallback metadata creation failed",
-                        file_path=str(file_path),
-                        fallback_error=str(fallback_error),
-                    )
-                    fallback_metadata = PDFMetadata(
-                        page_count=1,
-                        file_size=max(1, file_path.stat().st_size),  # Ensure positive
-                        encrypted=False,
-                    )
-
+                # Return basic fallback metadata
+                fallback_metadata = PDFMetadata(
+                    page_count=1,
+                    file_size=max(1, file_path.stat().st_size),
+                    encrypted=False,
+                )
                 self.logger.warning(
                     "Using fallback metadata due to extraction failure",
                     file_path=str(file_path),
-                    fallback_page_count=1,
                 )
-
                 return fallback_metadata
 
     async def upload_pdf(self, file: UploadFile) -> PDFUploadResponse:
@@ -218,11 +209,9 @@ class PDFService:
 
             self._validate_file(file)
 
-            # Generate unique file ID
+            # Generate unique file ID and file path
             file_id = str(uuid.uuid4())
-            if not file.filename:
-                raise HTTPException(status_code=400, detail="No filename provided")
-            file_extension = Path(file.filename).suffix
+            file_extension = Path(file.filename).suffix  # type: ignore[arg-type]
             stored_filename = f"{file_id}{file_extension}"
             file_path = self.upload_dir / stored_filename
 
@@ -263,10 +252,8 @@ class PDFService:
 
                 # Verify MIME type
                 with PerformanceTracker(
-                    "MIME type verification",
-                    self.logger,
-                    file_id=file_id,
-                ) as mime_tracker:
+                    "MIME type verification", self.logger, file_id=file_id
+                ):
                     mime_type = magic.from_file(str(file_path), mime=True)
 
                 if mime_type not in self.allowed_mime_types:
@@ -276,14 +263,8 @@ class PDFService:
                         detected_mime_type=mime_type,
                         allowed_mime_types=list(self.allowed_mime_types),
                     )
-                    os.unlink(file_path)  # Remove invalid file
+                    os.unlink(file_path)
                     raise HTTPException(status_code=400, detail="Invalid file type")
-
-                self.logger.debug(
-                    "MIME type verification passed",
-                    file_id=file_id,
-                    mime_type=mime_type,
-                )
 
                 # Extract metadata
                 metadata = self._extract_pdf_metadata(file_path)
@@ -306,7 +287,7 @@ class PDFService:
                     upload_tracker.duration_ms or 0,
                     mime_type=mime_type,
                     page_count=metadata.page_count,
-                    file_size_mb=round(actual_file_size / (1024 * 1024), 2),
+                    file_size_mb=round(file_size / (1024 * 1024), 2),
                 )
 
                 response = PDFUploadResponse(

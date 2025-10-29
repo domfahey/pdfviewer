@@ -5,15 +5,12 @@ This module handles PDF file uploads with validation and processing.
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from ..dependencies import get_pdf_service, init_pdf_service
+from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import APILogger, log_api_call, log_file_operation
 
 router = APIRouter()
-
-# Re-export init function for backward compatibility
-__all__ = ["router", "init_pdf_service"]
 
 
 @router.post("/upload", response_model=PDFUploadResponse)
@@ -56,20 +53,20 @@ async def upload_pdf(
     api_logger.log_processing_start(filename=file.filename)
 
     try:
-        result = await pdf_service.upload_pdf(file)
+        upload_response = await pdf_service.upload_pdf(file)
 
         api_logger.log_processing_success(
-            file_id=result.file_id,
-            filename=result.filename,
-            file_size=result.file_size,
-            page_count=result.metadata.page_count if result.metadata else None,
+            file_id=upload_response.file_id,
+            filename=upload_response.filename,
+            file_size=upload_response.file_size,
+            page_count=upload_response.metadata.page_count if upload_response.metadata else None,
         )
 
         api_logger.log_response_prepared(
-            file_id=result.file_id, response_type=type(result).__name__
+            file_id=upload_response.file_id, response_type=type(upload_response).__name__
         )
 
-        return result
+        return upload_response
 
     except Exception as upload_error:
         api_logger.log_processing_error(upload_error, filename=file.filename)

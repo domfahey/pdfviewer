@@ -21,7 +21,7 @@ dependencies = [
     "types-aiofiles>=23.2.0",
 ]
 requires-python = ">=3.11"
-readme = "../README.md"
+readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]

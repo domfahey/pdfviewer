@@ -128,9 +128,10 @@ export class PDFService {
     canvas: HTMLCanvasElement,
     scale: number = 1.0
   ): Promise<void> {
+    // Check if canvas is already being rendered
+    const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
+    
     try {
-      // Check if canvas is already being rendered
-      const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
       if (extendedCanvas._isRendering) {
         devLog('⏭️ [PDFService] Canvas already rendering, skipping duplicate request');
         return;
