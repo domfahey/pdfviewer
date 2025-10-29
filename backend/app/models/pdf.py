@@ -180,65 +180,6 @@ class PDFMetadata(BaseModel):
         """True if document has more than 100 pages."""
         return self.page_count > 100
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def document_complexity_score(self) -> float:
-        """Calculate document complexity score for POC monitoring (0-100)."""
-        score = 0.0
-
-        # Page count factor (0-40 points)
-        if self.page_count <= 10:
-            score += 5
-        elif self.page_count <= 50:
-            score += 15
-        elif self.page_count <= 200:
-            score += 30
-        else:
-            score += 40
-
-        # File size factor (0-30 points)
-        size_mb = self.file_size_mb
-        if size_mb <= 1:
-            score += 5
-        elif size_mb <= 10:
-            score += 15
-        elif size_mb <= 50:
-            score += 25
-        else:
-            score += 30
-
-        # Encryption factor (0-20 points)
-        if self.encrypted:
-            score += 20
-
-        # Metadata richness factor (0-10 points)
-        metadata_fields = [
-            self.title,
-            self.author,
-            self.subject,
-            self.creator,
-            self.producer,
-        ]
-        filled_fields = sum(1 for field in metadata_fields if field)
-        score += (filled_fields / len(metadata_fields)) * 10
-
-        return round(min(score, 100.0), 1)
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def document_category(self) -> str:
-        """Categorize document for POC analysis."""
-        if self.page_count == 1:
-            return "single-page"
-        elif self.page_count <= 10:
-            return "short-document"
-        elif self.page_count <= 50:
-            return "medium-document"
-        elif self.page_count <= 200:
-            return "long-document"
-        else:
-            return "very-long-document"
-
     @field_serializer("creation_date", "modification_date")
     def serialize_dates(self, value: datetime | None) -> str | None:
         """Serialize dates to ISO format for POC consistency."""
@@ -343,11 +284,6 @@ class PDFUploadResponse(BaseModel):
         if any(char in v for char in unsafe_chars):
             raise ValueError(f"Filename contains unsafe characters: {unsafe_chars}")
 
-        # POC-specific: Avoid names that might conflict with system files
-        forbidden_names = ["con.pdf", "aux.pdf", "prn.pdf", "nul.pdf"]
-        if v.lower() in forbidden_names:
-            raise ValueError("Filename conflicts with system reserved names")
-
         return v
 
     @field_validator("mime_type")
@@ -391,13 +327,6 @@ class PDFUploadResponse(BaseModel):
         if self.metadata and self.metadata.file_size != self.file_size:
             raise ValueError("File size mismatch between upload response and metadata")
 
-        # POC constraint: Warn about large files that might cause performance issues
-        large_file_threshold = 50_000_000  # 50MB
-        if self.file_size > large_file_threshold:
-            # In a real app, this might be logged as a warning
-            # For POC, we allow it but could add monitoring
-            pass
-
         return self
 
     @computed_field  # type: ignore[prop-decorator]
@@ -406,47 +335,6 @@ class PDFUploadResponse(BaseModel):
         """File size in megabytes for display purposes."""
         return round(self.file_size / (1024 * 1024), 2)
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def upload_age_hours(self) -> float:
-        """Hours since upload, useful for POC debugging."""
-        now = datetime.now(UTC)
-        # Ensure upload_time is timezone-aware
-        upload_time = self.upload_time
-        if upload_time.tzinfo is None:
-            upload_time = upload_time.replace(tzinfo=UTC)
-
-        delta = now - upload_time
-        return round(delta.total_seconds() / 3600, 1)
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def upload_status(self) -> str:
-        """Status based on upload age for POC monitoring."""
-        age_hours = self.upload_age_hours
-        if age_hours < 1:
-            return "fresh"
-        elif age_hours < 24:
-            return "recent"
-        elif age_hours < 168:  # 1 week
-            return "aging"
-        else:
-            return "old"
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def processing_priority(self) -> str:
-        """Suggested processing priority for POC workflows."""
-        # Base priority on file size and complexity
-        if self.file_size_mb > 50:  # Large files
-            return "low"  # Process during off-peak
-        elif self.file_size_mb > 10:  # Medium files
-            if self.metadata and self.metadata.page_count > 100:
-                return "low"  # Complex medium files
-            return "normal"
-        else:  # Small files
-            return "high"  # Quick to process
-
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
         """Serialize upload time to ISO format."""
@@ -454,37 +342,6 @@ class PDFUploadResponse(BaseModel):
         if value.tzinfo is None:
             value = value.replace(tzinfo=UTC)
         return value.isoformat()
-
-    @model_serializer
-    def serialize_model(self) -> dict[str, Any]:
-        """Serialize model for POC API responses with all fields.
-
-        Returns:
-            dict: Serialized model data including computed fields.
-
-        """
-        # Get the default serialized data
-        data = {
-            "file_id": self.file_id,
-            "filename": self.filename,
-            "file_size": self.file_size,
-            "file_size_mb": self.file_size_mb,  # Include computed field
-            "mime_type": self.mime_type,
-            "upload_time": self.serialize_upload_time(self.upload_time),
-            "upload_age_hours": self.upload_age_hours,  # Include computed field
-            "upload_status": self.upload_status,  # Include computed field
-            "processing_priority": self.processing_priority,  # Include computed field
-            "metadata": self.metadata.model_dump() if self.metadata else None,
-        }
-
-        # Add POC-specific metadata for debugging
-        data["_poc_info"] = {
-            "serialized_at": datetime.now(UTC).isoformat(),
-            "model_version": "2.0",
-            "enhanced_validation": True,
-        }
-
-        return data
 
 
 class PDFInfo(BaseModel):
@@ -514,57 +371,12 @@ class PDFInfo(BaseModel):
     upload_time: Annotated[datetime, Field(description="Upload timestamp")]
     metadata: Annotated[PDFMetadata, Field(description="Complete PDF metadata")]
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def storage_efficiency(self) -> float:
-        """Calculate storage efficiency score for POC monitoring."""
-        if not self.metadata:
-            return 0.0
-
-        # Bytes per page ratio
-        bytes_per_page = self.file_size / self.metadata.page_count
-
-        # Efficiency score (lower bytes per page = higher efficiency)
-        if bytes_per_page < 50_000:  # < 50KB per page = very efficient
-            return 1.0
-        elif bytes_per_page < 100_000:  # < 100KB per page = good
-            return 0.8
-        elif bytes_per_page < 200_000:  # < 200KB per page = average
-            return 0.6
-        elif bytes_per_page < 500_000:  # < 500KB per page = poor
-            return 0.4
-        else:  # > 500KB per page = very poor
-            return 0.2
-
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
         """Serialize upload time consistently."""
         if value.tzinfo is None:
             value = value.replace(tzinfo=UTC)
         return value.isoformat()
-
-    @model_serializer
-    def serialize_for_internal_use(self) -> dict[str, Any]:
-        """Serialize model optimized for internal API responses.
-
-        Returns:
-            dict: Lightweight serialized data for internal use.
-
-        """
-        return {
-            "file_id": self.file_id,
-            "filename": self.filename,
-            "file_size": self.file_size,
-            "mime_type": self.mime_type,
-            "upload_time": self.serialize_upload_time(self.upload_time),
-            "metadata": self.metadata.model_dump(),
-            "storage_efficiency": self.storage_efficiency,  # Include computed field
-            "_internal": {
-                "model_type": "PDFInfo",
-                "version": "2.0",
-                "enhanced_features": True,
-            },
-        }
 
 
 class ErrorResponse(BaseModel):
@@ -636,18 +448,12 @@ class ErrorResponse(BaseModel):
         if v is None:
             return v
 
-        # Remove whitespace
+        # Remove whitespace and convert to uppercase
         v = v.strip().upper()
 
         # Must be uppercase with underscores only
         if not v.replace("_", "").isalpha():
             raise ValueError("Error code must contain only letters and underscores")
-
-        # POC standard: Should start with category prefix
-        valid_prefixes = ["FILE_", "VALIDATION_", "API_", "AUTH_", "SYSTEM_"]
-        if not any(v.startswith(prefix) for prefix in valid_prefixes):
-            # For POC, we'll be lenient but could enforce this
-            pass
 
         return v
 
@@ -675,34 +481,3 @@ class ErrorResponse(BaseModel):
             return None
         # Ensure consistent formatting and remove extra whitespace
         return " ".join(value.split())
-
-    @model_serializer
-    def serialize_error_response(self) -> dict[str, Any]:
-        """Serialize error responses with POC debugging information.
-
-        Returns:
-            dict: Error response data with debugging context.
-
-        """
-        data: dict[str, Any] = {
-            "error": self.serialize_error_fields(self.error),
-            "detail": self.serialize_error_fields(self.detail),
-            "error_code": self.error_code,
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
-
-        # Add POC debugging information
-        data["_debug"] = {
-            "error_type": (
-                "validation" if "validation" in self.error.lower() else "processing"
-            ),
-            "has_detail": self.detail is not None,
-            "has_error_code": self.error_code is not None,
-            "severity": (
-                "high"
-                if self.error_code and self.error_code.startswith("SYSTEM_")
-                else "medium"
-            ),
-        }
-
-        return data
