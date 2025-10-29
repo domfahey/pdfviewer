@@ -361,11 +361,6 @@ def set_correlation_id(correlation_id: str | None) -> None:
     correlation_id_var.set(correlation_id)
 
 
-def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
-    """Get a structured logger instance."""
-    return structlog.get_logger(name)
-
-
 def log_with_correlation(
     logger_instance: structlog.stdlib.BoundLogger, **extra_context
 ):
@@ -435,93 +430,3 @@ class RequestContextLogger:
                 exc_type=exc_type.__name__,
                 exc_value=str(exc_val),
             )
-
-
-def log_file_operation(operation: str, filename: str, file_id: str | None = None):
-    """Log file operations with consistent context and tracking.
-
-    Args:
-        operation: Description of the file operation.
-        filename: Name of the file being operated on.
-        file_id: Optional file ID for tracking.
-
-    Returns:
-        Callable: Decorated function with file operation logging.
-
-    """
-
-    def decorator(func):
-        import asyncio
-        import functools
-
-        @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            operation_logger = log_with_correlation(
-                logger,
-                operation=operation,
-                filename=filename,
-                file_id=file_id,
-            )
-
-            start_time = time.perf_counter()
-            operation_logger.info(f"Starting {operation}")
-
-            try:
-                result = await func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
-                return result
-            except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
-                raise
-
-        @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            operation_logger = log_with_correlation(
-                logger,
-                operation=operation,
-                filename=filename,
-                file_id=file_id,
-            )
-
-            start_time = time.perf_counter()
-            operation_logger.info(f"Starting {operation}")
-
-            try:
-                result = func(*args, **kwargs)
-                duration = time.perf_counter() - start_time
-                operation_logger.info(
-                    f"Completed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    success=True,
-                )
-                return result
-            except Exception as operation_error:
-                duration = time.perf_counter() - start_time
-                operation_logger.error(
-                    f"Failed {operation}",
-                    duration_ms=round(duration * 1000, 2),
-                    error=str(operation_error),
-                    error_type=type(operation_error).__name__,
-                    success=False,
-                )
-                raise
-
-        # Return appropriate wrapper based on function type
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        else:
-            return sync_wrapper
-
-    return decorator
