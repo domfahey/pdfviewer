@@ -107,23 +107,44 @@ class PDFService:
             file_size_bytes=file_path.stat().st_size,
         ):
             try:
-                with open(file_path, "rb") as pdf_file:
-                    reader = PdfReader(pdf_file)
+                with open(file_path, "rb") as pdf_file_handle:
+                    reader = PdfReader(pdf_file_handle)
+
+                    # Get basic info
                     page_count = len(reader.pages)
                     file_size = file_path.stat().st_size
                     encrypted = reader.is_encrypted
-                    pdf_info = reader.metadata
 
-                    # Create metadata with validation
+                    # Get document info
+                    pdf_document_metadata = reader.metadata
+
+                    # Log metadata extraction details
+                    self.logger.debug(
+                        "PDF metadata extracted",
+                        page_count=page_count,
+                        file_size_mb=round(file_size / (1024 * 1024), 2),
+                        encrypted=encrypted,
+                        has_metadata=pdf_document_metadata is not None,
+                        title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                        author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
+                    )
+
+                    # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=self._get_pdf_attr(pdf_info, "title"),
-                            author=self._get_pdf_attr(pdf_info, "author"),
-                            subject=self._get_pdf_attr(pdf_info, "subject"),
-                            creator=self._get_pdf_attr(pdf_info, "creator"),
-                            producer=self._get_pdf_attr(pdf_info, "producer"),
-                            creation_date=self._get_pdf_attr(pdf_info, "creation_date"),
-                            modification_date=self._get_pdf_attr(pdf_info, "modification_date"),
+                            title=getattr(pdf_document_metadata, "title", None) if pdf_document_metadata else None,
+                            author=getattr(pdf_document_metadata, "author", None) if pdf_document_metadata else None,
+                            subject=getattr(pdf_document_metadata, "subject", None) if pdf_document_metadata else None,
+                            creator=getattr(pdf_document_metadata, "creator", None) if pdf_document_metadata else None,
+                            producer=getattr(pdf_document_metadata, "producer", None) if pdf_document_metadata else None,
+                            creation_date=(
+                                getattr(pdf_document_metadata, "creation_date", None) if pdf_document_metadata else None
+                            ),
+                            modification_date=(
+                                getattr(pdf_document_metadata, "modification_date", None)
+                                if pdf_document_metadata
+                                else None
+                            ),
                             page_count=page_count,
                             file_size=file_size,
                             encrypted=encrypted,
@@ -206,10 +227,10 @@ class PDFService:
                     self.logger,
                     file_id=file_id,
                     file_size=file.size,
-                ):
-                    async with aiofiles.open(file_path, "wb") as pdf_file:
+                ) as write_tracker:
+                    async with aiofiles.open(file_path, "wb") as output_file_handle:
                         content = await file.read()
-                        await pdf_file.write(content)
+                        await output_file_handle.write(content)
 
                 # Verify MIME type
                 with PerformanceTracker(

@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
+// Search debounce delay in milliseconds to avoid excessive processing
+const SEARCH_DEBOUNCE_DELAY_MS = 300;
+
 interface SearchMatch {
   pageIndex: number;
   matchIndex: number;
@@ -67,7 +70,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
       const normalizedQuery = query.toLowerCase();
 
       try {
-        for (let pageNum = 1; pageNum <= document.numPages; pageNum++) {
+        for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
           const page = await document.getPage(pageNum);
@@ -88,14 +91,14 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
           const normalizedPageText = pageText.toLowerCase();
           
           // Find all matches in this page
-          let searchIndex = 0;
-          while ((searchIndex = normalizedPageText.indexOf(normalizedQuery, searchIndex)) !== -1) {
+          let matchStartIndex = 0;
+          while ((matchStartIndex = normalizedPageText.indexOf(normalizedQuery, matchStartIndex)) !== -1) {
             matches.push({
-              pageIndex: pageNum - 1,
+              pageIndex: pageNumber - 1,
               matchIndex: matches.length,
-              text: pageText.substring(searchIndex, searchIndex + query.length),
+              text: pageText.substring(matchStartIndex, matchStartIndex + query.length),
             });
-            searchIndex += normalizedQuery.length;
+            matchStartIndex += normalizedQuery.length;
           }
         }
 
@@ -130,7 +133,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
       // Debounce the search to avoid excessive processing
       debounceTimer.current = setTimeout(() => {
         performSearch(query);
-      }, SEARCH_DEBOUNCE_DELAY);
+      }, SEARCH_DEBOUNCE_DELAY_MS);
     },
     [performSearch]
   );
