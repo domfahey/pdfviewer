@@ -1,3 +1,9 @@
+"""PDF processing service for file operations and metadata extraction.
+
+This module provides comprehensive PDF handling including upload,
+validation, metadata extraction, and file management.
+"""
+
 import os
 import uuid
 from datetime import UTC, datetime
@@ -18,9 +24,15 @@ from ..utils.logger import (
 
 
 class PDFService:
-    """Service for handling PDF operations with comprehensive logging"""
+    """Service for handling PDF operations with comprehensive logging."""
 
     def __init__(self, upload_dir: str = "uploads"):
+        """Initialize the PDF service.
+
+        Args:
+            upload_dir: Directory path for storing uploaded PDF files. Defaults to "uploads".
+
+        """
         self.upload_dir = Path(upload_dir)
         self.upload_dir.mkdir(exist_ok=True)
         self.max_file_size = 50 * 1024 * 1024  # 50MB
@@ -41,7 +53,7 @@ class PDFService:
         )
 
     def _validate_file(self, file: UploadFile) -> None:
-        """Validate uploaded file with detailed logging"""
+        """Validate uploaded file with detailed logging."""
         validation_context = {
             "filename": file.filename,
             "content_type": file.content_type,
@@ -80,7 +92,7 @@ class PDFService:
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
-        """Extract metadata from PDF file with comprehensive logging"""
+        """Extract metadata from PDF file with comprehensive logging."""
         with PerformanceTracker(
             "PDF metadata extraction",
             self.logger,
@@ -186,7 +198,7 @@ class PDFService:
                 return fallback_metadata
 
     async def upload_pdf(self, file: UploadFile) -> PDFUploadResponse:
-        """Upload and process PDF file with comprehensive logging"""
+        """Upload and process PDF file with comprehensive logging."""
         # Start timing the entire upload operation
         with PerformanceTracker(
             "PDF file upload",
@@ -353,7 +365,7 @@ class PDFService:
                 )
 
     def get_pdf_path(self, file_id: str) -> Path:
-        """Get file path for PDF with logging"""
+        """Get file path for PDF with logging."""
         self.logger.debug("Getting PDF path", file_id=file_id)
 
         if file_id not in self._file_metadata:
@@ -375,7 +387,7 @@ class PDFService:
         return file_path
 
     def get_pdf_metadata(self, file_id: str) -> PDFMetadata:
-        """Get PDF metadata with logging"""
+        """Get PDF metadata with logging."""
         self.logger.debug("Getting PDF metadata", file_id=file_id)
 
         if file_id not in self._file_metadata:
@@ -393,7 +405,7 @@ class PDFService:
         return metadata
 
     def delete_pdf(self, file_id: str) -> bool:
-        """Delete PDF file with comprehensive logging"""
+        """Delete PDF file with comprehensive logging."""
         with PerformanceTracker(
             "PDF file deletion",
             self.logger,
@@ -466,7 +478,7 @@ class PDFService:
                 )
 
     def list_files(self) -> dict[str, PDFInfo]:
-        """List all uploaded files with logging"""
+        """List all uploaded files with logging."""
         file_count = len(self._file_metadata)
         total_size = sum(info.file_size for info in self._file_metadata.values())
 
@@ -486,7 +498,7 @@ class PDFService:
         return self._file_metadata.copy()
 
     def get_service_stats(self) -> dict[str, int | float | str]:
-        """Get service statistics for monitoring and debugging"""
+        """Get service statistics for monitoring and debugging."""
         files = list(self._file_metadata.values())
         total_size = sum(f.file_size for f in files)
         page_counts = [f.metadata.page_count if f.metadata else 0 for f in files]

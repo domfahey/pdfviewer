@@ -1,3 +1,9 @@
+"""Main FastAPI application module for PDF Viewer backend.
+
+This module initializes the FastAPI application, configures logging,
+sets up middleware, and includes all API routers.
+"""
+
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -94,5 +100,11 @@ if os.path.exists("uploads"):
 
 @app.get("/")
 async def root() -> dict[str, str]:
+    """Root endpoint providing API status information.
+
+    Returns:
+        dict: A status message indicating the API is running.
+
+    """
     logger.info("Root endpoint accessed")
     return {"message": "PDF Viewer API is running"}

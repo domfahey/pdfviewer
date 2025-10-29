@@ -1,5 +1,4 @@
-"""
-Centralized logging configuration for the PDF Viewer API.
+"""Centralized logging configuration for the PDF Viewer API.
 
 This module provides structured logging with context, correlation IDs,
 and different output formats for development vs production environments.
@@ -20,13 +19,13 @@ def configure_logging(
     json_logs: bool = False,
     enable_correlation_id: bool = True,
 ) -> None:
-    """
-    Configure structured logging for the application.
+    """Configure structured logging for the application.
 
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_logs: Whether to output logs in JSON format (for production)
         enable_correlation_id: Whether to add correlation IDs to logs
+
     """
     log_level = getattr(logging, level.upper())
 
@@ -101,27 +100,27 @@ def configure_logging(
 
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
-    """
-    Get a structured logger instance.
+    """Get a structured logger instance.
 
     Args:
         name: Logger name (typically __name__)
 
     Returns:
         Configured structlog logger
+
     """
     return structlog.get_logger(name)
 
 
 def setup_uvicorn_logging(log_level: str = "INFO") -> dict[str, Any]:
-    """
-    Configure uvicorn logging to work with our structured logging.
+    """Configure uvicorn logging to work with our structured logging.
 
     Args:
         log_level: Log level for uvicorn
 
     Returns:
         Uvicorn logging configuration dict
+
     """
     return {
         "version": 1,
@@ -168,15 +167,36 @@ class LogContext:
     """Context manager for adding structured log context."""
 
     def __init__(self, logger: structlog.stdlib.BoundLogger, **context: Any) -> None:
+        """Initialize the log context manager.
+
+        Args:
+            logger: The logger instance to bind context to.
+            **context: Key-value pairs to add as logging context.
+
+        """
         self.logger = logger
         self.context = context
         self.bound_logger: structlog.stdlib.BoundLogger | None = None
 
     def __enter__(self) -> structlog.stdlib.BoundLogger:
+        """Enter the context and bind logging context.
+
+        Returns:
+            structlog.stdlib.BoundLogger: Logger with bound context.
+
+        """
         self.bound_logger = self.logger.bind(**self.context)
         return self.bound_logger
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit the context and log any exceptions.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception value if an exception occurred, None otherwise.
+            exc_tb: Exception traceback if an exception occurred, None otherwise.
+
+        """
         if exc_type is not None and self.bound_logger:
             self.bound_logger.error(
                 "Exception occurred in log context",
@@ -187,7 +207,15 @@ class LogContext:
 
 # Performance monitoring decorators
 def log_performance(operation: str):
-    """Decorator to log function performance metrics."""
+    """Log function performance metrics using a decorator.
+
+    Args:
+        operation: Name of the operation being measured.
+
+    Returns:
+        Callable: Decorated function with performance logging.
+
+    """
 
     def decorator(func):
         import functools

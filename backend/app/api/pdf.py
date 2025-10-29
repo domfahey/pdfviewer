@@ -1,3 +1,8 @@
+"""PDF file operations API endpoints.
+
+This module provides endpoints for retrieving, viewing, and managing PDF files.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
@@ -12,12 +17,23 @@ _pdf_service = None
 
 
 def init_pdf_service(service: PDFService) -> None:
+    """Initialize the global PDF service instance.
+
+    Args:
+        service: The PDFService instance to use for all operations.
+
+    """
     global _pdf_service
     _pdf_service = service
 
 
-# Dependency to get PDF service
 def get_pdf_service() -> PDFService:
+    """Get the PDF service instance for dependency injection.
+
+    Returns:
+        PDFService: The initialized PDF service instance or a new instance as fallback.
+
+    """
     if _pdf_service is None:
         # Fallback to creating new instance if not initialized
         return PDFService()
@@ -29,8 +45,7 @@ def get_pdf_service() -> PDFService:
 async def get_pdf_file(
     file_id: str, pdf_service: PDFService = Depends(get_pdf_service)
 ) -> FileResponse:
-    """
-    Retrieve a PDF file by its ID.
+    """Retrieve a PDF file by its ID.
 
     - **file_id**: Unique identifier of the PDF file
 
@@ -80,8 +95,7 @@ async def get_pdf_file(
 async def get_pdf_metadata(
     file_id: str, pdf_service: PDFService = Depends(get_pdf_service)
 ) -> PDFMetadata:
-    """
-    Get metadata for a PDF file.
+    """Get metadata for a PDF file.
 
     - **file_id**: Unique identifier of the PDF file
 
@@ -133,8 +147,7 @@ async def get_pdf_metadata(
 async def delete_pdf_file(
     file_id: str, pdf_service: PDFService = Depends(get_pdf_service)
 ) -> dict[str, str]:
-    """
-    Delete a PDF file.
+    """Delete a PDF file.
 
     - **file_id**: Unique identifier of the PDF file
 

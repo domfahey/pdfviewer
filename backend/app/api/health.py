@@ -1,3 +1,5 @@
+"""Health check API endpoints for service monitoring."""
+
 import os
 from datetime import UTC, datetime
 from typing import Annotated
@@ -131,7 +133,7 @@ class HealthResponse(BaseModel):
 @router.get("/health", response_model=HealthResponse)
 @log_api_call("health_check", log_params=False, log_response=True, log_timing=True)
 async def health_check() -> HealthResponse:
-    """Health check endpoint"""
+    """Health check endpoint."""
     api_logger = APILogger("health_check")
 
     api_logger.log_request_received()

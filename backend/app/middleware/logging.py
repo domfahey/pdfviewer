@@ -1,5 +1,4 @@
-"""
-Logging middleware for request correlation and structured logging context.
+"""Logging middleware for request correlation and structured logging context.
 
 This module provides middleware to add correlation IDs to requests and
 enhance logging with request context throughout the application lifecycle.
@@ -22,8 +21,7 @@ logger = structlog.get_logger(__name__)
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """
-    Enhanced middleware for comprehensive request/response logging.
+    """Enhanced middleware for comprehensive request/response logging.
 
     This middleware:
     1. Generates or extracts correlation IDs from headers
@@ -42,6 +40,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         log_response_bodies: bool | None = None,
         max_body_size: int = 4096,  # 4KB default limit
     ):  # type: ignore[misc]
+        """Initialize the logging middleware.
+
+        Args:
+            app: The FastAPI application instance.
+            correlation_header: Header name for correlation ID tracking. Defaults to "X-Correlation-ID".
+            log_request_bodies: Whether to log request bodies. If None, uses LOG_REQUEST_BODIES env var.
+            log_response_bodies: Whether to log response bodies. If None, uses LOG_RESPONSE_BODIES env var.
+            max_body_size: Maximum size of request/response body to log in bytes. Defaults to 4KB.
+
+        """
         super().__init__(app)
         self.correlation_header = correlation_header
 
@@ -75,6 +83,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         }
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[misc]
+        """Process HTTP request through the logging middleware.
+
+        Args:
+            request: The incoming HTTP request.
+            call_next: The next middleware or route handler in the chain.
+
+        Returns:
+            Response: The HTTP response with correlation ID header added.
+
+        """
         # Generate or extract correlation ID
         correlation_id = request.headers.get(self.correlation_header) or str(
             uuid.uuid4()
@@ -315,8 +333,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 
 def add_correlation_id(logger, method_name, event_dict):
-    """
-    Structlog processor to add correlation ID to all log entries.
+    """Structlog processor to add correlation ID to all log entries.
 
     This processor automatically adds the current correlation ID
     to every log entry when available.
@@ -352,8 +369,7 @@ def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
 def log_with_correlation(
     logger_instance: structlog.stdlib.BoundLogger, **extra_context
 ):
-    """
-    Create a logger bound with correlation ID and extra context.
+    """Create a logger bound with correlation ID and extra context.
 
     Args:
         logger_instance: The base logger instance
@@ -361,6 +377,7 @@ def log_with_correlation(
 
     Returns:
         Logger bound with correlation ID and extra context
+
     """
     context = {"correlation_id": get_correlation_id()}
     context.update(extra_context)
@@ -368,8 +385,7 @@ def log_with_correlation(
 
 
 class RequestContextLogger:
-    """
-    Context manager to automatically add request context to logs.
+    """Context manager to automatically add request context to logs.
 
     Usage:
         with RequestContextLogger(logger, request) as log:
@@ -377,11 +393,24 @@ class RequestContextLogger:
     """
 
     def __init__(self, logger_instance: structlog.stdlib.BoundLogger, request: Request):
+        """Initialize the request context logger.
+
+        Args:
+            logger_instance: The base logger instance to bind context to.
+            request: The HTTP request to extract context from.
+
+        """
         self.logger = logger_instance
         self.request = request
         self.context_logger: structlog.stdlib.BoundLogger | None = None
 
     def __enter__(self) -> structlog.stdlib.BoundLogger:
+        """Enter context and bind request information to logger.
+
+        Returns:
+            structlog.stdlib.BoundLogger: Logger with request context bound.
+
+        """
         context = {
             "method": self.request.method,
             "path": self.request.url.path,
@@ -392,6 +421,14 @@ class RequestContextLogger:
         return self.context_logger
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context and log any exceptions.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception value if an exception occurred, None otherwise.
+            exc_tb: Exception traceback if an exception occurred, None otherwise.
+
+        """
         if exc_type is not None and self.context_logger:
             self.context_logger.error(
                 "Exception in request context",
@@ -401,13 +438,16 @@ class RequestContextLogger:
 
 
 def log_file_operation(operation: str, filename: str, file_id: str | None = None):
-    """
-    Decorator to log file operations with consistent context.
+    """Log file operations with consistent context and tracking.
 
     Args:
-        operation: Description of the file operation
-        filename: Name of the file being operated on
-        file_id: Optional file ID for tracking
+        operation: Description of the file operation.
+        filename: Name of the file being operated on.
+        file_id: Optional file ID for tracking.
+
+    Returns:
+        Callable: Decorated function with file operation logging.
+
     """
 
     def decorator(func):
