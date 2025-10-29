@@ -1,26 +1,14 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
+from ..dependencies import get_pdf_service, init_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import APILogger, log_api_call, log_file_operation
 
 router = APIRouter()
 
-# Global service instance variable
-_pdf_service = None
-
-
-def init_pdf_service(service: PDFService) -> None:
-    global _pdf_service
-    _pdf_service = service
-
-
-# Dependency to get PDF service
-def get_pdf_service() -> PDFService:
-    if _pdf_service is None:
-        # Fallback to creating new instance if not initialized
-        return PDFService()
-    return _pdf_service
+# Re-export init function for backward compatibility
+__all__ = ["router", "init_pdf_service"]
 
 
 @router.post("/upload", response_model=PDFUploadResponse)

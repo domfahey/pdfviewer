@@ -11,29 +11,29 @@ from unittest.mock import Mock, patch
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from backend.app.api.pdf import get_pdf_service, init_pdf_service
+from backend.app.dependencies import get_pdf_service, init_pdf_service
 from backend.app.services.pdf_service import PDFService
 
 
 @pytest.fixture(autouse=True)
 def reset_pdf_service_state():
     """Reset PDF service global state before each test."""
-    # Reset the global service instance
-    from backend.app.api import pdf
+    # Reset the global service instance in the dependencies module
+    from backend.app import dependencies
 
-    pdf._pdf_service = None
+    dependencies._pdf_service = None
 
     yield
 
     # Cleanup after test
-    pdf._pdf_service = None
+    dependencies._pdf_service = None
 
 
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
     from backend.app.services.pdf_service import PDFService
-    from backend.app.api.pdf import init_pdf_service
+    from backend.app.dependencies import init_pdf_service
 
     # Create a service instance
     service = PDFService(upload_dir="uploads")

@@ -10,7 +10,8 @@ from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 import httpx
 
-from backend.app.api.load_url import get_pdf_service, init_pdf_service, LoadPDFRequest
+from backend.app.dependencies import get_pdf_service, init_pdf_service
+from backend.app.api.load_url import LoadPDFRequest
 from backend.app.services.pdf_service import PDFService
 from backend.app.models.pdf import PDFUploadResponse
 import uuid
@@ -19,20 +20,20 @@ import uuid
 @pytest.fixture(autouse=True)
 def reset_load_url_service_state():
     """Reset PDF service global state before each test."""
-    from backend.app.api import load_url
+    from backend.app import dependencies
 
-    load_url._pdf_service = None
+    dependencies._pdf_service = None
 
     yield
 
-    load_url._pdf_service = None
+    dependencies._pdf_service = None
 
 
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
     from backend.app.services.pdf_service import PDFService
-    from backend.app.api.load_url import init_pdf_service
+    from backend.app.dependencies import init_pdf_service
 
     service = PDFService(upload_dir="uploads")
     init_pdf_service(service)

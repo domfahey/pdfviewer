@@ -1,27 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
+from ..dependencies import get_pdf_service, init_pdf_service
 from ..models.pdf import PDFMetadata
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import APILogger, log_api_call
+from ..utils.validation import validate_file_id
 
 router = APIRouter()
 
-# Global service instance variable
-_pdf_service = None
-
-
-def init_pdf_service(service: PDFService) -> None:
-    global _pdf_service
-    _pdf_service = service
-
-
-# Dependency to get PDF service
-def get_pdf_service() -> PDFService:
-    if _pdf_service is None:
-        # Fallback to creating new instance if not initialized
-        return PDFService()
-    return _pdf_service
+# Re-export init function for backward compatibility
+__all__ = ["router", "init_pdf_service"]
 
 
 @router.get("/pdf/{file_id}", response_class=FileResponse)
@@ -41,9 +30,8 @@ async def get_pdf_file(
     api_logger.log_request_received(file_id=file_id)
     api_logger.log_validation_start()
 
-    if not file_id or not file_id.strip():
-        api_logger.log_validation_error("Empty file_id provided")
-        raise HTTPException(status_code=400, detail="File ID is required")
+    # Validate file_id using shared utility
+    validate_file_id(file_id, api_logger)
 
     api_logger.log_validation_success(file_id=file_id)
     api_logger.log_processing_start(file_id=file_id)
@@ -92,9 +80,8 @@ async def get_pdf_metadata(
     api_logger.log_request_received(file_id=file_id)
     api_logger.log_validation_start()
 
-    if not file_id or not file_id.strip():
-        api_logger.log_validation_error("Empty file_id provided")
-        raise HTTPException(status_code=400, detail="File ID is required")
+    # Validate file_id using shared utility
+    validate_file_id(file_id, api_logger)
 
     api_logger.log_validation_success(file_id=file_id)
     api_logger.log_processing_start(file_id=file_id)
@@ -145,9 +132,8 @@ async def delete_pdf_file(
     api_logger.log_request_received(file_id=file_id)
     api_logger.log_validation_start()
 
-    if not file_id or not file_id.strip():
-        api_logger.log_validation_error("Empty file_id provided")
-        raise HTTPException(status_code=400, detail="File ID is required")
+    # Validate file_id using shared utility
+    validate_file_id(file_id, api_logger)
 
     api_logger.log_validation_success(file_id=file_id)
     api_logger.log_processing_start(file_id=file_id, operation="file_deletion")
