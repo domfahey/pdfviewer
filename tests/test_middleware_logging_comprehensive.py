@@ -8,7 +8,7 @@ and logging functionality that isn't covered by basic integration tests.
 import json
 import os
 import uuid
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI, Request, Response
@@ -16,14 +16,14 @@ from fastapi.testclient import TestClient
 
 from backend.app.middleware.logging import (
     LoggingMiddleware,
-    correlation_id_var,
-    add_correlation_id,
-    get_correlation_id,
-    set_correlation_id,
-    get_logger,
-    log_with_correlation,
     RequestContextLogger,
+    add_correlation_id,
+    correlation_id_var,
+    get_correlation_id,
+    get_logger,
     log_file_operation,
+    log_with_correlation,
+    set_correlation_id,
 )
 
 

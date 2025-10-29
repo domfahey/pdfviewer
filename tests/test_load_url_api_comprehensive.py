@@ -5,15 +5,16 @@ This module focuses on edge cases, error scenarios, validation logic,
 and network-related error handling for the load_pdf_from_url endpoint.
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi.testclient import TestClient
-import httpx
-
-from backend.app.api.load_url import get_pdf_service, init_pdf_service, LoadPDFRequest
-from backend.app.services.pdf_service import PDFService
-from backend.app.models.pdf import PDFUploadResponse
 import uuid
+from unittest.mock import AsyncMock, Mock, patch
+
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+
+from backend.app.api.load_url import LoadPDFRequest, get_pdf_service, init_pdf_service
+from backend.app.models.pdf import PDFUploadResponse
+from backend.app.services.pdf_service import PDFService
 
 
 @pytest.fixture(autouse=True)
@@ -31,8 +32,8 @@ def reset_load_url_service_state():
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.services.pdf_service import PDFService
     from backend.app.api.load_url import init_pdf_service
+    from backend.app.services.pdf_service import PDFService
 
     service = PDFService(upload_dir="uploads")
     init_pdf_service(service)

@@ -6,8 +6,9 @@ that aren't covered by the basic workflow tests.
 """
 
 import io
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -32,8 +33,8 @@ def reset_pdf_service_state():
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.services.pdf_service import PDFService
     from backend.app.api.pdf import init_pdf_service
+    from backend.app.services.pdf_service import PDFService
 
     # Create a service instance
     service = PDFService(upload_dir="uploads")

@@ -1,3 +1,8 @@
+/**
+ * PDF service for loading, rendering, and managing PDF documents.
+ * Handles document caching, page rendering, text layers, and annotations.
+ */
+
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
 
@@ -13,9 +18,21 @@ interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {
   _pdfRenderTask?: RenderTask | null;
 }
 
+/**
+ * Service class for PDF operations using PDF.js.
+ * Provides static methods for document loading, page retrieval, and rendering.
+ */
 export class PDFService {
   private static loadedDocuments = new Map<string, PDFDocumentProxy>();
 
+  /**
+   * Load a PDF document from a URL.
+   * Documents are cached to avoid redundant loads.
+   *
+   * @param url - The URL of the PDF document to load
+   * @returns Promise resolving to the loaded PDF document
+   * @throws Error if document fails to load
+   */
   static async loadDocument(url: string): Promise<PDFDocumentProxy> {
     try {
       console.log('🔗 [PDFService] Loading document from URL:', {
@@ -60,6 +77,14 @@ export class PDFService {
     }
   }
 
+  /**
+   * Get a specific page from a loaded PDF document.
+   *
+   * @param document - The loaded PDF document
+   * @param pageNumber - The page number to retrieve (1-indexed)
+   * @returns Promise resolving to the requested page
+   * @throws Error if page fails to load
+   */
   static async getPage(document: PDFDocumentProxy, pageNumber: number): Promise<PDFPageProxy> {
     try {
       console.log('📄 [PDFService] Getting page from document:', {
@@ -87,6 +112,16 @@ export class PDFService {
     }
   }
 
+  /**
+   * Render a PDF page to a canvas element.
+   * Handles concurrent render prevention and task cancellation.
+   *
+   * @param page - The PDF page to render
+   * @param canvas - The canvas element to render to
+   * @param scale - The scale factor for rendering (default: 1.0)
+   * @returns Promise that resolves when rendering is complete
+   * @throws Error if rendering fails (except for cancellations)
+   */
   static async renderPageToCanvas(
     page: PDFPageProxy,
     canvas: HTMLCanvasElement,
@@ -161,6 +196,15 @@ export class PDFService {
     }
   }
 
+  /**
+   * Render the text layer for a PDF page.
+   * Enables text selection and search functionality.
+   *
+   * @param page - The PDF page to render text layer for
+   * @param textLayerDiv - The div element to render the text layer into
+   * @param scale - The scale factor for rendering (default: 1.0)
+   * @returns Promise that resolves when text layer is rendered
+   */
   static async renderTextLayer(
     page: PDFPageProxy,
     textLayerDiv: HTMLDivElement,
@@ -200,6 +244,15 @@ export class PDFService {
     }
   }
 
+  /**
+   * Render the annotation layer for a PDF page.
+   * Currently a simplified implementation for POC.
+   *
+   * @param page - The PDF page to render annotations for
+   * @param annotationLayerDiv - The div element to render annotations into
+   * @param _scale - The scale factor (currently unused)
+   * @returns Promise that resolves when annotation layer is rendered
+   */
   static async renderAnnotationLayer(
     page: PDFPageProxy,
     annotationLayerDiv: HTMLDivElement,
@@ -237,6 +290,11 @@ export class PDFService {
     }
   }
 
+  /**
+   * Clean up loaded PDF documents from cache.
+   *
+   * @param document - Optional specific document to clean up. If not provided, cleans all.
+   */
   static cleanup(document?: PDFDocumentProxy): void {
     if (document) {
       // Clean up specific document
@@ -252,6 +310,11 @@ export class PDFService {
     }
   }
 
+  /**
+   * Get a copy of all currently loaded documents.
+   *
+   * @returns Map of document URLs to their loaded PDF document objects
+   */
   static getLoadedDocuments(): Map<string, PDFDocumentProxy> {
     return new Map(this.loadedDocuments);
   }
