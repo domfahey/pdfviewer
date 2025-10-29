@@ -26,6 +26,9 @@ from ..utils.logger import (
 class PDFService:
     """Service for handling PDF operations with comprehensive logging."""
 
+    # Configuration constants
+    CHUNK_SIZE = 1024 * 1024  # 1MB chunks for file upload streaming
+
     def __init__(self, upload_dir: str = "uploads"):
         """Initialize the PDF service.
 
@@ -221,16 +224,31 @@ class PDFService:
             )
 
             try:
-                # Save file
+                # Save file using chunked reading for better memory efficiency
+                # This prevents loading entire large PDFs into memory at once
                 with PerformanceTracker(
                     "File write operation",
                     self.logger,
                     file_id=file_id,
                     file_size=file.size,
                 ) as write_tracker:
-                    async with aiofiles.open(file_path, "wb") as output_file_handle:
-                        content = await file.read()
-                        await output_file_handle.write(content)
+                    async with aiofiles.open(file_path, "wb") as pdf_file:
+                        while True:
+                            chunk = await file.read(self.CHUNK_SIZE)
+                            if not chunk:
+                                break
+                            await pdf_file.write(chunk)
+
+                # Cache file.stat() result to avoid multiple filesystem calls
+                file_stat = file_path.stat()
+                actual_file_size = file_stat.st_size
+                self.logger.debug(
+                    "File written to disk",
+                    file_id=file_id,
+                    expected_size=file.size,
+                    actual_size=actual_file_size,
+                    size_match=file.size == actual_file_size if file.size else True,
+                )
 
                 # Verify MIME type
                 with PerformanceTracker(
@@ -251,14 +269,11 @@ class PDFService:
                 # Extract metadata
                 metadata = self._extract_pdf_metadata(file_path)
 
-                # Get file size once
-                file_size = file_path.stat().st_size
-
-                # Store file info
+                # Store file info (reuse cached file_stat)
                 pdf_info = PDFInfo(
                     file_id=file_id,
                     filename=file.filename,
-                    file_size=file_size,
+                    file_size=actual_file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
@@ -278,7 +293,7 @@ class PDFService:
                 response = PDFUploadResponse(
                     file_id=file_id,
                     filename=file.filename,
-                    file_size=file_size,
+                    file_size=actual_file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
                     metadata=metadata,

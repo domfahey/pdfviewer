@@ -13,6 +13,7 @@ interface VirtualPDFViewerProps {
 interface PageRenderData {
   pageNumber: number;
   canvas: HTMLCanvasElement | null;
+  dataUrl: string | null; // Cache toDataURL result
   isRendered: boolean;
   isVisible: boolean;
   height: number;
@@ -56,6 +57,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
           pages.push({
             pageNumber: i,
             canvas: null,
+            dataUrl: null,
             isRendered: false,
             isVisible: false,
             height: viewport.height,
@@ -66,6 +68,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
           pages.push({
             pageNumber: i,
             canvas: null,
+            dataUrl: null,
             isRendered: false,
             isVisible: false,
             height: DEFAULT_PAGE_HEIGHT * scale,
@@ -138,12 +141,16 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
 
         await page.render(renderContext).promise;
 
+        // Cache the toDataURL result to avoid repeated expensive conversions
+        const dataUrl = canvas.toDataURL();
+
         setPageData(prev =>
           prev.map((p, i) =>
             i === pageIndex
               ? {
                   ...p,
                   canvas,
+                  dataUrl,
                   isRendered: true,
                   height: viewport.height,
                   width: viewport.width,
@@ -266,7 +273,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
             if (context) {
               context.clearRect(0, 0, canvas.width, canvas.height);
             }
-            return { ...page, canvas: null, isRendered: false };
+            return { ...page, canvas: null, dataUrl: null, isRendered: false };
           }
           return page;
         })
@@ -321,9 +328,9 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
                 ${currentPage === page.pageNumber ? 'border-blue-500' : 'border-gray-200'}
               `}
             >
-              {page.isRendered && page.canvas ? (
+              {page.isRendered && page.dataUrl ? (
                 <img
-                  src={page.canvas.toDataURL()}
+                  src={page.dataUrl}
                   alt={`Page ${page.pageNumber}`}
                   className="w-full h-full object-contain"
                   style={{ width: page.width, height: page.height }}

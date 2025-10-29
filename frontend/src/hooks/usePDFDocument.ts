@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { PDFService } from '../services/pdfService';
 import type { PDFMetadata } from '../types/pdf.types';
+import { devLog, devError } from '../utils/devLogger';
 
 interface UsePDFDocumentReturn {
   document: PDFDocumentProxy | null;
@@ -35,7 +36,7 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
   const [metadata, setMetadata] = useState<PDFMetadata | null>(null);
 
   const loadDocument = useCallback(async (url: string, docMetadata?: PDFMetadata) => {
-    console.log('📖 [usePDFDocument] Starting document load:', {
+    devLog('📖 [usePDFDocument] Starting document load:', {
       url,
       metadata: docMetadata,
       timestamp: new Date().toISOString(),
@@ -45,10 +46,10 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
     setError(null);
 
     try {
-      console.log('📚 [usePDFDocument] Calling PDFService.loadDocument...');
+      devLog('📚 [usePDFDocument] Calling PDFService.loadDocument...');
       const pdfDocument = await PDFService.loadDocument(url);
 
-      console.log('✅ [usePDFDocument] Document loaded successfully:', {
+      devLog('✅ [usePDFDocument] Document loaded successfully:', {
         numPages: pdfDocument.numPages,
         fingerprint: pdfDocument.fingerprints?.[0] || 'unknown',
       });
@@ -61,7 +62,7 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
         setMetadata(docMetadata);
       }
     } catch (error) {
-      console.error('❌ [usePDFDocument] Document load failed:', {
+      devError('❌ [usePDFDocument] Document load failed:', {
         error: error,
         message: error instanceof Error ? error.message : 'Failed to load document',
         url,
@@ -111,7 +112,7 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log('🧹 [usePDFDocument] Hook unmounting, cleaning up document');
+      devLog('🧹 [usePDFDocument] Hook unmounting, cleaning up document');
       if (document) {
         PDFService.cleanup(document);
       }
