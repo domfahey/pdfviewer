@@ -29,26 +29,6 @@ Modern PDF viewer with React 19.1 frontend and FastAPI backend, featuring compre
 - Python 3.11 or higher
 - Node.js 18 or higher
 
-### System Dependencies
-
-The backend requires `libmagic` for file type detection:
-
-```bash
-# macOS
-brew install libmagic
-
-# Ubuntu/Debian
-sudo apt-get install libmagic1
-
-# RHEL/CentOS/Fedora
-sudo yum install file-devel
-# or
-sudo dnf install file-devel
-
-# Windows
-# python-magic-bin will be installed automatically
-```
-
 ## Quick Start
 
 **Two ways to get started:**

@@ -279,20 +279,7 @@ npm test -- --run src/components/__tests__/FileUpload.test.tsx
 
 ## System Dependencies
 
-### Required: libmagic
-File type detection requires `libmagic`:
-```bash
-# macOS
-brew install libmagic
-
-# Ubuntu/Debian
-sudo apt-get install libmagic1
-
-# RHEL/CentOS/Fedora
-sudo yum install file-devel
-
-# Windows - python-magic-bin auto-installed
-```
+No system dependencies required! PDF validation uses lightweight header checking.
 
 ## Performance Considerations
 
@@ -327,7 +314,6 @@ Before making changes, review:
 ## Troubleshooting
 
 ### Backend Issues
-- **libmagic errors**: Reinstall libmagic for your OS
 - **Import errors**: Check virtual environment, reinstall dependencies
 - **Type errors**: Run `mypy backend` to diagnose
 

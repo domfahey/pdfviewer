@@ -110,14 +110,20 @@ export const usePDFDocument = (): UsePDFDocumentReturn => {
   }, [document]);
 
   // Cleanup on unmount
+  // Use ref to avoid re-creating effect on every document change
+  const documentRef = useRef(document);
+  useEffect(() => {
+    documentRef.current = document;
+  }, [document]);
+
   useEffect(() => {
     return () => {
       devLog('🧹 [usePDFDocument] Hook unmounting, cleaning up document');
-      if (document) {
-        PDFService.cleanup(document);
+      if (documentRef.current) {
+        PDFService.cleanup(documentRef.current);
       }
     };
-  }, [document]); // Include document dependency for cleanup
+  }, []); // Empty deps - only run on unmount
 
   return {
     document,

@@ -24,15 +24,23 @@ async def get_pdf_file(
 
     - **file_id**: Unique identifier of the PDF file
 
-    Returns the PDF file for viewing.
+    Returns the PDF file for viewing with caching headers for performance.
     """
     # Validate file_id using shared utility
     validate_file_id(file_id)
 
     with handle_api_errors("retrieve file"):
         file_path = pdf_service.get_pdf_path(file_id)
+        # Add cache headers for better client-side performance
+        # Cache for 1 hour since PDFs are immutable once uploaded
         return FileResponse(
-            path=str(file_path), media_type="application/pdf", filename=f"{file_id}.pdf"
+            path=str(file_path),
+            media_type="application/pdf",
+            filename=f"{file_id}.pdf",
+            headers={
+                "Cache-Control": "public, max-age=3600, immutable",
+                "X-Content-Type-Options": "nosniff",
+            },
         )
 
 

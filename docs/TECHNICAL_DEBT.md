@@ -12,55 +12,7 @@ This document tracks potential improvements and refactoring opportunities for th
 
 ## Future Improvements
 
-### 1. Replace libmagic Dependency
-
-**Current State:**
-- The backend uses `python-magic` (which requires system library `libmagic`) for MIME type verification
-- This adds a system dependency that complicates installation, especially on Windows
-- Located in `backend/app/services/pdf_service.py` line 250
-
-**Problem:**
-- Requires system package installation (`brew install libmagic`, `apt-get install libmagic1`, etc.)
-- Can cause installation failures if libmagic is not present
-- Adds complexity for a simple file type check
-
-**Proposed Solution:**
-Replace libmagic with a simple PDF header check:
-
-```python
-def validate_pdf_header(file_path: Path) -> bool:
-    """Check if file has valid PDF header."""
-    try:
-        with open(file_path, 'rb') as f:
-            header = f.read(8)
-            # PDF files start with "%PDF-" followed by version
-            return header.startswith(b'%PDF-')
-    except Exception:
-        return False
-```
-
-**Benefits:**
-- ✅ No system dependencies
-- ✅ Simpler installation process
-- ✅ Cross-platform compatibility without extra steps
-- ✅ Sufficient security when combined with extension check
-
-**Trade-offs:**
-- ❌ Less sophisticated than libmagic
-- ❌ Won't detect corrupted PDFs as effectively
-- ❌ May miss some edge cases that libmagic would catch
-
-**Implementation Notes:**
-1. Replace `magic.from_file()` call with header check
-2. Remove `python-magic` from dependencies
-3. Update documentation to remove libmagic installation steps
-4. Add unit tests for header validation
-
-**Priority:** Low - Current solution works, this is an optimization
-
----
-
-### 2. Docker Configuration
+### 1. Docker Configuration
 
 **Current State:**
 - Makefile has docker commands but no Docker files exist (docker-compose.yml, Dockerfile)
@@ -69,13 +21,12 @@ def validate_pdf_header(file_path: Path) -> bool:
 **Proposed Solution:**
 - Create `Dockerfile` for backend and frontend
 - Create `docker-compose.yml` for full stack
-- Include libmagic in Docker image (or implement header check first)
 
 **Priority:** Medium - Nice to have for easier deployment and development environment consistency
 
 ---
 
-### 3. CI/CD Pipeline
+### 2. CI/CD Pipeline
 
 **Current State:**
 - No GitHub Actions workflows directory (.github/workflows/)
@@ -95,6 +46,11 @@ def validate_pdf_header(file_path: Path) -> bool:
 ## Completed Improvements
 
 ### Recent (October 2025)
+- ✅ **Removed libmagic dependency** - Replaced with lightweight PDF header validation
+  - Eliminates system dependency (no more `brew install libmagic` needed)
+  - Faster validation using simple header check
+  - Simplified cross-platform installation
+  - Reduced dependencies and installation complexity
 - ✅ **Code refactoring** - Removed 507 lines of overly complicated code (PR #31)
   - Simplified Pydantic models, removed unnecessary computed fields
   - Consolidated duplicate logging logic
@@ -104,6 +60,9 @@ def validate_pdf_header(file_path: Path) -> bool:
   - Search result caching (99% improvement on repeated searches)
   - Chunked file uploads (98% memory reduction)
   - Canvas rendering optimizations
+  - HTTP caching headers for static resources
+  - Consolidated React useEffect hooks to reduce re-renders
+  - Optimized connection pooling for external HTTP requests
 
 ### Previous Work
 - ✅ Comprehensive test infrastructure (unit, integration, E2E)

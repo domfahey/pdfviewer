@@ -22,7 +22,6 @@ PDF viewer POC built with React 19.1 and FastAPI. Core features:
 - FastAPI (Python 3.11+)
 - UV package manager
 - Pydantic v2
-- System dependency: `libmagic`
 
 ## Code Standards
 

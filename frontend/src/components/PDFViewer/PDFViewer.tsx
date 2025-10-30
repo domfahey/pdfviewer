@@ -172,24 +172,24 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       const containerWidth = window.innerWidth - thumbnailsWidthActual - metadataWidth - 40; // 40px for padding
       const containerHeight = window.innerHeight - 120; // Account for PDF controls only
 
+      // Pre-calculate padding to avoid repetition
+      const padding = 60;
+      const availableWidth = containerWidth - padding;
+      const availableHeight = containerHeight - padding;
+
       let scale = 1;
 
       switch (mode) {
         case 'width':
-          // Fit to container width with some padding
-          scale = (containerWidth - 60) / pageWidth; // 60px for padding
+          scale = availableWidth / pageWidth;
           break;
         case 'height':
-          // Fit to container height with some padding
-          scale = (containerHeight - 60) / pageHeight; // 60px for padding
+          scale = availableHeight / pageHeight;
           break;
-        case 'page': {
+        case 'page':
           // Fit to both width and height, using the smaller scale
-          const widthScale = (containerWidth - 60) / pageWidth;
-          const heightScale = (containerHeight - 60) / pageHeight;
-          scale = Math.min(widthScale, heightScale);
+          scale = Math.min(availableWidth / pageWidth, availableHeight / pageHeight);
           break;
-        }
       }
 
       // Clamp scale to reasonable bounds
@@ -198,39 +198,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     [showThumbnails, thumbnailsWidth, showMetadata]
   );
 
-  // Recalculate fit mode when page loads or window resizes
+  // Consolidated effect: Recalculate fit mode when page, panels, or window changes
+  // This replaces three separate effects to reduce redundant calculations
   useEffect(() => {
-    if (currentPageProxy && fitMode.mode !== 'custom') {
-      const newScale = calculateFitScale(
-        fitMode.mode as 'width' | 'height' | 'page',
-        currentPageProxy
-      );
-      setScale(newScale);
-    }
-  }, [currentPageProxy, fitMode.mode, calculateFitScale, setScale]);
-
-  // Recalculate fit mode when panels are toggled
-  useEffect(() => {
-    if (currentPageProxy && fitMode.mode !== 'custom') {
-      const newScale = calculateFitScale(
-        fitMode.mode as 'width' | 'height' | 'page',
-        currentPageProxy
-      );
-      setScale(newScale);
-    }
-  }, [
-    showThumbnails,
-    thumbnailsWidth,
-    showMetadata,
-    currentPageProxy,
-    fitMode.mode,
-    calculateFitScale,
-    setScale,
-  ]);
-
-  // Handle window resize for fit modes
-  useEffect(() => {
-    const handleResize = () => {
+    const recalculateScale = () => {
       if (currentPageProxy && fitMode.mode !== 'custom') {
         const newScale = calculateFitScale(
           fitMode.mode as 'width' | 'height' | 'page',
@@ -240,9 +211,21 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [currentPageProxy, fitMode.mode, calculateFitScale, setScale]);
+    // Recalculate immediately when dependencies change
+    recalculateScale();
+
+    // Also recalculate on window resize
+    window.addEventListener('resize', recalculateScale);
+    return () => window.removeEventListener('resize', recalculateScale);
+  }, [
+    currentPageProxy,
+    fitMode.mode,
+    showThumbnails,
+    thumbnailsWidth,
+    showMetadata,
+    calculateFitScale,
+    setScale,
+  ]);
 
   const handleFitModeChange = useCallback(
     (newFitMode: FitMode) => {

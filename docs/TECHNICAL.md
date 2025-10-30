@@ -24,25 +24,7 @@
 ### Prerequisites
 - Python 3.11 or higher (currently using 3.12.3)
 - Node.js 18 or higher
-- libmagic (for file type detection)
 - **Optional:** UV package manager for faster Python dependency installation
-
-### System Dependencies
-
-```bash
-# Install libmagic (required for PDF validation)
-
-# macOS
-brew install libmagic
-
-# Ubuntu/Debian
-sudo apt-get install libmagic1
-
-# RHEL/CentOS/Fedora
-sudo yum install file-devel
-
-# Windows - automatically handled by python-magic-bin
-```
 
 ### Install & Run
 
