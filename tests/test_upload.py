@@ -2,34 +2,21 @@ import io
 
 from fastapi.testclient import TestClient
 
+from conftest import (
+    assert_error_response,
+    assert_metadata_fields,
+    assert_upload_response,
+    create_upload_files,
+)
+
 
 def test_upload_valid_pdf(client: TestClient, sample_pdf_content: bytes):
     """Test uploading a valid PDF file."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
-
+    files = create_upload_files("test.pdf", sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 200
+    assert_upload_response(response, expected_filename="test.pdf")
     data = response.json()
-
-    assert "file_id" in data
-    assert "filename" in data
-    assert "file_size" in data
-    assert "mime_type" in data
-    assert "upload_time" in data
-    assert "metadata" in data
-
-    assert data["filename"] == "test.pdf"
-    assert data["mime_type"] == "application/pdf"
-    assert data["file_size"] > 0
-
-    # Check Pydantic v2 enhanced response fields
-    assert "file_size_mb" in data
-    assert "upload_time" in data
-    assert "upload_age_hours" in data
-    assert "upload_status" in data
-    assert "processing_priority" in data
-    assert "_poc_info" in data
 
     # Validate POC info
     poc_info = data["_poc_info"]
@@ -37,26 +24,14 @@ def test_upload_valid_pdf(client: TestClient, sample_pdf_content: bytes):
     assert poc_info["enhanced_validation"] is True
 
     # Check enhanced metadata with computed fields
-    metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-    assert "file_size_mb" in metadata
-    assert "document_complexity_score" in metadata
-    assert "document_category" in metadata
-    assert "is_large_document" in metadata
-    assert metadata["page_count"] > 0
+    assert_metadata_fields(data["metadata"])
 
 
 def test_upload_invalid_file_type(client: TestClient):
     """Test uploading a non-PDF file."""
-    files = {"file": ("test.txt", io.BytesIO(b"Not a PDF"), "text/plain")}
-
+    files = create_upload_files("test.txt", b"Not a PDF", "text/plain")
     response = client.post("/api/upload", files=files)
-
-    assert response.status_code == 400
-    data = response.json()
-    assert "detail" in data
+    assert_error_response(response, 400)
 
 
 def test_upload_no_file(client: TestClient):
@@ -68,8 +43,7 @@ def test_upload_no_file(client: TestClient):
 
 def test_upload_empty_filename(client: TestClient, sample_pdf_content: bytes):
     """Test uploading a file with no filename."""
-    files = {"file": ("", io.BytesIO(sample_pdf_content), "application/pdf")}
-
+    files = create_upload_files("", sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
     # FastAPI might return 422 for validation errors instead of 400
@@ -89,18 +63,14 @@ def test_upload_large_file(client: TestClient):
     """Test uploading a file that exceeds size limit."""
     # Create a file larger than 50MB (the limit)
     large_content = b"x" * (51 * 1024 * 1024)  # 51MB
-    files = {"file": ("large.pdf", io.BytesIO(large_content), "application/pdf")}
-
+    files = create_upload_files("large.pdf", large_content)
     response = client.post("/api/upload", files=files)
-
-    assert response.status_code == 413
-    data = response.json()
-    assert "too large" in data["detail"].lower()
+    assert_error_response(response, 413, "too large")
 
 
 def test_upload_with_correlation_id(client: TestClient, sample_pdf_content: bytes):
     """Test upload with correlation ID header tracking."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
+    files = create_upload_files("test.pdf", sample_pdf_content)
     correlation_id = "test-correlation-123"
 
     response = client.post(
@@ -113,7 +83,7 @@ def test_upload_with_correlation_id(client: TestClient, sample_pdf_content: byte
 
 def test_upload_cors_headers(client: TestClient, sample_pdf_content: bytes):
     """Test CORS headers are properly set for upload endpoint."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
+    files = create_upload_files("test.pdf", sample_pdf_content)
     origin = "http://localhost:5173"
 
     response = client.post("/api/upload", files=files, headers={"Origin": origin})
@@ -125,15 +95,9 @@ def test_upload_cors_headers(client: TestClient, sample_pdf_content: bytes):
 def test_upload_enhanced_error_response(client: TestClient):
     """Test enhanced error response format."""
     # Upload invalid file to trigger error
-    files = {"file": ("test.txt", io.BytesIO(b"Not a PDF"), "text/plain")}
-
+    files = create_upload_files("test.txt", b"Not a PDF", "text/plain")
     response = client.post("/api/upload", files=files)
-
-    assert response.status_code == 400
-    data = response.json()
-
-    # Should have enhanced error format
-    assert "detail" in data
+    assert_error_response(response, 400)
 
 
 def test_upload_filename_validation(client: TestClient, sample_pdf_content: bytes):
@@ -146,7 +110,7 @@ def test_upload_filename_validation(client: TestClient, sample_pdf_content: byte
     ]
 
     for filename, expected_status in test_cases:
-        files = {"file": (filename, io.BytesIO(sample_pdf_content), "application/pdf")}
+        files = create_upload_files(filename, sample_pdf_content)
         response = client.post("/api/upload", files=files)
         assert (
             response.status_code == expected_status
@@ -155,8 +119,7 @@ def test_upload_filename_validation(client: TestClient, sample_pdf_content: byte
 
 def test_upload_response_timing_fields(client: TestClient, sample_pdf_content: bytes):
     """Test that timing-related computed fields are present."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
-
+    files = create_upload_files("test.pdf", sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
     assert response.status_code == 200
@@ -176,8 +139,7 @@ def test_upload_processing_priority_assignment(
     client: TestClient, sample_pdf_content: bytes
 ):
     """Test processing priority assignment based on file characteristics."""
-    files = {"file": ("small.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
-
+    files = create_upload_files("small.pdf", sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
     assert response.status_code == 200
@@ -191,8 +153,7 @@ def test_upload_metadata_complexity_scoring(
     client: TestClient, sample_pdf_content: bytes
 ):
     """Test document complexity scoring in metadata."""
-    files = {"file": ("test.pdf", io.BytesIO(sample_pdf_content), "application/pdf")}
-
+    files = create_upload_files("test.pdf", sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
     assert response.status_code == 200

@@ -222,3 +222,160 @@ def nhtsa_form_pdf_file(temp_dir, nhtsa_form_pdf_content):
     pdf_file = temp_dir / "nhtsa_form.pdf"
     pdf_file.write_bytes(nhtsa_form_pdf_content)
     return pdf_file
+
+
+# Test Helper Functions for Reducing Code Duplication
+
+
+def create_upload_files(
+    filename: str, content: bytes, mime_type: str = "application/pdf"
+) -> dict:
+    """Create a files dictionary for PDF upload testing.
+
+    Args:
+        filename: Name of the file to upload
+        content: Binary content of the file
+        mime_type: MIME type of the file (default: "application/pdf")
+
+    Returns:
+        Dictionary formatted for FastAPI TestClient file upload
+
+    Example:
+        files = create_upload_files("test.pdf", pdf_content)
+        response = client.post("/api/upload", files=files)
+    """
+    import io
+
+    return {"file": (filename, io.BytesIO(content), mime_type)}
+
+
+def assert_upload_response(response, expected_filename: str | None = None):
+    """Assert that an upload response has the expected structure and fields.
+
+    Args:
+        response: TestClient response object
+        expected_filename: Optional expected filename to validate
+
+    Raises:
+        AssertionError: If response doesn't match expected structure
+    """
+    assert response.status_code == 200
+    data = response.json()
+
+    # Check core fields
+    assert "file_id" in data
+    assert "filename" in data
+    assert "file_size" in data
+    assert "mime_type" in data
+    assert "upload_time" in data
+    assert "metadata" in data
+
+    if expected_filename:
+        assert data["filename"] == expected_filename
+
+    assert data["mime_type"] == "application/pdf"
+    assert data["file_size"] > 0
+
+    # Check Pydantic v2 enhanced response fields
+    assert "file_size_mb" in data
+    assert "upload_time" in data
+    assert "upload_age_hours" in data
+    assert "upload_status" in data
+    assert "processing_priority" in data
+    assert "_poc_info" in data
+
+
+def assert_metadata_fields(metadata: dict, min_pages: int = 1):
+    """Assert that metadata has expected fields and valid values.
+
+    Args:
+        metadata: Metadata dictionary from upload response
+        min_pages: Minimum expected page count (default: 1)
+
+    Raises:
+        AssertionError: If metadata doesn't have expected structure
+    """
+    # Check essential metadata fields
+    assert "page_count" in metadata
+    assert "file_size" in metadata
+    assert "encrypted" in metadata
+
+    # Check computed fields
+    assert "file_size_mb" in metadata
+    assert "document_complexity_score" in metadata
+    assert "document_category" in metadata
+    assert "is_large_document" in metadata
+
+    # Validate values
+    assert metadata["page_count"] >= min_pages
+    assert metadata["file_size"] > 0
+    assert isinstance(metadata["encrypted"], bool)
+
+
+def perform_full_pdf_workflow(
+    client: TestClient, filename: str, content: bytes
+) -> tuple[str, dict]:
+    """Perform a complete PDF workflow: upload, retrieve, get metadata, delete.
+
+    Args:
+        client: FastAPI TestClient instance
+        filename: Name of the PDF file
+        content: Binary content of the PDF file
+
+    Returns:
+        Tuple of (file_id, upload_data)
+
+    Raises:
+        AssertionError: If any step in the workflow fails
+    """
+    import io
+
+    # Step 1: Upload PDF
+    files = create_upload_files(filename, content)
+    upload_response = client.post("/api/upload", files=files)
+    assert upload_response.status_code == 200
+    upload_data = upload_response.json()
+    file_id = upload_data["file_id"]
+
+    # Step 2: Get PDF file
+    pdf_response = client.get(f"/api/pdf/{file_id}")
+    assert pdf_response.status_code == 200
+    assert pdf_response.headers["content-type"] == "application/pdf"
+    assert len(pdf_response.content) > 0
+
+    # Step 3: Get metadata
+    metadata_response = client.get(f"/api/metadata/{file_id}")
+    assert metadata_response.status_code == 200
+    metadata = metadata_response.json()
+    assert_metadata_fields(metadata)
+
+    # Step 4: Delete PDF
+    delete_response = client.delete(f"/api/pdf/{file_id}")
+    assert delete_response.status_code == 200
+    delete_data = delete_response.json()
+    assert "deleted successfully" in delete_data["message"]
+
+    # Step 5: Verify file is deleted
+    pdf_response_after_delete = client.get(f"/api/pdf/{file_id}")
+    assert pdf_response_after_delete.status_code == 404
+
+    return file_id, upload_data
+
+
+def assert_error_response(response, expected_status: int, error_substring: str = ""):
+    """Assert that an error response has the expected status and message.
+
+    Args:
+        response: TestClient response object
+        expected_status: Expected HTTP status code
+        error_substring: Optional substring to check in error detail (case-insensitive)
+
+    Raises:
+        AssertionError: If response doesn't match expected error format
+    """
+    assert response.status_code == expected_status
+    data = response.json()
+    assert "detail" in data
+
+    if error_substring:
+        assert error_substring.lower() in data["detail"].lower()
