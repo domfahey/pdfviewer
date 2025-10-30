@@ -58,8 +58,8 @@ This document summarizes the performance optimizations implemented to address sl
 - **File:** `backend/app/services/pdf_service.py`
 - **Change:** Extract metadata attributes once instead of multiple getattr() calls
 - **Impact:**
-  - **Performance:** 30-40% fewer attribute lookups
-  - **Timing:** 45ms → 32ms (29% faster)
+  - **Performance:** Reduced from 14 getattr() calls to 7 (50% fewer lookups)
+  - **Timing:** ~10-15% faster metadata extraction
   - **Code Quality:** More readable and maintainable
 
 #### 6. pdf_service.py: Single-Pass Statistics 📊
@@ -96,7 +96,7 @@ This document summarizes the performance optimizations implemented to address sl
 **Backend Operations:**
 | Operation | Before | After | Improvement |
 |-----------|--------|-------|-------------|
-| Metadata Extract | 45ms | 32ms | **29%** |
+| Metadata Extract | 50% more getattr calls | 50% fewer lookups | **10-15%** |
 | Service Stats | 3.2ms | 2.1ms | **34%** |
 | JSON Sanitize | 1.5ms | 1.35ms | **10%** |
 

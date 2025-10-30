@@ -96,13 +96,13 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             const page = await document.getPage(pageNumber);
             const textContent = await page.getTextContent();
 
-            // Pre-allocate array for better performance
-            const text_items: string[] = new Array(textContent.items.length);
+            // Build array efficiently - only include items with text
+            const text_items: string[] = [];
             
             for (let i = 0; i < textContent.items.length; i++) {
               const item = textContent.items[i];
               if ('str' in item) {
-                text_items[i] = item.str;
+                text_items.push(item.str);
               }
             }
 
