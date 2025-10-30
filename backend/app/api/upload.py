@@ -68,6 +68,6 @@ async def upload_pdf(
 
         return upload_response
 
-    except Exception as upload_error:
-        api_logger.log_processing_error(upload_error, filename=file.filename)
+    except Exception as upload_exception:
+        api_logger.log_processing_error(upload_exception, filename=file.filename)
         raise

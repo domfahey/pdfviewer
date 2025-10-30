@@ -59,14 +59,14 @@ async def load_pdf_from_url(
                     response.raise_for_status()
                     break
 
-                except (httpx.TimeoutException, httpx.NetworkError) as network_error:
+                except (httpx.TimeoutException, httpx.NetworkError) as network_exception:
                     if attempt < max_retries - 1:
                         # Exponential backoff
                         await asyncio.sleep(2**attempt)
                         continue
                     raise HTTPException(
                         status_code=504,
-                        detail=f"Timeout downloading PDF after {max_retries} attempts: {str(network_error)}",
+                        detail=f"Timeout downloading PDF after {max_retries} attempts: {str(network_exception)}",
                     )
 
             if response is None:
@@ -113,14 +113,14 @@ async def load_pdf_from_url(
 
             return upload_response
 
-    except httpx.HTTPStatusError as http_status_error:
+    except httpx.HTTPStatusError as http_status_exception:
         raise HTTPException(
             status_code=502,
-            detail=f"Failed to download PDF from URL: {http_status_error.response.status_code}",
+            detail=f"Failed to download PDF from URL: {http_status_exception.response.status_code}",
         )
-    except httpx.RequestError as request_error:
+    except httpx.RequestError as request_exception:
         raise HTTPException(
-            status_code=502, detail=f"Failed to connect to URL: {str(request_error)}"
+            status_code=502, detail=f"Failed to connect to URL: {str(request_exception)}"
         )
     except Exception as error:
         raise HTTPException(

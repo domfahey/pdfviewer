@@ -75,28 +75,28 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
           const textContent = await page.getTextContent();
 
           // Pre-allocate array for better performance
-          const text_items: string[] = new Array(textContent.items.length);
+          const extractedTextItems: string[] = new Array(textContent.items.length);
           
           for (let i = 0; i < textContent.items.length; i++) {
             const item = textContent.items[i];
             if ('str' in item) {
-              text_items[i] = item.str;
+              extractedTextItems[i] = item.str;
             }
           }
 
           // Join once instead of concatenating in loop
-          const pageText = text_items.join(' ');
+          const pageText = extractedTextItems.join(' ');
           const normalizedPageText = pageText.toLowerCase();
           
           // Find all matches in this page
-          let current_match_position = 0;
-          while ((current_match_position = normalizedPageText.indexOf(normalizedQuery, current_match_position)) !== -1) {
+          let currentMatchPosition = 0;
+          while ((currentMatchPosition = normalizedPageText.indexOf(normalizedQuery, currentMatchPosition)) !== -1) {
             matches.push({
               pageIndex: pageNumber - 1,
               matchIndex: matches.length,
-              text: pageText.substring(current_match_position, current_match_position + query.length),
+              text: pageText.substring(currentMatchPosition, currentMatchPosition + query.length),
             });
-            current_match_position += normalizedQuery.length;
+            currentMatchPosition += normalizedQuery.length;
           }
         }
 

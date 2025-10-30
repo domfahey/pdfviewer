@@ -110,8 +110,8 @@ class PDFService:
             file_size_bytes=file_path.stat().st_size,
         ):
             try:
-                with open(file_path, "rb") as pdf_file_reader:
-                    reader = PdfReader(pdf_file_reader)
+                with open(file_path, "rb") as pdf_binary_file:
+                    reader = PdfReader(pdf_binary_file)
 
                     # Get basic info
                     page_count = len(reader.pages)
@@ -152,11 +152,11 @@ class PDFService:
                             file_size=file_size,
                             encrypted=encrypted,
                         )
-                    except Exception as metadata_error:
+                    except Exception as metadata_exception:
                         self.logger.warning(
                             "PDF metadata validation failed, using fallback",
                             file_path=str(file_path),
-                            metadata_error=str(metadata_error),
+                            metadata_error=str(metadata_exception),
                             page_count=page_count,
                             file_size=file_size,
                         )
@@ -169,12 +169,12 @@ class PDFService:
 
                     return metadata
 
-            except Exception as extraction_error:
+            except Exception as extraction_exception:
                 # Log the specific error and return fallback metadata
                 log_exception_context(
                     self.logger,
                     "PDF metadata extraction",
-                    extraction_error,
+                    extraction_exception,
                     file_path=str(file_path),
                     fallback_used=True,
                 )
@@ -232,12 +232,12 @@ class PDFService:
                     file_id=file_id,
                     file_size=file.size,
                 ) as write_tracker:
-                    async with aiofiles.open(file_path, "wb") as pdf_output_file:
+                    async with aiofiles.open(file_path, "wb") as output_file_handle:
                         while True:
                             chunk = await file.read(self.CHUNK_SIZE)
                             if not chunk:
                                 break
-                            await pdf_output_file.write(chunk)
+                            await output_file_handle.write(chunk)
 
                 # Cache file.stat() result to avoid multiple filesystem calls
                 file_stat = file_path.stat()
@@ -317,12 +317,12 @@ class PDFService:
             except HTTPException:
                 # Re-raise HTTP exceptions (these are expected errors)
                 raise
-            except Exception as upload_error:
+            except Exception as upload_exception:
                 # Log unexpected errors
                 log_exception_context(
                     self.logger,
                     "PDF file upload",
-                    upload_error,
+                    upload_exception,
                     file_id=file_id,
                     filename=file.filename,
                     file_path=str(file_path),
@@ -330,10 +330,10 @@ class PDFService:
 
                 self.file_logger.upload_failed(
                     file.filename or "unknown",
-                    str(upload_error),
+                    str(upload_exception),
                     upload_tracker.duration_ms or 0,
                     file_id=file_id,
-                    error_type=type(upload_error).__name__,
+                    error_type=type(upload_exception).__name__,
                 )
 
                 # Clean up file if something went wrong
@@ -343,15 +343,15 @@ class PDFService:
                         self.logger.debug(
                             "Cleaned up failed upload file", file_path=str(file_path)
                         )
-                    except Exception as cleanup_error:
+                    except Exception as cleanup_exception:
                         self.logger.error(
                             "Failed to clean up upload file",
                             file_path=str(file_path),
-                            cleanup_error=str(cleanup_error),
+                            cleanup_error=str(cleanup_exception),
                         )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to process file: {str(upload_error)}"
+                    status_code=500, detail=f"Failed to process file: {str(upload_exception)}"
                 )
 
     def get_pdf_path(self, file_id: str) -> Path:
@@ -445,12 +445,12 @@ class PDFService:
                 self.logger.info("PDF file deleted successfully", file_id=file_id)
                 return True
 
-            except Exception as deletion_error:
+            except Exception as deletion_exception:
                 # Log deletion failure
                 log_exception_context(
                     self.logger,
                     "PDF file deletion",
-                    deletion_error,
+                    deletion_exception,
                     file_id=file_id,
                     file_path=str(file_path),
                 )
@@ -458,13 +458,13 @@ class PDFService:
                 self.file_logger.deletion_logged(
                     file_id,
                     success=False,
-                    error=str(deletion_error),
-                    error_type=type(deletion_error).__name__,
+                    error=str(deletion_exception),
+                    error_type=type(deletion_exception).__name__,
                     duration_ms=delete_tracker.duration_ms,
                 )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to delete file: {str(deletion_error)}"
+                    status_code=500, detail=f"Failed to delete file: {str(deletion_exception)}"
                 )
 
     def list_files(self) -> dict[str, PDFInfo]:
