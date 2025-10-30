@@ -390,7 +390,7 @@ class TestLogFileOperationDecorator:
         async def failing_upload(file):
             raise OSError("File upload failed")
 
-        with pytest.raises(IOError, match="File upload failed"):
+        with pytest.raises(OSError, match="File upload failed"):
             await failing_upload(file=Mock())
 
     @pytest.mark.asyncio
