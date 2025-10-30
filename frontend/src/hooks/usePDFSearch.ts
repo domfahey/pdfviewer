@@ -17,9 +17,6 @@ interface SearchState {
   isSearching: boolean;
 }
 
-// Search debounce delay in milliseconds
-const SEARCH_DEBOUNCE_DELAY = 300;
-
 /**
  * Custom hook for full-text PDF search functionality.
  * Provides search across all pages with match navigation and highlighting.

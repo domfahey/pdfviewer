@@ -5,8 +5,8 @@ and file information using Pydantic v2.
 """
 
 from datetime import UTC, datetime
-import re
-from typing import Annotated, Any
+
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
@@ -15,14 +15,7 @@ from pydantic import (
     computed_field,
     field_serializer,
     field_validator,
-    model_serializer,
     model_validator,
-)
-
-# Compile regex patterns once for performance
-UUID_V4_PATTERN = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
-    re.IGNORECASE
 )
 
 
