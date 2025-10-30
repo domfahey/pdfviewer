@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ApiService } from '../services/api';
 import type { PDFUploadResponse } from '../types/pdf.types';
 import { devLog, devError } from '../utils/devLogger';
@@ -15,6 +15,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const validateFile = (file: File): string | null => {
     // Check file type
@@ -55,10 +56,13 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
     try {
       // Simulate upload progress (since fetch doesn't provide real progress)
-      const progressInterval = setInterval(() => {
+      progressIntervalRef.current = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
-            clearInterval(progressInterval);
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
             return prev;
           }
           return prev + 10;
@@ -75,7 +79,10 @@ export const useFileUpload = (): UseFileUploadReturn => {
         metadata: response.metadata,
       });
 
-      clearInterval(progressInterval);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       setUploadProgress(100);
 
       // Keep progress at 100% for a moment before clearing
@@ -100,6 +107,15 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  // Cleanup on unmount - clear any active progress interval
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
   }, []);
 
   return {
