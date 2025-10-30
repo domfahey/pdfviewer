@@ -2,7 +2,7 @@
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, TypeVar
+from typing import Any
 
 from fastapi import HTTPException
 
@@ -15,8 +15,6 @@ __all__ = [
     "api_endpoint_handler",
     "handle_api_errors",
 ]
-
-T = TypeVar("T")
 
 
 def validate_file_id(file_id: str) -> str:
