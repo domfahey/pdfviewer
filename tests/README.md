@@ -159,7 +159,7 @@ The test suite includes reusable helper functions in `conftest.py` to reduce cod
 
 **File Upload Helpers:**
 ```python
-# Pytest auto-discovers conftest.py, so you can import directly:
+# Import from conftest.py (pytest auto-discovers it in the tests directory)
 from conftest import create_upload_files
 
 # Create upload files dict for testing
@@ -169,11 +169,8 @@ response = client.post("/api/upload", files=files)
 
 **Response Validation Helpers:**
 ```python
-from conftest import (
-    assert_upload_response,
-    assert_metadata_fields,
-    assert_error_response,
-)
+# Import multiple helpers
+from conftest import assert_upload_response, assert_metadata_fields, assert_error_response
 
 # Validate successful upload response
 assert_upload_response(response, expected_filename="test.pdf")
@@ -187,6 +184,7 @@ assert_error_response(response, 404, "not found")
 
 **Workflow Helpers:**
 ```python
+# Import workflow helper
 from conftest import perform_full_pdf_workflow
 
 # Perform complete upload/retrieve/metadata/delete workflow
