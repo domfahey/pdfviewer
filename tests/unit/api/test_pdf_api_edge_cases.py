@@ -1,8 +1,13 @@
 """
-Comprehensive tests for PDF API endpoints to increase coverage.
+Edge case tests for PDF API endpoints.
 
-This module focuses on edge cases, error scenarios, and validation logic
-that aren't covered by the basic workflow tests.
+This module complements test_pdf_endpoints.py by focusing on:
+- Edge cases and boundary conditions
+- Error scenarios and validation edge cases
+- File handling edge cases
+- Concurrent request edge cases
+
+For standard API functionality tests, see test_pdf_endpoints.py.
 """
 
 import io

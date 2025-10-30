@@ -1,8 +1,14 @@
 """
-Comprehensive tests for backend.app.utils.logger to increase coverage.
+Edge case tests for logging utilities.
 
-This module focuses on edge cases, error scenarios, performance tracking,
-and logging utilities that aren't covered by existing tests.
+This module provides additional coverage for logger utilities:
+- Performance tracking edge cases
+- Structured logging edge cases  
+- Context binding edge cases
+- Error logging edge cases
+- Async logging edge cases
+
+For standard logging functionality, see test_core_logging.py.
 """
 
 import asyncio

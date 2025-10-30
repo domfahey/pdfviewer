@@ -1,8 +1,14 @@
 """
-Comprehensive tests for middleware/logging.py to increase coverage.
+Edge case tests for logging middleware.
 
-This module focuses on edge cases, error scenarios, correlation ID management,
-and logging functionality that isn't covered by basic integration tests.
+This module complements test_logging_middleware.py by focusing on:
+- Edge cases and boundary conditions
+- Error scenarios and error handling
+- Correlation ID edge cases
+- Request/response body handling edge cases
+- Header filtering and sanitization edge cases
+
+For standard middleware functionality tests, see test_logging_middleware.py.
 """
 
 import json
