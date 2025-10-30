@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PDFService } from '../pdfService';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy, PDFPageProxy, PageViewport } from 'pdfjs-dist';
+import { createMockTextLayer } from '../../test/pdfMockHelpers';
 
 // Mock pdfjs-dist
 vi.mock('pdfjs-dist', () => ({
@@ -331,9 +332,7 @@ describe('PDFService', () => {
     });
 
     it('should render text layer successfully', async () => {
-      const mockTextLayer = {
-        render: vi.fn().mockResolvedValue(undefined),
-      };
+      const mockTextLayer = createMockTextLayer();
 
       vi.mocked(pdfjsLib.TextLayer).mockReturnValue(mockTextLayer as any);
 
@@ -359,9 +358,7 @@ describe('PDFService', () => {
     it('should clear previous content', async () => {
       textLayerDiv.innerHTML = '<div>Previous content</div>';
 
-      const mockTextLayer = {
-        render: vi.fn().mockResolvedValue(undefined),
-      };
+      const mockTextLayer = createMockTextLayer();
 
       vi.mocked(pdfjsLib.TextLayer).mockReturnValue(mockTextLayer as any);
 

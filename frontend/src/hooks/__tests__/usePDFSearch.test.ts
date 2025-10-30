@@ -8,34 +8,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePDFSearch } from '../usePDFSearch';
-import type { PDFDocumentProxy, PDFPageProxy, TextContent, TextItem } from 'pdfjs-dist';
+import { createMockDocument } from '../../test/pdfMockHelpers';
 
 describe('usePDFSearch', () => {
-  const createMockTextContent = (text: string): TextContent => ({
-    items: text.split(' ').map(
-      (str) =>
-        ({
-          str,
-        }) as TextItem
-    ),
-    styles: {},
-  });
-
-  const createMockPage = (pageNumber: number, text: string): PDFPageProxy => ({
-    pageNumber,
-    getTextContent: vi.fn().mockResolvedValue(createMockTextContent(text)),
-  }) as unknown as PDFPageProxy;
-
-  const createMockDocument = (pages: Array<{ pageNum: number; text: string }>): PDFDocumentProxy => {
-    const mockPages = pages.map((p) => createMockPage(p.pageNum, p.text));
-    return {
-      numPages: pages.length,
-      getPage: vi.fn().mockImplementation((pageNum: number) =>
-        Promise.resolve(mockPages[pageNum - 1])
-      ),
-    } as unknown as PDFDocumentProxy;
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
