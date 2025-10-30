@@ -24,6 +24,7 @@ interface PDFThumbnailsProps {
 interface ThumbnailData {
   pageNumber: number;
   canvas: HTMLCanvasElement | null;
+  dataUrl: string | null; // Cache toDataURL result to avoid repeated encoding
   isLoading: boolean;
 }
 
@@ -39,26 +40,16 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
   const [thumbnails, setThumbnails] = useState<ThumbnailData[]>([]);
   const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const generatedPages = useRef<Set<number>>(new Set());
 
-  const generateThumbnails = useCallback(async () => {
-    if (!pdfDocument) return;
+  // Generate a single thumbnail when it becomes visible
+  const generateThumbnail = useCallback(
+    async (pageNumber: number) => {
+      if (!pdfDocument || generatedPages.current.has(pageNumber)) return;
 
-    setIsGenerating(true);
-    const newThumbnails: ThumbnailData[] = [];
+      generatedPages.current.add(pageNumber);
 
-    // Initialize thumbnail data
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      newThumbnails.push({
-        pageNumber: i,
-        canvas: null,
-        isLoading: true,
-      });
-    }
-
-    setThumbnails([...newThumbnails]);
-
-    // Generate thumbnails asynchronously
-    const generateThumbnail = async (pageNumber: number) => {
       try {
         const page = await pdfDocument.getPage(pageNumber);
         const viewport = page.getViewport({ scale: 0.2 }); // Small scale for thumbnails
@@ -78,9 +69,14 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
 
         await page.render(renderContext).promise;
 
+        // Cache toDataURL result to avoid repeated encoding on every render
+        const dataUrl = canvas.toDataURL();
+
         setThumbnails(prev =>
           prev.map(thumb =>
-            thumb.pageNumber === pageNumber ? { ...thumb, canvas, isLoading: false } : thumb
+            thumb.pageNumber === pageNumber
+              ? { ...thumb, canvas, dataUrl, isLoading: false }
+              : thumb
           )
         );
       } catch (error) {
@@ -91,31 +87,89 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
           )
         );
       }
-    };
+    },
+    [pdfDocument]
+  );
 
-    // Generate thumbnails in batches to avoid overwhelming the browser
-    const batchSize = 5;
-    for (let i = 0; i < pdfDocument.numPages; i += batchSize) {
-      const batch = [];
-      for (let j = i; j < Math.min(i + batchSize, pdfDocument.numPages); j++) {
-        batch.push(generateThumbnail(j + 1));
-      }
-      await Promise.all(batch);
-      // Small delay between batches
-      await new Promise(resolve => setTimeout(resolve, 100));
+  const initializeThumbnails = useCallback(() => {
+    if (!pdfDocument) return;
+
+    setIsGenerating(true);
+    const newThumbnails: ThumbnailData[] = [];
+
+    // Initialize thumbnail data (but don't generate yet)
+    for (let i = 1; i <= pdfDocument.numPages; i++) {
+      newThumbnails.push({
+        pageNumber: i,
+        canvas: null,
+        dataUrl: null,
+        isLoading: false, // Not loading yet
+      });
+    }
+
+    setThumbnails([...newThumbnails]);
+    generatedPages.current.clear();
+
+    // Generate first few thumbnails immediately for better UX
+    const initialBatch = Math.min(3, pdfDocument.numPages);
+    for (let i = 1; i <= initialBatch; i++) {
+      setThumbnails(prev =>
+        prev.map(thumb => (thumb.pageNumber === i ? { ...thumb, isLoading: true } : thumb))
+      );
+      generateThumbnail(i);
     }
 
     setIsGenerating(false);
-  }, [pdfDocument]);
+  }, [pdfDocument, generateThumbnail]);
 
   useEffect(() => {
     if (!pdfDocument || !isVisible) {
       setThumbnails([]);
+      generatedPages.current.clear();
       return;
     }
 
-    generateThumbnails();
-  }, [pdfDocument, isVisible, generateThumbnails]);
+    initializeThumbnails();
+  }, [pdfDocument, isVisible, initializeThumbnails]);
+
+  // Set up Intersection Observer for lazy loading thumbnails
+  useEffect(() => {
+    if (!isVisible || thumbnails.length === 0) return;
+
+    observerRef.current = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const pageNumber = parseInt(entry.target.getAttribute('data-page-number') || '0');
+            if (pageNumber > 0) {
+              setThumbnails(prev =>
+                prev.map(thumb =>
+                  thumb.pageNumber === pageNumber ? { ...thumb, isLoading: true } : thumb
+                )
+              );
+              generateThumbnail(pageNumber);
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '200px', // Start loading 200px before thumbnail is visible
+        threshold: 0.01,
+      }
+    );
+
+    // Observe all thumbnail containers
+    thumbnailRefs.current.forEach((ref, index) => {
+      if (ref && !generatedPages.current.has(index + 1)) {
+        observerRef.current?.observe(ref);
+      }
+    });
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [isVisible, thumbnails.length, generateThumbnail]);
 
   // Scroll to current page thumbnail
   useEffect(() => {
@@ -211,6 +265,7 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
             {thumbnails.map((thumbnail, index) => (
               <Card
                 key={thumbnail.pageNumber}
+                data-page-number={thumbnail.pageNumber}
                 ref={el => {
                   thumbnailRefs.current[index] = el;
                 }}
@@ -244,10 +299,10 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
                     >
                       <CircularProgress size={20} />
                     </Box>
-                  ) : thumbnail.canvas ? (
+                  ) : thumbnail.dataUrl ? (
                     <CardMedia
                       component="img"
-                      image={thumbnail.canvas.toDataURL()}
+                      image={thumbnail.dataUrl}
                       alt={`Page ${thumbnail.pageNumber}`}
                       sx={{
                         width: '100%',
