@@ -3,6 +3,7 @@ import type { PDFPageProxy } from 'pdfjs-dist';
 import { PDFService } from '../../services/pdfService';
 import { PDFSearchHighlight } from './PDFSearchHighlight';
 import { cleanupCanvas } from '../../utils/canvasRenderer';
+import { devError } from '../../utils/devLogger';
 
 interface PDFPageProps {
   page: PDFPageProxy;
@@ -81,7 +82,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     } catch (error) {
       // Only report errors if component is still mounted
       if (isMountedRef.current) {
-        console.error('Error rendering PDF page:', error);
+        devError('Error rendering PDF page:', error);
         onPageError?.(error instanceof Error ? error.message : 'Failed to render page');
       }
     }

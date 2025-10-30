@@ -18,6 +18,7 @@ import {
   Description as DescriptionIcon,
   Image as ImageIcon,
 } from '@mui/icons-material';
+import { devError } from '../utils/devLogger';
 import type { PDFUploadResponse } from '../types/pdf.types';
 
 interface TestPDF {
@@ -101,7 +102,7 @@ export const TestPDFLoader: React.FC<TestPDFLoaderProps> = ({ onLoadSuccess }) =
 
       setSuccess(`Successfully loaded: ${testPDF.name}`);
     } catch (error) {
-      console.error('Error loading test PDF:', error);
+      devError('Error loading test PDF:', error);
       setError(error instanceof Error ? error.message : 'Failed to load PDF');
     } finally {
       setLoading(false);

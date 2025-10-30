@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { devError } from '../../utils/devLogger';
 
 interface PDFMetadata {
   title?: string;
@@ -101,7 +102,7 @@ export const PDFMetadataPanel: React.FC<PDFMetadataPanelProps> = ({
 
       setMetadata(pdfMetadata);
     } catch (error) {
-      console.error('Error extracting PDF metadata:', error);
+      devError('Error extracting PDF metadata:', error);
       setError('Failed to extract PDF metadata');
     } finally {
       setLoading(false);

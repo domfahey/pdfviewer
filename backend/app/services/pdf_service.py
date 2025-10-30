@@ -96,16 +96,21 @@ class PDFService:
 
         self.logger.debug("File validation passed", **validation_context)
 
-
+    def _get_pdf_attr(self, pdf_info, attr: str):
+        """Helper to safely get PDF info attributes."""
+        return getattr(pdf_info, attr, None) if pdf_info else None
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
         """Extract metadata from PDF file with comprehensive logging."""
+        # Cache file.stat() result to avoid duplicate filesystem call
+        file_stat = file_path.stat()
+        
         with PerformanceTracker(
             "PDF metadata extraction",
             self.logger,
             file_path=str(file_path),
-            file_size_bytes=file_path.stat().st_size,
+            file_size_bytes=file_stat.st_size,
         ):
             try:
                 with open(file_path, "rb") as pdf_binary_file:
@@ -113,7 +118,7 @@ class PDFService:
 
                     # Get basic info
                     page_count = len(reader.pages)
-                    file_size = file_path.stat().st_size
+                    file_size = file_stat.st_size  # Use cached stat result
                     encrypted = reader.is_encrypted
 
                     # Get document info
