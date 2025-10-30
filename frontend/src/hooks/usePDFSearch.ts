@@ -89,27 +89,31 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNumber);
-          const textContent = await page.getTextContent();
-
-          // Pre-allocate array for better performance
-          const extractedTextItems: string[] = new Array(textContent.items.length);
+          // Check if we have cached text for this page
+          let pageText = pageTextCache.current.get(pageNumber);
           
-          for (let i = 0; i < textContent.items.length; i++) {
-            const item = textContent.items[i];
-            if ('str' in item) {
-              extractedTextItems[i] = item.str;
+          if (!pageText) {
+            // Extract text if not cached
+            const page = await document.getPage(pageNumber);
+            const textContent = await page.getTextContent();
+
+            // Pre-allocate array for better performance
+            const extractedTextItems: string[] = new Array(textContent.items.length);
+            
+            for (let i = 0; i < textContent.items.length; i++) {
+              const item = textContent.items[i];
+              if ('str' in item) {
+                extractedTextItems[i] = item.str;
+              }
             }
 
             // Join once instead of concatenating in loop
-            pageText = text_items.join(' ');
+            pageText = extractedTextItems.join(' ');
             
             // Cache the extracted text
             pageTextCache.current.set(pageNumber, pageText);
           }
 
-          // Join once instead of concatenating in loop
-          const pageText = extractedTextItems.join(' ');
           const normalizedPageText = pageText.toLowerCase();
           
           // Find all matches in this page

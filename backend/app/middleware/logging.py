@@ -223,9 +223,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if content_length and int(content_length) > self.max_body_size:
             return False
 
-        # Don't log binary content
-        binary_types = ["image/", "video/", "audio/", "application/pdf", "application/octet-stream"]
-        return not any(binary_type in content_type.lower() for binary_type in binary_types)
+        # Don't log binary content - use tuple for faster membership testing
+        content_type_lower = content_type.lower()
+        return not any(binary_type in content_type_lower for binary_type in self._binary_content_types)
 
     def _should_log_body(self, request: Request) -> bool:
         """Determine if request body should be logged."""
@@ -295,6 +295,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
     # Pre-compile sensitive key patterns for better performance
     _sensitive_patterns = frozenset(["password", "token", "secret", "key", "auth"])
+    
+    # Pre-define binary content types to avoid repeated list creation
+    _binary_content_types = ("image/", "video/", "audio/", "application/pdf", "application/octet-stream")
 
     def _sanitize_json_data(self, data):
         """Recursively sanitize JSON data."""

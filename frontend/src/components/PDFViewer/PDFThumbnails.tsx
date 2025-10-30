@@ -11,6 +11,7 @@ import {
   Skeleton,
 } from '@mui/material';
 import { renderPageToCanvas } from '../../utils/canvasRenderer';
+import { devError } from '../../utils/devLogger';
 
 interface PDFThumbnailsProps {
   pdfDocument: pdfjsLib.PDFDocumentProxy | null;
@@ -68,7 +69,7 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
           )
         );
       } catch (error) {
-        console.error(`Error generating thumbnail for page ${pageNumber}:`, error);
+        devError(`Error generating thumbnail for page ${pageNumber}:`, error);
         setThumbnails(prev =>
           prev.map(thumb =>
             thumb.pageNumber === pageNumber ? { ...thumb, isLoading: false } : thumb

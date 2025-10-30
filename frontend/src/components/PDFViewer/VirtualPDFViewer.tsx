@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { renderPageToCanvas, canvasToDataURL, cleanupCanvas } from '../../utils/canvasRenderer';
+import { devError } from '../../utils/devLogger';
 
 interface VirtualPDFViewerProps {
   pdfDocument: pdfjsLib.PDFDocumentProxy | null;
@@ -65,7 +66,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
             width: viewport.width,
           });
         } catch (error) {
-          console.error(`Error loading page ${i}:`, error);
+          devError(`Error loading page ${i}:`, error);
           pages.push({
             pageNumber: i,
             canvas: null,
@@ -144,7 +145,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
           )
         );
       } catch (error) {
-        console.error(`Error rendering page ${pageInfo.pageNumber}:`, error);
+        devError(`Error rendering page ${pageInfo.pageNumber}:`, error);
       } finally {
         renderingPages.current.delete(pageInfo.pageNumber);
       }
