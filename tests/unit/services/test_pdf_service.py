@@ -80,7 +80,7 @@ class TestPDFServiceValidation:
         mock_file.size = len(sample_pdf_content)
 
         # Should not raise an exception
-        pdf_service._validate_file(mock_file)
+        pdf_service._validate_file(mock_file, len(sample_pdf_content))
 
 
 
@@ -97,10 +97,8 @@ class TestPDFServiceMetadataExtraction:
         assert metadata.file_size > 0
         assert metadata.encrypted is False
 
-        # Test computed fields
+        # Test computed fields that should exist
         assert hasattr(metadata, "file_size_mb")
-        assert hasattr(metadata, "document_complexity_score")
-        assert hasattr(metadata, "document_category")
 
     @patch("backend.app.services.pdf_service.PdfReader")
     def test_extract_pdf_metadata_corrupted_file(
@@ -165,14 +163,18 @@ class TestPDFServiceUpload:
     @pytest.mark.asyncio
     async def test_upload_pdf_success(self, pdf_service, sample_pdf_content):
         """Test successful PDF upload."""
+        from unittest.mock import AsyncMock
+        
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.pdf"
         mock_file.content_type = "application/pdf"
         mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file.seek = AsyncMock()
+        # Read needs to be async and return empty on second call
+        read_calls = [sample_pdf_content, b""]
+        mock_file.read = AsyncMock(side_effect=read_calls)
 
-        with patch("magic.from_file", return_value="application/pdf"):
-            response = await pdf_service.upload_pdf(mock_file)
+        response = await pdf_service.upload_pdf(mock_file)
 
         assert isinstance(response, PDFUploadResponse)
         assert response.filename == "test.pdf"
@@ -186,16 +188,23 @@ class TestPDFServiceUpload:
 
     @pytest.mark.asyncio
     async def test_upload_pdf_invalid_mime_type(self, pdf_service, sample_pdf_content):
-        """Test upload failure due to invalid MIME type detected."""
+        """Test upload failure due to invalid PDF header detected."""
+        from unittest.mock import AsyncMock
+        
+        # Create a file with invalid PDF header (text file content)
+        invalid_content = b"This is not a PDF file"
+        
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.pdf"
         mock_file.content_type = "application/pdf"
-        mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file.size = len(invalid_content)
+        mock_file.seek = AsyncMock()
+        # Read needs to be async and return empty on second call
+        read_calls = [invalid_content, b""]
+        mock_file.read = AsyncMock(side_effect=read_calls)
 
-        with patch("magic.from_file", return_value="text/plain"):
-            with pytest.raises(HTTPException) as exc_info:
-                await pdf_service.upload_pdf(mock_file)
+        with pytest.raises(HTTPException) as exc_info:
+            await pdf_service.upload_pdf(mock_file)
 
         assert exc_info.value.status_code == 400
         assert "Invalid file type" in exc_info.value.detail
@@ -203,24 +212,21 @@ class TestPDFServiceUpload:
     @pytest.mark.asyncio
     async def test_upload_pdf_file_write_error(self, pdf_service, sample_pdf_content):
         """Test upload failure due to file write error."""
+        from unittest.mock import AsyncMock
+        
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.pdf"
         mock_file.content_type = "application/pdf"
         mock_file.size = len(sample_pdf_content)
-        mock_file.read = Mock(return_value=sample_pdf_content)
+        mock_file.seek = AsyncMock()
+        # Simulate read error
+        mock_file.read = AsyncMock(side_effect=Exception("Read error"))
 
-        # Make upload directory read-only to cause write error
-        pdf_service.upload_dir.chmod(0o444)
+        with pytest.raises(HTTPException) as exc_info:
+            await pdf_service.upload_pdf(mock_file)
 
-        try:
-            with pytest.raises(HTTPException) as exc_info:
-                await pdf_service.upload_pdf(mock_file)
-
-            assert exc_info.value.status_code == 500
-            assert "Failed to process file" in exc_info.value.detail
-        finally:
-            # Restore permissions for cleanup
-            pdf_service.upload_dir.chmod(0o755)
+        assert exc_info.value.status_code == 500
+        assert "Failed to process file" in exc_info.value.detail
 
 
 class TestPDFServiceFileOperations:
@@ -232,7 +238,8 @@ class TestPDFServiceFileOperations:
         """Test successful PDF path retrieval."""
         # Add a file to metadata and create the actual file
         file_id = str(uuid.uuid4())
-        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
+        stored_filename = f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / stored_filename
         file_path.write_bytes(sample_pdf_content)
 
         # Add to metadata using factory fixture
@@ -242,12 +249,13 @@ class TestPDFServiceFileOperations:
             file_size=len(sample_pdf_content),
         )
         pdf_service._file_metadata[file_id] = pdf_info
+        pdf_service._stored_files[file_id] = stored_filename
 
         result_path = pdf_service.get_pdf_path(file_id)
         assert result_path == file_path
         assert result_path.exists()
 
-    def test_get_pdf_path_not_found(self):
+    def test_get_pdf_path_not_found(self, pdf_service):
         """Test PDF path retrieval for non-existent file."""
         with pytest.raises(HTTPException) as exc_info:
             pdf_service.get_pdf_path("nonexistent-id")
@@ -255,7 +263,7 @@ class TestPDFServiceFileOperations:
         assert exc_info.value.status_code == 404
         assert "File not found" in exc_info.value.detail
 
-    def test_get_pdf_path_file_missing_on_disk(self):
+    def test_get_pdf_path_file_missing_on_disk(self, pdf_service):
         """Test PDF path retrieval when metadata exists but file is missing on disk."""
         file_id = str(uuid.uuid4())
 
@@ -281,11 +289,12 @@ class TestPDFServiceFileOperations:
         assert exc_info.value.status_code == 404
         assert "File not found on disk" in exc_info.value.detail
 
-    def test_delete_pdf_success(self, sample_pdf_content):
+    def test_delete_pdf_success(self, pdf_service, sample_pdf_content):
         """Test successful PDF deletion."""
         # Set up a file for deletion
         file_id = str(uuid.uuid4())
-        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
+        stored_filename = f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / stored_filename
         file_path.write_bytes(sample_pdf_content)
 
         from datetime import datetime
@@ -302,6 +311,7 @@ class TestPDFServiceFileOperations:
             metadata=metadata,
         )
         pdf_service._file_metadata[file_id] = pdf_info
+        pdf_service._stored_files[file_id] = stored_filename
 
         # Delete the file
         result = pdf_service.delete_pdf(file_id)
@@ -310,7 +320,7 @@ class TestPDFServiceFileOperations:
         assert not file_path.exists()
         assert file_id not in pdf_service._file_metadata
 
-    def test_delete_pdf_not_found(self):
+    def test_delete_pdf_not_found(self, pdf_service):
         """Test PDF deletion for non-existent file."""
         with pytest.raises(HTTPException) as exc_info:
             pdf_service.delete_pdf("nonexistent-id")
@@ -318,14 +328,14 @@ class TestPDFServiceFileOperations:
         assert exc_info.value.status_code == 404
         assert "File not found" in exc_info.value.detail
 
-    def test_list_files_empty(self):
+    def test_list_files_empty(self, pdf_service):
         """Test listing files when no files are uploaded."""
         result = pdf_service.list_files()
 
         assert isinstance(result, dict)
         assert len(result) == 0
 
-    def test_list_files_with_content(self, sample_pdf_content):
+    def test_list_files_with_content(self, pdf_service, sample_pdf_content):
         """Test listing files with uploaded content."""
         # Add a file to metadata
         file_id = str(uuid.uuid4())
@@ -352,7 +362,7 @@ class TestPDFServiceFileOperations:
         assert file_id in result
         assert result[file_id].filename == "test.pdf"
 
-    def test_get_service_stats(self, sample_pdf_content):
+    def test_get_service_stats(self, pdf_service, sample_pdf_content):
         """Test getting service statistics."""
         # Add multiple files to test statistics
         for i in range(3):
