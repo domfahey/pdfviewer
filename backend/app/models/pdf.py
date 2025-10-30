@@ -5,7 +5,7 @@ and file information using Pydantic v2.
 """
 
 from datetime import UTC, datetime
-
+import re
 from typing import Annotated
 
 from pydantic import (

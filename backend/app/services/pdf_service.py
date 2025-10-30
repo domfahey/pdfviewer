@@ -238,8 +238,8 @@ class PDFService:
                     self.logger,
                     file_id=file_id,
                     file_size=file.size,
-                ) as write_tracker:
-                    async with aiofiles.open(file_path, "wb") as output_file_handle:
+                ):
+                    async with aiofiles.open(file_path, "wb") as pdf_file:
                         while True:
                             chunk = await file.read(self.CHUNK_SIZE)
                             if not chunk:
@@ -294,7 +294,7 @@ class PDFService:
                     upload_tracker.duration_ms or 0,
                     mime_type=mime_type,
                     page_count=metadata.page_count,
-                    file_size_mb=round(file_size / (1024 * 1024), 2),
+                    file_size_mb=round(actual_file_size / (1024 * 1024), 2),
                 )
 
                 response = PDFUploadResponse(

@@ -10,7 +10,7 @@ from ..dependencies import get_pdf_service
 from ..models.pdf import PDFMetadata
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
-from ..utils.validation import api_endpoint_handler
+from ..utils.validation import validate_file_id
 
 router = APIRouter()
 
@@ -26,24 +26,20 @@ async def get_pdf_file(
 
     Returns the PDF file for viewing.
     """
-    with api_endpoint_handler(
-        "pdf_retrieve", file_id=file_id, default_error_message="Failed to retrieve file"
-    ) as api_logger:
+    # Validate file_id using shared utility
+    validate_file_id(file_id)
+
+    try:
         file_path = pdf_service.get_pdf_path(file_id)
-
-        api_logger.log_processing_success(
-            file_id=file_id, file_path=str(file_path), file_exists=file_path.exists()
-        )
-
-        response = FileResponse(
+        return FileResponse(
             path=str(file_path), media_type="application/pdf", filename=f"{file_id}.pdf"
         )
-
-        api_logger.log_response_prepared(
-            file_id=file_id, response_type="FileResponse", media_type="application/pdf"
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve file: {str(error)}"
         )
-
-        return response
 
 
 @router.get("/metadata/{file_id}", response_model=PDFMetadata)
@@ -57,26 +53,17 @@ async def get_pdf_metadata(
 
     Returns PDF metadata including page count, file size, and document properties.
     """
-    with api_endpoint_handler(
-        "pdf_metadata", file_id=file_id, default_error_message="Failed to retrieve metadata"
-    ) as api_logger:
-        metadata = pdf_service.get_pdf_metadata(file_id)
+    # Validate file_id using shared utility
+    validate_file_id(file_id)
 
-        api_logger.log_processing_success(
-            file_id=file_id,
-            page_count=metadata.page_count,
-            file_size=metadata.file_size,
-            has_metadata=True,
+    try:
+        return pdf_service.get_pdf_metadata(file_id)
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve metadata: {str(error)}"
         )
-
-        api_logger.log_response_prepared(
-            file_id=file_id,
-            response_type="PDFMetadata",
-            page_count=metadata.page_count,
-            file_size=metadata.file_size,
-        )
-
-        return metadata
 
 
 @router.delete("/pdf/{file_id}")
@@ -90,25 +77,16 @@ async def delete_pdf_file(
 
     Returns confirmation of deletion.
     """
-    with api_endpoint_handler(
-        "pdf_delete", file_id=file_id, default_error_message="Failed to delete file"
-    ) as api_logger:
+    # Validate file_id using shared utility
+    validate_file_id(file_id)
+
+    try:
         success = pdf_service.delete_pdf(file_id)
-
         if success:
-            api_logger.log_processing_success(file_id=file_id, deletion_successful=True)
-
-            response = {"message": f"File {file_id} deleted successfully"}
-
-            api_logger.log_response_prepared(
-                file_id=file_id, response_type="dict", operation_result="success"
-            )
-
-            return response
+            return {"message": f"File {file_id} deleted successfully"}
         else:
-            api_logger.log_processing_error(
-                Exception("Delete operation returned False"),
-                file_id=file_id,
-                deletion_successful=False,
-            )
             raise HTTPException(status_code=500, detail="Failed to delete file")
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(error)}")

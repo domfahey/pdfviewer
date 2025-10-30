@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from ..utils.api_logging import APILogger, log_api_call
+from ..utils.api_logging import log_api_call
 
 router = APIRouter()
 
@@ -135,15 +135,9 @@ class HealthResponse(BaseModel):
 @log_api_call("health_check", log_params=False, log_response=True, log_timing=True)
 async def health_check() -> HealthResponse:
     """Health check endpoint."""
-    api_logger = APILogger("health_check")
-
-    api_logger.log_request_received()
-    api_logger.log_processing_start(operation="system_health_check")
-
     # Check if upload directory is accessible
     upload_dir = "uploads"
     storage_available = True
-    storage_error = None
 
     try:
         os.makedirs(upload_dir, exist_ok=True)
@@ -152,18 +146,8 @@ async def health_check() -> HealthResponse:
         with open(test_file, "w") as test_file_handle:
             test_file_handle.write("ok")
         os.remove(test_file)
-
-        api_logger.log_processing_success(
-            upload_dir=upload_dir, storage_check="passed", storage_available=True
-        )
-
-    except Exception as storage_error_exception:
+    except Exception:
         storage_available = False
-        storage_error = str(storage_error_exception)
-
-        api_logger.log_processing_error(
-            storage_error_exception, upload_dir=upload_dir, storage_check="failed", storage_available=False
-        )
 
     # Enhanced health status determination for POC
     if storage_available:
@@ -171,6 +155,7 @@ async def health_check() -> HealthResponse:
     else:
         # For POC, storage issues are degraded, not unhealthy
         health_status = "degraded"
+
     # Create response with enhanced validation
     try:
         response = HealthResponse(
@@ -178,23 +163,12 @@ async def health_check() -> HealthResponse:
             timestamp=datetime.now(UTC),
             storage_available=storage_available,
         )
-    except Exception as response_error:
-        # If response creation fails, log and return minimal response
-        api_logger.log_processing_error(
-            response_error, health_status=health_status, response_creation="failed"
-        )
+    except Exception:
         # Fallback response
         response = HealthResponse(
             status="unhealthy",
             timestamp=datetime.now(UTC),
             storage_available=False,
         )
-
-    api_logger.log_response_prepared(
-        health_status=health_status,
-        storage_available=storage_available,
-        storage_error=storage_error,
-        response_type="HealthResponse",
-    )
 
     return response
