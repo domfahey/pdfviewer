@@ -182,10 +182,11 @@ class TestLogContext:
         """Test LogContext logs exceptions that occur within context."""
         logger = get_logger("test")
 
-        with patch.object(logger, "error"):
+        with patch.object(logger, "error") as mock_error:
             with pytest.raises(ValueError):
                 with LogContext(logger, operation="test"):
                     raise ValueError("Test error")
+            mock_error.assert_called_once()
 
     def test_log_context_normal_exit(self):
         """Test LogContext exits normally without exceptions."""
