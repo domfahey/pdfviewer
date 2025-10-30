@@ -17,6 +17,31 @@ from ..middleware.logging import get_correlation_id
 logger = structlog.get_logger(__name__)
 
 
+def create_duration_calculator(start_time: float) -> Callable[[], float]:
+    """Create a closure that calculates elapsed time in milliseconds.
+    
+    This helper eliminates duplication of duration calculation logic
+    across multiple decorators (log_api_call, log_file_operation).
+    
+    Args:
+        start_time: The start time from time.perf_counter()
+        
+    Returns:
+        Callable that returns elapsed time in milliseconds when called
+        
+    Example:
+        >>> start = time.perf_counter()
+        >>> calc = create_duration_calculator(start)
+        >>> # ... do work ...
+        >>> duration_ms = calc()
+    """
+    def calculate_duration_ms() -> float:
+        """Calculate elapsed time in milliseconds."""
+        return round((time.perf_counter() - start_time) * 1000, 2)
+    
+    return calculate_duration_ms
+
+
 def log_api_call(
     operation: str,
     log_params: bool = True,
@@ -43,13 +68,7 @@ def log_api_call(
         async def wrapper(*args, **kwargs):
             # Start timing
             start_time = time.perf_counter()
-            
-            def calculate_duration_ms() -> float:
-                """Calculate elapsed time in milliseconds.
-                
-                Note: This closure captures start_time from the outer scope.
-                """
-                return round((time.perf_counter() - start_time) * 1000, 2)
+            calculate_duration_ms = create_duration_calculator(start_time)
 
             # Extract request info if available
             request_info = {}
@@ -144,13 +163,7 @@ def log_file_operation(
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
-            def calculate_duration_ms() -> float:
-                """Calculate elapsed time in milliseconds.
-                
-                Note: This closure captures start_time from the outer scope.
-                """
-                return round((time.perf_counter() - start_time) * 1000, 2)
+            calculate_duration_ms = create_duration_calculator(start_time)
 
             # Extract file information
             file_info = {}
