@@ -96,7 +96,7 @@ test-unit: test-unit-backend test-unit-frontend ## Run all unit tests
 .PHONY: test-unit-backend
 test-unit-backend: ## Run backend unit tests
 	@echo "Running backend unit tests..."
-	cd $(PROJ_ROOT) && uv run pytest tests/test_*.py -v --tb=short
+	cd $(PROJ_ROOT) && uv run pytest tests/unit -v --tb=short
 
 .PHONY: test-unit-frontend
 test-unit-frontend: ## Run frontend unit tests
@@ -110,6 +110,16 @@ test-integration: test-integration-api test-integration-fixtures ## Run all inte
 test-integration-api: ## Run API integration tests
 	@echo "Running API integration tests..."
 	cd $(PROJ_ROOT) && pytest tests/integration/api -v --tb=short
+
+.PHONY: test-samples
+test-samples: ## Run sample PDF tests
+	@echo "Running sample PDF tests..."
+	cd $(PROJ_ROOT) && pytest tests/samples -v --tb=short
+
+.PHONY: test-edge-cases
+test-edge-cases: ## Run edge case tests
+	@echo "Running edge case tests..."
+	cd $(PROJ_ROOT) && pytest tests/unit/edge_cases -v --tb=short
 
 .PHONY: test-integration-fixtures
 test-integration-fixtures: ## Verify integration test fixtures
@@ -210,13 +220,13 @@ test-performance: ## Run performance tests
 .PHONY: test-smoke
 test-smoke: ## Run quick smoke tests
 	@echo "Running smoke tests..."
-	cd $(PROJ_ROOT) && pytest tests/test_health.py -v --no-cov
+	cd $(PROJ_ROOT) && pytest tests/unit/api/test_health.py -v --no-cov
 	cd $(PROJ_ROOT)/frontend && npm test -- --run src/components/__tests__/FileUpload.test.tsx
 
 .PHONY: test-nocov
 test-nocov: ## Run tests without coverage requirements
 	@echo "Running tests without coverage requirements..."
-	cd $(PROJ_ROOT) && pytest tests/test_*.py -v --no-cov
+	cd $(PROJ_ROOT) && pytest tests/unit -v --no-cov
 	cd $(PROJ_ROOT)/frontend && npm test -- --run
 
 # Backward compatibility aliases
