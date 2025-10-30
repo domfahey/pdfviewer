@@ -1,39 +1,31 @@
 import io
+import time
 
 import pytest
 from fastapi.testclient import TestClient
+
+from conftest import (
+    assert_error_response,
+    assert_metadata_fields,
+    assert_upload_response,
+    create_upload_files,
+    perform_full_pdf_workflow,
+)
 
 
 def test_anyline_sample_upload_and_metadata(
     client: TestClient, anyline_sample_pdf_content: bytes
 ):
     """Test uploading the Anyline sample scan book PDF with complex images and barcodes."""
-    files = {
-        "file": (
-            "anyline_sample.pdf",
-            io.BytesIO(anyline_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-
+    files = create_upload_files("anyline_sample.pdf", anyline_sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 200
+    assert_upload_response(response, expected_filename="anyline_sample.pdf")
     data = response.json()
-
-    assert "file_id" in data
-    assert data["filename"] == "anyline_sample.pdf"
-    assert data["mime_type"] == "application/pdf"
-    assert data["file_size"] > 1000  # Should be substantial with images
 
     # Check metadata for Anyline PDF
     metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-    assert (
-        metadata["page_count"] >= 1
-    )  # Should have multiple pages with scanned content
+    assert_metadata_fields(metadata)
     assert not metadata["encrypted"]  # Should not be encrypted
 
 
@@ -48,30 +40,21 @@ def test_anyline_sample_complex_content_handling(
     print(f"Anyline PDF size: {file_size:,} bytes ({file_size / (1024 * 1024):.2f} MB)")
 
     # Test upload regardless of size to verify handling
-    files = {
-        "file": (
-            "anyline_sample.pdf",
-            io.BytesIO(anyline_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    files = create_upload_files("anyline_sample.pdf", anyline_sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
     if file_size >= max_size:
         # Should be rejected for size
-        assert response.status_code == 413
-        data = response.json()
-        assert "too large" in data["detail"].lower()
+        assert_error_response(response, 413, "too large")
     else:
         # Should be accepted and processed successfully
-        assert response.status_code == 200
+        assert_upload_response(response, expected_filename="anyline_sample.pdf")
         data = response.json()
         assert data["file_size"] == file_size
 
         # Verify metadata extraction works with complex image content
         metadata = data["metadata"]
-        assert metadata["page_count"] > 0
-        assert metadata["file_size"] == file_size
+        assert_metadata_fields(metadata)
         assert not metadata["encrypted"]
 
 
@@ -88,49 +71,13 @@ def test_anyline_sample_full_workflow(
             f"Anyline PDF ({file_size:,} bytes) exceeds 50MB limit - testing size rejection instead"
         )
 
-    # Upload Anyline sample PDF
-    files = {
-        "file": (
-            "anyline_sample.pdf",
-            io.BytesIO(anyline_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-    upload_response = client.post("/api/upload", files=files)
-
-    assert upload_response.status_code == 200
-    upload_data = upload_response.json()
-    file_id = upload_data["file_id"]
-
-    # Retrieve the PDF file
-    pdf_response = client.get(f"/api/pdf/{file_id}")
-    assert pdf_response.status_code == 200
-    assert pdf_response.headers["content-type"] == "application/pdf"
-
-    # Verify the content matches what we uploaded (important for image-heavy PDFs)
-    assert len(pdf_response.content) == len(anyline_sample_pdf_content)
-
-    # Get metadata
-    metadata_response = client.get(f"/api/metadata/{file_id}")
-    assert metadata_response.status_code == 200
-    metadata = metadata_response.json()
-
-    # Verify PDF with complex images has valid metadata
-    assert metadata["page_count"] >= 1
-    assert metadata["file_size"] > 1000
-    assert not metadata["encrypted"]
-
-    # Clean up
-    delete_response = client.delete(f"/api/pdf/{file_id}")
-    assert delete_response.status_code == 200
+    perform_full_pdf_workflow(client, "anyline_sample.pdf", anyline_sample_pdf_content)
 
 
 def test_anyline_sample_image_rich_performance(
     client: TestClient, anyline_sample_pdf_content: bytes
 ):
     """Test performance characteristics with image-rich PDF containing barcodes."""
-    import time
-
     file_size = len(anyline_sample_pdf_content)
     max_size = 50 * 1024 * 1024  # 50MB limit
 
@@ -138,13 +85,7 @@ def test_anyline_sample_image_rich_performance(
     if file_size >= max_size:
         pytest.skip(f"Anyline PDF ({file_size:,} bytes) exceeds 50MB limit")
 
-    files = {
-        "file": (
-            "anyline_sample.pdf",
-            io.BytesIO(anyline_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    files = create_upload_files("anyline_sample.pdf", anyline_sample_pdf_content)
 
     # Time the upload process for image-heavy content
     start_time = time.time()

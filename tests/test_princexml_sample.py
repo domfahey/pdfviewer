@@ -1,37 +1,28 @@
-import io
-
 import pytest
 from fastapi.testclient import TestClient
+
+from conftest import (
+    assert_error_response,
+    assert_metadata_fields,
+    assert_upload_response,
+    create_upload_files,
+    perform_full_pdf_workflow,
+)
 
 
 def test_princexml_sample_upload_and_metadata(
     client: TestClient, princexml_sample_pdf_content: bytes
 ):
     """Test uploading the PrinceXML large essay PDF and verifying its metadata."""
-    files = {
-        "file": (
-            "princexml_essay.pdf",
-            io.BytesIO(princexml_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-
+    files = create_upload_files("princexml_essay.pdf", princexml_sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 200
+    assert_upload_response(response, expected_filename="princexml_essay.pdf")
     data = response.json()
-
-    assert "file_id" in data
-    assert data["filename"] == "princexml_essay.pdf"
-    assert data["mime_type"] == "application/pdf"
-    assert data["file_size"] > 10000  # PrinceXML essay should be a substantial file
 
     # Check metadata for PrinceXML PDF
     metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-    assert metadata["page_count"] >= 1  # Essay should have multiple pages
+    assert_metadata_fields(metadata)
     assert not metadata["encrypted"]  # Essay should not be encrypted
 
 
@@ -47,30 +38,15 @@ def test_princexml_sample_large_file_handling(
         f"PrinceXML PDF size: {file_size:,} bytes ({file_size / (1024 * 1024):.2f} MB)"
     )
 
+    files = create_upload_files("princexml_essay.pdf", princexml_sample_pdf_content)
+    response = client.post("/api/upload", files=files)
+
     # If the file is too large, test that it's properly rejected
     if file_size >= max_size:
-        files = {
-            "file": (
-                "princexml_essay.pdf",
-                io.BytesIO(princexml_sample_pdf_content),
-                "application/pdf",
-            )
-        }
-        response = client.post("/api/upload", files=files)
-        assert response.status_code == 413  # File too large
-        data = response.json()
-        assert "too large" in data["detail"].lower()
+        assert_error_response(response, 413, "too large")
     else:
         # If within limits, test successful upload
-        files = {
-            "file": (
-                "princexml_essay.pdf",
-                io.BytesIO(princexml_sample_pdf_content),
-                "application/pdf",
-            )
-        }
-        response = client.post("/api/upload", files=files)
-        assert response.status_code == 200
+        assert_upload_response(response, expected_filename="princexml_essay.pdf")
         data = response.json()
         assert data["file_size"] == file_size
 
@@ -88,41 +64,7 @@ def test_princexml_sample_full_workflow(
             f"PrinceXML PDF ({file_size:,} bytes) exceeds 50MB limit - testing size rejection instead"
         )
 
-    # Upload PrinceXML essay PDF
-    files = {
-        "file": (
-            "princexml_essay.pdf",
-            io.BytesIO(princexml_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-    upload_response = client.post("/api/upload", files=files)
-
-    assert upload_response.status_code == 200
-    upload_data = upload_response.json()
-    file_id = upload_data["file_id"]
-
-    # Retrieve the PDF file
-    pdf_response = client.get(f"/api/pdf/{file_id}")
-    assert pdf_response.status_code == 200
-    assert pdf_response.headers["content-type"] == "application/pdf"
-
-    # Verify the content matches what we uploaded
-    assert len(pdf_response.content) == len(princexml_sample_pdf_content)
-
-    # Get metadata
-    metadata_response = client.get(f"/api/metadata/{file_id}")
-    assert metadata_response.status_code == 200
-    metadata = metadata_response.json()
-
-    # Verify PrinceXML PDF specific properties
-    assert metadata["page_count"] >= 1
-    assert metadata["file_size"] > 10000
-    assert not metadata["encrypted"]
-
-    # Clean up
-    delete_response = client.delete(f"/api/pdf/{file_id}")
-    assert delete_response.status_code == 200
+    perform_full_pdf_workflow(client, "princexml_essay.pdf", princexml_sample_pdf_content)
 
 
 def test_princexml_sample_performance(
@@ -138,13 +80,9 @@ def test_princexml_sample_performance(
     if file_size >= max_size:
         pytest.skip(f"PrinceXML PDF ({file_size:,} bytes) exceeds 50MB limit")
 
-    files = {
-        "file": (
-            "princexml_essay.pdf",
-            io.BytesIO(princexml_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    import time
+
+    files = create_upload_files("princexml_essay.pdf", princexml_sample_pdf_content)
 
     # Time the upload process
     start_time = time.time()

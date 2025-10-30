@@ -1,36 +1,26 @@
-import io
-
 from fastapi.testclient import TestClient
+
+from conftest import (
+    assert_metadata_fields,
+    assert_upload_response,
+    create_upload_files,
+    perform_full_pdf_workflow,
+)
 
 
 def test_weblite_sample_upload_and_metadata(
     client: TestClient, weblite_sample_pdf_content: bytes
 ):
     """Test uploading the Weblite OCR sample PDF and verifying its metadata."""
-    files = {
-        "file": (
-            "weblite_sample.pdf",
-            io.BytesIO(weblite_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-
+    files = create_upload_files("weblite_sample.pdf", weblite_sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 200
+    assert_upload_response(response, expected_filename="weblite_sample.pdf")
     data = response.json()
-
-    assert "file_id" in data
-    assert data["filename"] == "weblite_sample.pdf"
-    assert data["mime_type"] == "application/pdf"
-    assert data["file_size"] > 1000  # Weblite PDF should be reasonably sized
 
     # Check metadata for Weblite PDF
     metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-    assert metadata["page_count"] >= 1  # Weblite sample should have at least 1 page
+    assert_metadata_fields(metadata)
     assert not metadata["encrypted"]  # Weblite sample should not be encrypted
 
 
@@ -38,41 +28,7 @@ def test_weblite_sample_full_workflow(
     client: TestClient, weblite_sample_pdf_content: bytes
 ):
     """Test the complete workflow with Weblite OCR sample PDF."""
-    # Upload Weblite sample PDF
-    files = {
-        "file": (
-            "weblite_sample.pdf",
-            io.BytesIO(weblite_sample_pdf_content),
-            "application/pdf",
-        )
-    }
-    upload_response = client.post("/api/upload", files=files)
-
-    assert upload_response.status_code == 200
-    upload_data = upload_response.json()
-    file_id = upload_data["file_id"]
-
-    # Retrieve the PDF file
-    pdf_response = client.get(f"/api/pdf/{file_id}")
-    assert pdf_response.status_code == 200
-    assert pdf_response.headers["content-type"] == "application/pdf"
-
-    # Verify the content matches what we uploaded
-    assert len(pdf_response.content) == len(weblite_sample_pdf_content)
-
-    # Get metadata
-    metadata_response = client.get(f"/api/metadata/{file_id}")
-    assert metadata_response.status_code == 200
-    metadata = metadata_response.json()
-
-    # Verify Weblite PDF specific properties
-    assert metadata["page_count"] >= 1
-    assert metadata["file_size"] > 1000
-    assert not metadata["encrypted"]
-
-    # Clean up
-    delete_response = client.delete(f"/api/pdf/{file_id}")
-    assert delete_response.status_code == 200
+    perform_full_pdf_workflow(client, "weblite_sample.pdf", weblite_sample_pdf_content)
 
 
 def test_weblite_sample_scanned_pdf_handling(
@@ -80,30 +36,14 @@ def test_weblite_sample_scanned_pdf_handling(
 ):
     """Test that Weblite scanned PDF sample is handled correctly."""
     # This PDF is specifically a scanned document sample, good for OCR testing
-    files = {
-        "file": (
-            "weblite_sample.pdf",
-            io.BytesIO(weblite_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    files = create_upload_files("weblite_sample.pdf", weblite_sample_pdf_content)
     response = client.post("/api/upload", files=files)
 
-    assert response.status_code == 200
+    assert_upload_response(response, expected_filename="weblite_sample.pdf")
     data = response.json()
 
-    # Verify basic properties
-    assert data["file_size"] > 0
-    assert data["mime_type"] == "application/pdf"
-
     # Check that metadata extraction works for scanned PDFs
-    metadata = data["metadata"]
-    assert "page_count" in metadata
-    assert "file_size" in metadata
-    assert "encrypted" in metadata
-
-    # Scanned PDFs should still have valid page counts
-    assert metadata["page_count"] > 0
+    assert_metadata_fields(data["metadata"])
 
 
 def test_multiple_pdf_samples_comparison(
@@ -111,26 +51,14 @@ def test_multiple_pdf_samples_comparison(
 ):
     """Test handling multiple different PDF samples to ensure system robustness."""
     # Upload EPA sample
-    epa_files = {
-        "file": (
-            "epa_sample.pdf",
-            io.BytesIO(epa_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    epa_files = create_upload_files("epa_sample.pdf", epa_sample_pdf_content)
     epa_response = client.post("/api/upload", files=epa_files)
     assert epa_response.status_code == 200
     epa_data = epa_response.json()
     epa_file_id = epa_data["file_id"]
 
     # Upload Weblite sample
-    weblite_files = {
-        "file": (
-            "weblite_sample.pdf",
-            io.BytesIO(weblite_sample_pdf_content),
-            "application/pdf",
-        )
-    }
+    weblite_files = create_upload_files("weblite_sample.pdf", weblite_sample_pdf_content)
     weblite_response = client.post("/api/upload", files=weblite_files)
     assert weblite_response.status_code == 200
     weblite_data = weblite_response.json()
@@ -157,8 +85,8 @@ def test_multiple_pdf_samples_comparison(
     weblite_metadata = weblite_metadata_response.json()
 
     # Both should have valid metadata but potentially different characteristics
-    assert epa_metadata["page_count"] > 0
-    assert weblite_metadata["page_count"] > 0
+    assert_metadata_fields(epa_metadata)
+    assert_metadata_fields(weblite_metadata)
     assert not epa_metadata["encrypted"]
     assert not weblite_metadata["encrypted"]
 

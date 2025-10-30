@@ -2,12 +2,13 @@
 Integration tests for error handling and edge cases.
 """
 
-import io
 from pathlib import Path
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
+
+from conftest import create_upload_files
 
 
 class TestErrorHandling:
@@ -18,7 +19,7 @@ class TestErrorHandling:
         """Test uploading non-PDF file."""
         # Create a text file
         text_content = b"This is not a PDF file"
-        files = {"file": ("test.txt", io.BytesIO(text_content), "text/plain")}
+        files = create_upload_files("test.txt", text_content, "text/plain")
 
         response = await async_client.post("/api/upload", files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -27,7 +28,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_upload_empty_file(self, async_client: AsyncClient):
         """Test uploading empty file."""
-        files = {"file": ("empty.pdf", io.BytesIO(b""), "application/pdf")}
+        files = create_upload_files("empty.pdf", b"")
 
         response = await async_client.post("/api/upload", files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -38,7 +39,7 @@ class TestErrorHandling:
         """Test uploading file exceeding size limit."""
         # Create a large dummy PDF (51MB - over the 50MB limit)
         large_content = b"%PDF-1.4\n" + b"0" * (51 * 1024 * 1024)
-        files = {"file": ("large.pdf", io.BytesIO(large_content), "application/pdf")}
+        files = create_upload_files("large.pdf", large_content)
 
         response = await async_client.post("/api/upload", files=files)
         assert response.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
