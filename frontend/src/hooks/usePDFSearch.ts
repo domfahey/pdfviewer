@@ -73,7 +73,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
-          const page = await document.getPage(pageNum);
+          const page = await document.getPage(pageNumber);
           const textContent = await page.getTextContent();
 
           // Pre-allocate array for better performance
