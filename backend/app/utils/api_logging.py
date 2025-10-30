@@ -45,7 +45,10 @@ def log_api_call(
             start_time = time.perf_counter()
             
             def calculate_duration_ms() -> float:
-                """Calculate elapsed time in milliseconds."""
+                """Calculate elapsed time in milliseconds.
+                
+                Note: This closure captures start_time from the outer scope.
+                """
                 return round((time.perf_counter() - start_time) * 1000, 2)
 
             # Extract request info if available
@@ -143,7 +146,10 @@ def log_file_operation(
             start_time = time.perf_counter()
             
             def calculate_duration_ms() -> float:
-                """Calculate elapsed time in milliseconds."""
+                """Calculate elapsed time in milliseconds.
+                
+                Note: This closure captures start_time from the outer scope.
+                """
                 return round((time.perf_counter() - start_time) * 1000, 2)
 
             # Extract file information
@@ -280,13 +286,13 @@ class APILogger:
         """Internal helper to log with consistent formatting.
         
         Args:
-            level: Log level ('info' or 'error')
+            level: Log level ('info', 'error', 'warning', or 'debug')
             action: Action description (e.g., 'Request received', 'Validation started')
                    Should be a complete phrase that reads well with "for {operation}"
             **context: Additional context to bind to the logger
             
         Raises:
-            AttributeError: If level is not a valid logger method
+            ValueError: If level is not a valid log level
         """
         # Validate level to provide clear error messages
         valid_levels = ('info', 'error', 'warning', 'debug')
