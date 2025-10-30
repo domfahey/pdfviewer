@@ -153,6 +153,47 @@ async def test_async_endpoint(async_client):
     assert response.status_code == 200
 ```
 
+### Test Helper Functions
+
+The test suite includes reusable helper functions in `conftest.py` to reduce code duplication:
+
+**File Upload Helpers:**
+```python
+from conftest import create_upload_files
+
+# Create upload files dict for testing
+files = create_upload_files("test.pdf", pdf_content)
+response = client.post("/api/upload", files=files)
+```
+
+**Response Validation Helpers:**
+```python
+from conftest import assert_upload_response, assert_metadata_fields, assert_error_response
+
+# Validate successful upload response
+assert_upload_response(response, expected_filename="test.pdf")
+
+# Validate metadata structure
+assert_metadata_fields(response.json()["metadata"])
+
+# Validate error responses
+assert_error_response(response, 404, "not found")
+```
+
+**Workflow Helpers:**
+```python
+from conftest import perform_full_pdf_workflow
+
+# Perform complete upload/retrieve/metadata/delete workflow
+file_id, upload_data = perform_full_pdf_workflow(client, "test.pdf", pdf_content)
+```
+
+These helpers:
+- Reduce code duplication by 200+ lines
+- Provide consistent validation across tests
+- Make tests more readable and maintainable
+- Centralize assertion logic for easier updates
+
 ## Coverage Requirements
 
 - Minimum coverage: 80%
