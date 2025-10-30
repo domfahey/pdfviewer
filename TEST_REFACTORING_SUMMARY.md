@@ -101,7 +101,7 @@ For standard functionality tests, see test_pdf_service.py.
 **After:**
 - Single parametrized test file: `test_sample_pdfs.py` (194 lines)
 - Uses `@pytest.mark.parametrize` to test all 5 PDFs
-- Individual sample test files moved to `integration/` for reference
+- Individual sample test files moved to `integration/` (kept for reference/backward compatibility)
 
 **Benefits:**
 - **DRY principle**: Shared test logic isn't duplicated 5 times
@@ -216,12 +216,14 @@ make test-integration
 - **Files reorganized:** 23 test files
 - **New directories created:** 6 (unit/ and 5 subdirectories)
 - **Files renamed:** 5 (comprehensive → edge_cases)
-- **Files consolidated:** 5 → 1 (sample PDF tests)
+- **Sample tests:** Created 1 new consolidated parametrized test file; moved 5 original files to integration/
 
 ### Lines of Code
-- **Sample tests:** 1,108 lines → 194 lines (reduced by 914 lines, 82% reduction)
-- **Documentation:** Added ~150 lines of improved documentation
-- **Net change:** -764 lines (reduced code without losing functionality)
+- **New test file created:** test_sample_pdfs.py (194 lines) - Consolidated sample test logic
+- **Sample test files moved:** 5 files moved to integration/ (kept for backward compatibility)
+- **Documentation added:** ~300 lines (TEST_REFACTORING_SUMMARY.md, updated README.md, tests/README.md)
+- **Docstring updates:** ~50 lines (updated docstrings in edge case test files)
+- **Note:** While sample test files were moved rather than deleted, the new parametrized approach in test_sample_pdfs.py provides the same coverage with more efficient, maintainable code
 
 ### Test Targets
 - **Before:** 12 make targets for testing
