@@ -56,25 +56,25 @@ def create_async_sync_wrapper(
     """
 
     def _execute_wrapper_logic(
-        result: R, start_time: float, exc: Exception | None = None
+        result: R, start_time: float, exception: Exception | None = None
     ) -> None:
         """Execute common wrapper logic for success/error cases.
         
         Args:
-            result: Function result (ignored if exc is provided).
+            result: Function result (ignored if exception is provided).
             start_time: Start time for duration calculation.
-            exc: Exception if an error occurred, None otherwise.
+            exception: Exception if an error occurred, None otherwise.
         """
         duration = time.perf_counter() - start_time
 
-        if exc is None:
+        if exception is None:
             # Success case: execute after callback
             if after_call:
                 after_call(result, duration)
         else:
             # Error case: execute error callback
             if on_error:
-                on_error(exc, duration)
+                on_error(exception, duration)
 
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -88,8 +88,8 @@ def create_async_sync_wrapper(
             result = await func(*args, **kwargs)
             _execute_wrapper_logic(result, start_time)
             return result
-        except Exception as exc:
-            _execute_wrapper_logic(None, start_time, exc)  # type: ignore[arg-type]
+        except Exception as exception:
+            _execute_wrapper_logic(None, start_time, exception)  # type: ignore[arg-type]
             raise
 
     @functools.wraps(func)
@@ -104,8 +104,8 @@ def create_async_sync_wrapper(
             result = func(*args, **kwargs)
             _execute_wrapper_logic(result, start_time)
             return result
-        except Exception as exc:
-            _execute_wrapper_logic(None, start_time, exc)  # type: ignore[arg-type]
+        except Exception as exception:
+            _execute_wrapper_logic(None, start_time, exception)  # type: ignore[arg-type]
             raise
 
     # Return the appropriate wrapper based on function type
@@ -189,7 +189,7 @@ def performance_logger(
 
             func_logger.bind(**context).info(f"Completed {operation}")
 
-        def on_error(exc: Exception, duration: float) -> None:
+        def on_error(exception: Exception, duration: float) -> None:
             """Log error with timing."""
             duration_ms = duration * 1000
 
@@ -198,8 +198,8 @@ def performance_logger(
                 "function": func.__name__,
                 "duration_ms": round(duration_ms, 2),
                 "success": False,
-                "error_type": type(exc).__name__,
-                "error": str(exc),
+                "error_type": type(exception).__name__,
+                "error": str(exception),
             }
 
             func_logger.bind(**context).error(f"Failed {operation}")
