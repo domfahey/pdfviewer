@@ -75,12 +75,13 @@ async def endpoint_name(...):
 
 **Branch:** Always use `main` as the primary branch (GitHub default).
 
-**Standard workflow:**
-1. Create feature branch from `main`: `git checkout -b feature/description`
-2. Develop and test locally
-3. Commit with clear messages
-4. Push and create PR to `main`
-5. Delete branch after merge
+**Branch Management:**
+- **Primary Branch**: `main` (NOT `master`) - GitHub default branch
+- Use only `main` as primary branch
+- All feature branches should branch from and merge back to `main`
+- Delete merged feature branches immediately
+- Keep branch lists clean and minimal
+- Use short-lived feature branches (days/weeks, not months)
 
 **Branch hygiene:**
 - Keep branches short-lived (days/weeks, not months)

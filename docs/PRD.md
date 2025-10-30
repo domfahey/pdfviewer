@@ -2,7 +2,7 @@
 ## PDF Viewer Proof of Concept
 
 **Document Version:** 1.3  
-**Last Updated:** 2025-07-20
+**Last Updated:** 2025-10-30
 
 ## Table of Contents
 
@@ -446,5 +446,5 @@ annotationLayer.render(viewport);
 ---
 
 **Document Version:** 1.3  
-**Last Updated:** 2025-07-20  
-**Next Review:** Upon completion of Phase 1
+**Last Updated:** 2025-10-30  
+**Next Review:** Quarterly or upon major feature additions

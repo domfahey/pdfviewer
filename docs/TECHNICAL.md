@@ -22,10 +22,10 @@
 ## Setup
 
 ### Prerequisites
-- Python 3.11+ with UV
-- Node.js 18+
-- Docker (optional)
+- Python 3.11 or higher (currently using 3.12.3)
+- Node.js 18 or higher
 - libmagic (for file type detection)
+- **Optional:** UV package manager for faster Python dependency installation
 
 ### System Dependencies
 
@@ -46,7 +46,7 @@ sudo yum install file-devel
 
 ### Install & Run
 
-**Using Make (Recommended):**
+**Using Make (Recommended - Auto-detects UV or falls back to pip):**
 ```bash
 make install          # Install all dependencies
 make dev-backend      # Start backend (http://localhost:8000)
@@ -56,19 +56,15 @@ make dev-frontend     # Start frontend (http://localhost:5173)
 **Manual Setup:**
 ```bash
 # Backend
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev]" -c configs/pyproject.toml
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 cd backend && uvicorn app.main:app --reload
 
 # Frontend (in new terminal)
 cd frontend
 npm install
 npm run dev
-```
-
-**Docker:**
-```bash
-docker-compose up -d
 ```
 
 **Access URLs:**
@@ -169,13 +165,17 @@ VITE_API_BASE_URL=http://localhost:8000/api
 - API decorators: `@log_api_call`, `@log_file_operation`
 - Debug mode enabled by default
 
-## Docker Commands
+## Docker Support
+
+Docker support is available via make commands (requires docker-compose.yml):
 
 ```bash
-docker-compose logs -f   # View logs
-docker-compose down      # Stop
-docker-compose build     # Rebuild
+make docker-up     # Start containers
+make docker-down   # Stop containers
+make docker-logs   # View logs
 ```
+
+> **Note:** Docker configuration is available as a future enhancement. See [Technical Debt](TECHNICAL_DEBT.md) for details.
 
 ## Key Features
 
