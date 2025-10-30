@@ -18,12 +18,6 @@ from pydantic import (
     model_validator,
 )
 
-# Compile regex patterns once for performance
-UUID_V4_PATTERN = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
-    re.IGNORECASE
-)
-
 
 class PDFMetadata(BaseModel):
     """PDF metadata model with enhanced validation for POC development."""

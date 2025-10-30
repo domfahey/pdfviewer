@@ -1,11 +1,10 @@
 """API endpoint for loading PDFs from URLs."""
 
-import asyncio
+import io
 import re
 from typing import Annotated
 
-import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel, Field, HttpUrl
 
 # Regular expression pattern to extract filename from Content-Disposition header
@@ -15,6 +14,7 @@ from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
+from ..utils.http_client import fetch_with_retry
 
 router = APIRouter()
 
@@ -42,86 +42,45 @@ async def load_pdf_from_url(
     Returns file ID and metadata for the loaded PDF.
     """
     try:
-        # Download the PDF from the URL with retries
-        timeout = httpx.Timeout(60.0, connect=10.0)
-        limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+        # Download the PDF from the URL with automatic retries
+        response = await fetch_with_retry(str(request.url))
 
-        async with httpx.AsyncClient(
-            timeout=timeout, limits=limits, follow_redirects=True
-        ) as client:
-            # Add retry logic for transient failures
-            max_retries = 3
-            response = None
-
-            for attempt in range(max_retries):
-                try:
-                    response = await client.get(str(request.url))
-                    response.raise_for_status()
-                    break
-
-                except (httpx.TimeoutException, httpx.NetworkError) as network_error:
-                    if attempt < max_retries - 1:
-                        # Exponential backoff
-                        await asyncio.sleep(2**attempt)
-                        continue
-                    raise HTTPException(
-                        status_code=504,
-                        detail=f"Timeout downloading PDF after {max_retries} attempts: {str(network_error)}",
-                    )
-
-            if response is None:
-                raise HTTPException(
-                    status_code=502,
-                    detail="Failed to download PDF after all retries",
-                )
-
-            # Check content type
-            content_type = response.headers.get("content-type", "")
-            if not content_type.startswith("application/pdf"):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"URL does not point to a PDF file (content-type: {content_type})",
-                )
-
-            # Get filename from URL or content-disposition
-            filename = "downloaded.pdf"
-            if "content-disposition" in response.headers:
-                matches = FILENAME_PATTERN.findall(
-                    response.headers["content-disposition"]
-                )
-                if matches:
-                    filename = matches[0]
-            else:
-                # Extract from URL
-                url_parts = str(request.url).split("/")
-                if url_parts[-1].endswith(".pdf"):
-                    filename = url_parts[-1]
-
-            # Create a temporary file-like object
-            import io
-
-            from fastapi import UploadFile
-
-            # Create UploadFile from downloaded content
-            file = UploadFile(
-                filename=filename,
-                file=io.BytesIO(response.content),
+        # Check content type
+        content_type = response.headers.get("content-type", "")
+        if not content_type.startswith("application/pdf"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"URL does not point to a PDF file (content-type: {content_type})",
             )
 
-            # Use the existing PDF service to process the file
-            upload_response = await pdf_service.upload_pdf(file)
+        # Get filename from URL or content-disposition
+        filename = "downloaded.pdf"
+        if "content-disposition" in response.headers:
+            matches = FILENAME_PATTERN.findall(
+                response.headers["content-disposition"]
+            )
+            if matches:
+                filename = matches[0]
+        else:
+            # Extract from URL
+            url_parts = str(request.url).split("/")
+            if url_parts[-1].endswith(".pdf"):
+                filename = url_parts[-1]
 
-            return upload_response
+        # Create UploadFile from downloaded content
+        file = UploadFile(
+            filename=filename,
+            file=io.BytesIO(response.content),
+        )
 
-    except httpx.HTTPStatusError as http_status_error:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Failed to download PDF from URL: {http_status_error.response.status_code}",
-        )
-    except httpx.RequestError as request_error:
-        raise HTTPException(
-            status_code=502, detail=f"Failed to connect to URL: {str(request_error)}"
-        )
+        # Use the existing PDF service to process the file
+        upload_response = await pdf_service.upload_pdf(file)
+
+        return upload_response
+
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (including those from fetch_with_retry)
+        raise
     except Exception as error:
         raise HTTPException(
             status_code=500, detail=f"Failed to load PDF from URL: {str(error)}"

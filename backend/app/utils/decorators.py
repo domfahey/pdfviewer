@@ -55,33 +55,41 @@ def create_async_sync_wrapper(
 
     """
 
+    def _execute_wrapper_logic(
+        result: R, start_time: float, exception: Exception | None = None
+    ) -> None:
+        """Execute common wrapper logic for success/error cases.
+        
+        Args:
+            result: Function result (ignored if exception is provided).
+            start_time: Start time for duration calculation.
+            exception: Exception if an error occurred, None otherwise.
+        """
+        duration = time.perf_counter() - start_time
+
+        if exception is None:
+            # Success case: execute after callback
+            if after_call:
+                after_call(result, duration)
+        else:
+            # Error case: execute error callback
+            if on_error:
+                on_error(exception, duration)
+
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         """Wrapper for async functions."""
         start_time = time.perf_counter()
 
-        # Execute before callback if provided
         if before_call:
             before_call(args, kwargs)
 
         try:
             result = await func(*args, **kwargs)
-            duration = time.perf_counter() - start_time
-
-            # Execute after callback if provided
-            if after_call:
-                after_call(result, duration)
-
+            _execute_wrapper_logic(result, start_time)
             return result
-
-        except Exception as exc:
-            duration = time.perf_counter() - start_time
-
-            # Execute error callback if provided
-            if on_error:
-                on_error(exc, duration)
-
-            # Always re-raise the exception
+        except Exception as exception:
+            _execute_wrapper_logic(None, start_time, exception)  # type: ignore[arg-type]
             raise
 
     @functools.wraps(func)
@@ -89,28 +97,15 @@ def create_async_sync_wrapper(
         """Wrapper for sync functions."""
         start_time = time.perf_counter()
 
-        # Execute before callback if provided
         if before_call:
             before_call(args, kwargs)
 
         try:
             result = func(*args, **kwargs)
-            duration = time.perf_counter() - start_time
-
-            # Execute after callback if provided
-            if after_call:
-                after_call(result, duration)
-
+            _execute_wrapper_logic(result, start_time)
             return result
-
-        except Exception as exc:
-            duration = time.perf_counter() - start_time
-
-            # Execute error callback if provided
-            if on_error:
-                on_error(exc, duration)
-
-            # Always re-raise the exception
+        except Exception as exception:
+            _execute_wrapper_logic(None, start_time, exception)  # type: ignore[arg-type]
             raise
 
     # Return the appropriate wrapper based on function type
@@ -194,7 +189,7 @@ def performance_logger(
 
             func_logger.bind(**context).info(f"Completed {operation}")
 
-        def on_error(exc: Exception, duration: float) -> None:
+        def on_error(exception: Exception, duration: float) -> None:
             """Log error with timing."""
             duration_ms = duration * 1000
 
@@ -203,8 +198,8 @@ def performance_logger(
                 "function": func.__name__,
                 "duration_ms": round(duration_ms, 2),
                 "success": False,
-                "error_type": type(exc).__name__,
-                "error": str(exc),
+                "error_type": type(exception).__name__,
+                "error": str(exception),
             }
 
             func_logger.bind(**context).error(f"Failed {operation}")

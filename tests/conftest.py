@@ -1,4 +1,5 @@
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ import requests
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
+from backend.app.models.pdf import PDFInfo, PDFMetadata
 
 
 @pytest.fixture
@@ -62,6 +64,31 @@ def non_pdf_file(temp_dir):
     txt_file = temp_dir / "test.txt"
     txt_file.write_text("This is not a PDF file")
     return txt_file
+
+
+@pytest.fixture
+def create_pdf_info():
+    """Factory fixture for creating PDFInfo objects."""
+    def _create_pdf_info(
+        file_id: str | None = None,
+        filename: str = "test.pdf",
+        file_size: int = 1000,
+        page_count: int = 1,
+    ) -> PDFInfo:
+        """Create a PDFInfo object with default or custom values."""
+        import uuid
+        
+        file_id = file_id or str(uuid.uuid4())
+        metadata = PDFMetadata(page_count=page_count, file_size=file_size)
+        return PDFInfo(
+            file_id=file_id,
+            filename=filename,
+            file_size=file_size,
+            mime_type="application/pdf",
+            upload_time=datetime.now(UTC),
+            metadata=metadata,
+        )
+    return _create_pdf_info
 
 
 @pytest.fixture
