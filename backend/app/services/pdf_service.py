@@ -241,11 +241,9 @@ class PDFService:
 
             # Generate unique file ID and file path
             # After validation, filename is guaranteed to be non-None
-            assert (
-                file.filename is not None
-            ), "Filename should not be None after validation"
+            if file.filename is None:
+                raise ValueError("Filename should not be None after validation")
             filename: str = file.filename
-
             file_id = str(uuid.uuid4())
             file_extension = Path(filename).suffix
             stored_filename = f"{file_id}{file_extension}"
