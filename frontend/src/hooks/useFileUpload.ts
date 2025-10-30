@@ -16,6 +16,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const validateFile = (file: File): string | null => {
     // Check file type
@@ -86,9 +87,10 @@ export const useFileUpload = (): UseFileUploadReturn => {
       setUploadProgress(100);
 
       // Keep progress at 100% for a moment before clearing
-      setTimeout(() => {
+      resetTimeoutRef.current = setTimeout(() => {
         setUploadProgress(0);
         setUploading(false);
+        resetTimeoutRef.current = null;
       }, 500);
 
       return response;
@@ -109,11 +111,14 @@ export const useFileUpload = (): UseFileUploadReturn => {
     setError(null);
   }, []);
 
-  // Cleanup on unmount - clear any active progress interval
+  // Cleanup on unmount - clear any active timers
   useEffect(() => {
     return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
+      }
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
       }
     };
   }, []);
