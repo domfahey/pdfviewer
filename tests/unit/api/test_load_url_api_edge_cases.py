@@ -1,8 +1,14 @@
 """
-Comprehensive tests for Load URL API endpoint to increase coverage.
+Edge case tests for Load URL API endpoint.
 
-This module focuses on edge cases, error scenarios, validation logic,
-and network-related error handling for the load_pdf_from_url endpoint.
+This module provides additional coverage for the load_pdf_from_url endpoint:
+- URL validation edge cases
+- Network error scenarios
+- HTTP error handling
+- Timeout and retry edge cases
+- Content-type validation edge cases
+
+For standard load URL functionality, see integration tests.
 """
 
 import uuid

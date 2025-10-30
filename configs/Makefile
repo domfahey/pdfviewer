@@ -92,7 +92,32 @@ test-unit: test-unit-backend test-unit-frontend ## Run all unit tests
 .PHONY: test-unit-backend
 test-unit-backend: ## Run backend unit tests
 	@echo "Running backend unit tests..."
-	cd .. && pytest tests/test_*.py -v --tb=short
+	cd .. && pytest tests/unit -v --tb=short
+
+.PHONY: test-unit-api
+test-unit-api: ## Run API unit tests
+	@echo "Running API unit tests..."
+	cd .. && pytest tests/unit/api -v --tb=short
+
+.PHONY: test-unit-services
+test-unit-services: ## Run service unit tests
+	@echo "Running service unit tests..."
+	cd .. && pytest tests/unit/services -v --tb=short
+
+.PHONY: test-unit-models
+test-unit-models: ## Run model unit tests
+	@echo "Running model unit tests..."
+	cd .. && pytest tests/unit/models -v --tb=short
+
+.PHONY: test-unit-utils
+test-unit-utils: ## Run utils unit tests
+	@echo "Running utils unit tests..."
+	cd .. && pytest tests/unit/utils -v --tb=short
+
+.PHONY: test-unit-middleware
+test-unit-middleware: ## Run middleware unit tests
+	@echo "Running middleware unit tests..."
+	cd .. && pytest tests/unit/middleware -v --tb=short
 
 .PHONY: test-unit-frontend
 test-unit-frontend: ## Run frontend unit tests
@@ -100,12 +125,17 @@ test-unit-frontend: ## Run frontend unit tests
 	cd ../frontend && npm test -- --run
 
 .PHONY: test-integration
-test-integration: test-integration-api test-integration-fixtures ## Run all integration tests
+test-integration: test-integration-api test-integration-samples test-integration-fixtures ## Run all integration tests
 
 .PHONY: test-integration-api
 test-integration-api: ## Run API integration tests
 	@echo "Running API integration tests..."
 	cd .. && pytest tests/integration/api -v --tb=short
+
+.PHONY: test-integration-samples
+test-integration-samples: ## Run sample PDF integration tests
+	@echo "Running sample PDF integration tests..."
+	cd .. && pytest tests/integration/test_*_sample.py tests/integration/test_nhtsa_form.py -v --tb=short
 
 .PHONY: test-integration-fixtures
 test-integration-fixtures: ## Verify integration test fixtures

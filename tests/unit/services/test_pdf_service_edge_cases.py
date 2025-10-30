@@ -1,8 +1,13 @@
 """
-Comprehensive tests for PDFService to increase coverage beyond existing tests.
+Edge case tests for PDFService class.
 
-This module focuses on edge cases, error scenarios, logging integration,
-performance tracking, and uncovered code paths in the PDFService class.
+This module complements test_pdf_service.py by focusing on:
+- Edge cases and boundary conditions
+- Error scenarios and error handling
+- Logging integration and performance tracking
+- Uncovered code paths and corner cases
+
+For standard functionality tests, see test_pdf_service.py.
 """
 
 import os
