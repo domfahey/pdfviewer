@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { renderPageToCanvas, canvasToDataURL, cleanupCanvas } from '../../utils/canvasRenderer';
 
 interface VirtualPDFViewerProps {
   pdfDocument: pdfjsLib.PDFDocumentProxy | null;
@@ -121,28 +122,12 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
 
       try {
         const page = await pdfDocument.getPage(pageInfo.pageNumber);
-        const viewport = page.getViewport({ scale });
-
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-
-        if (!context) {
-          renderingPages.current.delete(pageInfo.pageNumber);
-          return;
-        }
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-
-        await page.render(renderContext).promise;
-
+        
+        // Use shared canvas rendering utility
+        const canvas = await renderPageToCanvas(page, { scale, createNew: true });
+        
         // Cache the toDataURL result to avoid repeated expensive conversions
-        const dataUrl = canvas.toDataURL();
+        const dataUrl = canvasToDataURL(canvas);
 
         setPageData(prev =>
           prev.map((p, i) =>
@@ -267,12 +252,8 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
       setPageData(prev =>
         prev.map(page => {
           if (!page.isVisible && page.canvas) {
-            // Clean up canvas to free memory
-            const canvas = page.canvas;
-            const context = canvas.getContext('2d');
-            if (context) {
-              context.clearRect(0, 0, canvas.width, canvas.height);
-            }
+            // Use shared cleanup utility
+            cleanupCanvas(page.canvas);
             return { ...page, canvas: null, dataUrl: null, isRendered: false };
           }
           return page;
