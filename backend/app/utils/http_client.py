@@ -1,4 +1,13 @@
-"""HTTP client utilities for making requests with retry logic."""
+"""HTTP client utilities for making requests with retry logic.
+
+Security Note:
+    The fetch_with_retry function accepts user-provided URLs by design,
+    as it's used for the /load-url endpoint to download PDFs from external sources.
+    This is a known and accepted risk that existed in the original implementation.
+    
+    Callers should validate URLs and implement appropriate rate limiting and
+    access controls at the API endpoint level.
+"""
 
 import asyncio
 from typing import Any
@@ -18,8 +27,17 @@ async def fetch_with_retry(
     
     Implements exponential backoff for retries on network errors and timeouts.
     
+    Security Warning:
+        This function fetches user-provided URLs and is susceptible to SSRF attacks.
+        It is intended for use in the /load-url endpoint where users provide PDF URLs.
+        Implement appropriate controls:
+        - Rate limiting at the API level
+        - URL validation/allowlisting if applicable
+        - Network segmentation to prevent access to internal resources
+        - Timeout constraints (already implemented: 60s default)
+    
     Args:
-        url: URL to fetch
+        url: URL to fetch (can be user-provided, see security warning)
         max_retries: Maximum number of retry attempts (default: 3)
         timeout: Request timeout in seconds (default: 60.0)
         connect_timeout: Connection timeout in seconds (default: 10.0)
