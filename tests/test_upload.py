@@ -138,18 +138,18 @@ def test_upload_enhanced_error_response(client: TestClient):
 
 def test_upload_filename_validation(client: TestClient, sample_pdf_content: bytes):
     """Test filename validation with security checks."""
-    # Test various filename scenarios
+    # Test various filename scenarios using parametrized approach
     test_cases = [
         ("normal.pdf", 200),
         ("file-name.pdf", 200),
         ("file_name.pdf", 200),
-        # These should be handled by validation
     ]
 
     for filename, expected_status in test_cases:
         files = {"file": (filename, io.BytesIO(sample_pdf_content), "application/pdf")}
         response = client.post("/api/upload", files=files)
-        assert response.status_code == expected_status
+        assert response.status_code == expected_status, \
+            f"Upload with filename '{filename}' should return {expected_status}"
 
 
 def test_upload_response_timing_fields(client: TestClient, sample_pdf_content: bytes):
