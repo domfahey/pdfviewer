@@ -299,7 +299,7 @@ export const PDFControls: React.FC<PDFControlsProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Tooltip title="Search in document">
               <IconButton
-                onClick={() => setShowSearchBar(!showSearchBar)}
+                onClick={() => setShowSearchBar(prev => !prev)}
                 color={showSearchBar ? 'primary' : 'default'}
                 size="small"
               >
