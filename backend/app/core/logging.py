@@ -12,6 +12,9 @@ import structlog
 from rich.console import Console
 from rich.logging import RichHandler
 
+# Type alias for structlog processor
+Processor = Any  # structlog.typing.Processor is not available in all versions
+
 
 def configure_logging(
     level: str = "INFO",
@@ -32,7 +35,7 @@ def configure_logging(
     timestamper = structlog.processors.TimeStamper(fmt="ISO")
 
     # Base processors for all logs
-    shared_processors = [
+    shared_processors: list[Any] = [
         structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
@@ -206,4 +209,3 @@ class LogContext:
 
 # Import performance monitoring decorator from unified utilities
 # This replaces the duplicated implementation that was here
-from ..utils.decorators import performance_logger as log_performance

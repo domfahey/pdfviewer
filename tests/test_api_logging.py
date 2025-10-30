@@ -6,17 +6,17 @@ parameter sanitization, and the APILogger class.
 """
 
 import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from fastapi import Request
 
+from backend.app.core.logging import get_logger
 from backend.app.utils.api_logging import (
     APILogger,
     _sanitize_params,
     _sanitize_response,
     create_duration_calculator,
-    get_logger,
     log_api_call,
     log_file_operation,
 )
@@ -388,7 +388,7 @@ class TestLogFileOperationDecorator:
 
         @log_file_operation("file_upload")
         async def failing_upload(file):
-            raise IOError("File upload failed")
+            raise OSError("File upload failed")
 
         with pytest.raises(IOError, match="File upload failed"):
             await failing_upload(file=Mock())
@@ -602,19 +602,19 @@ class TestCreateDurationCalculator:
         """Test that create_duration_calculator returns a callable."""
         start_time = time.perf_counter()
         calculator = create_duration_calculator(start_time)
-        
+
         assert callable(calculator)
 
     def test_duration_calculator_calculates_elapsed_time(self):
         """Test that calculator returns elapsed time in milliseconds."""
         start_time = time.perf_counter()
         calculator = create_duration_calculator(start_time)
-        
+
         # Wait a small amount of time
         time.sleep(0.01)  # 10ms
-        
+
         duration = calculator()
-        
+
         # Should be at least 10ms (allowing for some variance)
         assert duration >= 8.0
         assert isinstance(duration, float)
@@ -623,9 +623,9 @@ class TestCreateDurationCalculator:
         """Test that duration is rounded to 2 decimal places."""
         start_time = time.perf_counter()
         calculator = create_duration_calculator(start_time)
-        
+
         duration = calculator()
-        
+
         # Check that it's rounded to 2 decimal places
         assert round(duration, 2) == duration
 
@@ -633,11 +633,11 @@ class TestCreateDurationCalculator:
         """Test that calculator can be called multiple times with increasing durations."""
         start_time = time.perf_counter()
         calculator = create_duration_calculator(start_time)
-        
+
         duration1 = calculator()
         time.sleep(0.01)
         duration2 = calculator()
-        
+
         # Second call should return larger duration
         assert duration2 > duration1
 
@@ -646,14 +646,14 @@ class TestCreateDurationCalculator:
         # Create two calculators with different start times
         start1 = time.perf_counter()
         calc1 = create_duration_calculator(start1)
-        
+
         time.sleep(0.01)
-        
+
         start2 = time.perf_counter()
         calc2 = create_duration_calculator(start2)
-        
+
         # First calculator should show more elapsed time
         duration1 = calc1()
         duration2 = calc2()
-        
+
         assert duration1 > duration2

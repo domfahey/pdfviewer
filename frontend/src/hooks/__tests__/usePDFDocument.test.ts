@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for usePDFDocument hook.
- * 
+ *
  * Tests cover document loading, page navigation, scaling,
  * error handling, and cleanup functionality.
  */
@@ -68,9 +68,7 @@ describe('usePDFDocument', () => {
 
   describe('loadDocument', () => {
     it('should successfully load a document', async () => {
-      vi.mocked(PDFService.loadDocument).mockResolvedValue(
-        mockDocument as PDFDocumentProxy
-      );
+      vi.mocked(PDFService.loadDocument).mockResolvedValue(mockDocument as PDFDocumentProxy);
 
       const { result } = renderHook(() => usePDFDocument());
 
@@ -92,9 +90,7 @@ describe('usePDFDocument', () => {
     it('should set loading state during document load', async () => {
       vi.mocked(PDFService.loadDocument).mockImplementation(
         () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve(mockDocument as PDFDocumentProxy), 100)
-          )
+          new Promise(resolve => setTimeout(() => resolve(mockDocument as PDFDocumentProxy), 100))
       );
 
       const { result } = renderHook(() => usePDFDocument());
@@ -111,9 +107,7 @@ describe('usePDFDocument', () => {
     });
 
     it('should load document with metadata', async () => {
-      vi.mocked(PDFService.loadDocument).mockResolvedValue(
-        mockDocument as PDFDocumentProxy
-      );
+      vi.mocked(PDFService.loadDocument).mockResolvedValue(mockDocument as PDFDocumentProxy);
 
       const { result } = renderHook(() => usePDFDocument());
 
@@ -128,9 +122,7 @@ describe('usePDFDocument', () => {
 
     it('should handle document load failure', async () => {
       const errorMessage = 'Failed to load PDF';
-      vi.mocked(PDFService.loadDocument).mockRejectedValue(
-        new Error(errorMessage)
-      );
+      vi.mocked(PDFService.loadDocument).mockRejectedValue(new Error(errorMessage));
 
       const { result } = renderHook(() => usePDFDocument());
 
@@ -176,9 +168,7 @@ describe('usePDFDocument', () => {
 
   describe('Page Navigation', () => {
     beforeEach(async () => {
-      vi.mocked(PDFService.loadDocument).mockResolvedValue(
-        mockDocument as PDFDocumentProxy
-      );
+      vi.mocked(PDFService.loadDocument).mockResolvedValue(mockDocument as PDFDocumentProxy);
     });
 
     it('should set current page within valid range', async () => {
@@ -376,9 +366,7 @@ describe('usePDFDocument', () => {
 
   describe('Cleanup', () => {
     it('should cleanup document and reset state', async () => {
-      vi.mocked(PDFService.loadDocument).mockResolvedValue(
-        mockDocument as PDFDocumentProxy
-      );
+      vi.mocked(PDFService.loadDocument).mockResolvedValue(mockDocument as PDFDocumentProxy);
 
       const { result } = renderHook(() => usePDFDocument());
 
@@ -403,9 +391,7 @@ describe('usePDFDocument', () => {
     });
 
     it('should cleanup on unmount', async () => {
-      vi.mocked(PDFService.loadDocument).mockResolvedValue(
-        mockDocument as PDFDocumentProxy
-      );
+      vi.mocked(PDFService.loadDocument).mockResolvedValue(mockDocument as PDFDocumentProxy);
 
       const { result, unmount } = renderHook(() => usePDFDocument());
 
@@ -459,9 +445,7 @@ describe('usePDFDocument', () => {
     });
 
     it('should handle empty URL gracefully', async () => {
-      vi.mocked(PDFService.loadDocument).mockRejectedValue(
-        new Error('Invalid URL')
-      );
+      vi.mocked(PDFService.loadDocument).mockRejectedValue(new Error('Invalid URL'));
 
       const { result } = renderHook(() => usePDFDocument());
 

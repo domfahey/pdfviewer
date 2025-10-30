@@ -1,9 +1,9 @@
 """Tests for HTTP client utilities."""
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
+import pytest
 from fastapi import HTTPException
 
 from backend.app.utils.http_client import fetch_with_retry
@@ -47,7 +47,9 @@ class TestFetchWithRetry:
             ]
             mock_client.return_value.__aenter__.return_value.get = mock_get
 
-            with patch("backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock):
+            with patch(
+                "backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock
+            ):
                 response = await fetch_with_retry("https://example.com/test.pdf")
 
             assert response.status_code == 200
@@ -60,9 +62,13 @@ class TestFetchWithRetry:
             mock_get = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
             mock_client.return_value.__aenter__.return_value.get = mock_get
 
-            with patch("backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock):
+            with patch(
+                "backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock
+            ):
                 with pytest.raises(HTTPException) as exc_info:
-                    await fetch_with_retry("https://example.com/test.pdf", max_retries=3)
+                    await fetch_with_retry(
+                        "https://example.com/test.pdf", max_retries=3
+                    )
 
             assert exc_info.value.status_code == 504
             assert "Timeout" in exc_info.value.detail
@@ -94,9 +100,13 @@ class TestFetchWithRetry:
             mock_get = AsyncMock(side_effect=httpx.NetworkError("Connection failed"))
             mock_client.return_value.__aenter__.return_value.get = mock_get
 
-            with patch("backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock):
+            with patch(
+                "backend.app.utils.http_client.asyncio.sleep", new_callable=AsyncMock
+            ):
                 with pytest.raises(HTTPException) as exc_info:
-                    await fetch_with_retry("https://example.com/test.pdf", max_retries=2)
+                    await fetch_with_retry(
+                        "https://example.com/test.pdf", max_retries=2
+                    )
 
             assert exc_info.value.status_code == 504
             assert "Connection failed" in exc_info.value.detail

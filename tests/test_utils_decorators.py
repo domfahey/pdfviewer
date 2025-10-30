@@ -5,11 +5,9 @@ logging decorator that consolidates duplicated code.
 """
 
 import asyncio
-import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-import structlog
 
 from backend.app.utils.decorators import (
     create_async_sync_wrapper,

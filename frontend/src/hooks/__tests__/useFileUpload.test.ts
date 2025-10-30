@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for useFileUpload hook.
- * 
+ *
  * Tests cover file upload, validation, progress tracking,
  * error handling, and state management.
  */
@@ -178,10 +178,7 @@ describe('useFileUpload', () => {
 
     it('should set uploading state during upload', async () => {
       vi.mocked(ApiService.uploadPDF).mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve(mockUploadResponse), 1000)
-          )
+        () => new Promise(resolve => setTimeout(() => resolve(mockUploadResponse), 1000))
       );
 
       const { result } = renderHook(() => useFileUpload());
@@ -205,10 +202,7 @@ describe('useFileUpload', () => {
 
     it('should track upload progress', async () => {
       vi.mocked(ApiService.uploadPDF).mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve(mockUploadResponse), 500)
-          )
+        () => new Promise(resolve => setTimeout(() => resolve(mockUploadResponse), 500))
       );
 
       const { result } = renderHook(() => useFileUpload());
@@ -245,9 +239,7 @@ describe('useFileUpload', () => {
 
     it('should handle upload failure', async () => {
       const errorMessage = 'Network error';
-      vi.mocked(ApiService.uploadPDF).mockRejectedValue(
-        new Error(errorMessage)
-      );
+      vi.mocked(ApiService.uploadPDF).mockRejectedValue(new Error(errorMessage));
 
       const { result } = renderHook(() => useFileUpload());
 
@@ -266,9 +258,7 @@ describe('useFileUpload', () => {
     });
 
     it('should reset progress on upload failure', async () => {
-      vi.mocked(ApiService.uploadPDF).mockRejectedValue(
-        new Error('Upload failed')
-      );
+      vi.mocked(ApiService.uploadPDF).mockRejectedValue(new Error('Upload failed'));
 
       const { result } = renderHook(() => useFileUpload());
 

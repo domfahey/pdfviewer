@@ -21,7 +21,9 @@ from .services.pdf_service import PDFService
 
 # Configure logging first thing - use INFO by default, DEBUG only when explicitly requested
 configure_logging(
-    level=os.getenv("LOG_LEVEL", "INFO"),  # Changed from DEBUG to INFO for production readiness
+    level=os.getenv(
+        "LOG_LEVEL", "INFO"
+    ),  # Changed from DEBUG to INFO for production readiness
     json_logs=os.getenv("JSON_LOGS", "false").lower() == "true",
     enable_correlation_id=True,
 )

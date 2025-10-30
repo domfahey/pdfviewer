@@ -128,7 +128,7 @@ def log_function_call(
     log_args: bool = False,
     log_result: bool = False,
     min_duration_ms: float = 0.0,
-):
+) -> Any:
     """Automatically log function calls with performance tracking.
 
     This is now a wrapper around the unified performance_logger decorator
@@ -146,7 +146,7 @@ def log_function_call(
     """
     from .decorators import performance_logger
 
-    def decorator(func):
+    def decorator(func: Any) -> Any:
         op_name = operation_name or f"{func.__module__}.{func.__name__}"
         func_logger = get_logger(func.__module__)
 
@@ -176,7 +176,7 @@ def log_dict_safely(data: dict[str, Any], max_length: int = 1000) -> dict[str, A
     for key, value in data.items():
         if isinstance(value, str) and len(value) > max_length:
             safe_dict[key] = value[:max_length] + "... (truncated)"
-        elif isinstance(value, bytes | bytearray):
+        elif isinstance(value, (bytes, bytearray)):
             safe_dict[key] = f"<binary data: {len(value)} bytes>"
         elif isinstance(value, dict):
             safe_dict[key] = log_dict_safely(value, max_length)  # type: ignore[assignment]

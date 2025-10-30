@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for usePDFSearch hook.
- * 
+ *
  * Tests cover search functionality, match navigation,
  * abort handling, and edge cases.
  */
@@ -39,9 +39,7 @@ describe('usePDFSearch', () => {
 
   describe('Search Functionality', () => {
     it('should find matches in a single page', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'hello world hello universe' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'hello world hello universe' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -79,9 +77,7 @@ describe('usePDFSearch', () => {
     });
 
     it('should perform case-insensitive search', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'Hello HELLO hello HeLLo' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'Hello HELLO hello HeLLo' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -166,9 +162,7 @@ describe('usePDFSearch', () => {
 
   describe('Match Navigation', () => {
     it('should navigate to next match', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'test one test two test three' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'test one test two test three' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -196,9 +190,7 @@ describe('usePDFSearch', () => {
     });
 
     it('should wrap around to first match when at end', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'test one test two' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'test one test two' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -224,9 +216,7 @@ describe('usePDFSearch', () => {
     });
 
     it('should navigate to previous match', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'test one test two test three' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'test one test two test three' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -253,9 +243,7 @@ describe('usePDFSearch', () => {
     });
 
     it('should wrap around to last match when at beginning', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'test one test two test three' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'test one test two test three' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -295,9 +283,7 @@ describe('usePDFSearch', () => {
 
   describe('getCurrentMatch', () => {
     it('should return current match when valid', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'hello world' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'hello world' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -344,9 +330,7 @@ describe('usePDFSearch', () => {
 
   describe('clearSearch', () => {
     it('should clear search results', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'hello world' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'hello world' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 
@@ -448,9 +432,7 @@ describe('usePDFSearch', () => {
     });
 
     it('should handle special characters in search query', async () => {
-      const mockDoc = createMockDocument([
-        { pageNum: 1, text: 'test@example.com and test123' },
-      ]);
+      const mockDoc = createMockDocument([{ pageNum: 1, text: 'test@example.com and test123' }]);
 
       const { result } = renderHook(() => usePDFSearch(mockDoc));
 

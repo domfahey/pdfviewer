@@ -10,7 +10,7 @@ from ..dependencies import get_pdf_service
 from ..models.pdf import PDFMetadata
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
-from ..utils.validation import validate_file_id, handle_api_errors
+from ..utils.validation import handle_api_errors, validate_file_id
 
 router = APIRouter()
 

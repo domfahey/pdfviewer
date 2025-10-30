@@ -146,7 +146,7 @@ export class PDFService {
   ): Promise<void> {
     // Check if canvas is already being rendered
     const extendedCanvas = canvas as ExtendedHTMLCanvasElement;
-    
+
     try {
       if (extendedCanvas._isRendering) {
         devLog('⏭️ [PDFService] Canvas already rendering, skipping duplicate request');
@@ -273,9 +273,7 @@ export class PDFService {
   ): Promise<void> {
     try {
       if (!annotationLayerDiv) {
-        devLog(
-          '⚠️ [PDFService] Annotation layer div is null, skipping annotation layer rendering'
-        );
+        devLog('⚠️ [PDFService] Annotation layer div is null, skipping annotation layer rendering');
         return;
       }
 

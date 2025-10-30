@@ -19,26 +19,27 @@ logger = structlog.get_logger(__name__)
 
 def create_duration_calculator(start_time: float) -> Callable[[], float]:
     """Create a closure that calculates elapsed time in milliseconds.
-    
+
     This helper eliminates duplication of duration calculation logic
     across multiple decorators (log_api_call, log_file_operation).
-    
+
     Args:
         start_time: The start time from time.perf_counter()
-        
+
     Returns:
         Callable that returns elapsed time in milliseconds when called
-        
+
     Example:
         >>> start = time.perf_counter()
         >>> calc = create_duration_calculator(start)
         >>> # ... do work ...
         >>> duration_ms = calc()
     """
+
     def calculate_duration_ms() -> float:
         """Calculate elapsed time in milliseconds."""
         return round((time.perf_counter() - start_time) * 1000, 2)
-    
+
     return calculate_duration_ms
 
 
@@ -48,7 +49,7 @@ def log_api_call(
     log_response: bool = False,
     log_timing: bool = True,
     sensitive_params: list[str] | None = None,
-):
+) -> Any:
     """Provide detailed logging for API endpoint calls.
 
     Args:
@@ -63,9 +64,9 @@ def log_api_call(
 
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Any) -> Any:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Start timing
             start_time = time.perf_counter()
             calculate_duration_ms = create_duration_calculator(start_time)
@@ -91,7 +92,7 @@ def log_api_call(
             # Log parameters if requested
             if log_params:
                 sanitized_kwargs = _sanitize_params(kwargs, sensitive_params or [])
-                log_context["parameters"] = sanitized_kwargs
+                log_context["parameters"] = sanitized_kwargs  # type: ignore[assignment]
 
             # Log operation start
             bound_logger = logger.bind(**log_context)
@@ -102,7 +103,10 @@ def log_api_call(
                 result = await func(*args, **kwargs)
 
                 # Prepare success context
-                success_context = {"duration_ms": calculate_duration_ms(), "status": "success"}
+                success_context = {
+                    "duration_ms": calculate_duration_ms(),
+                    "status": "success",
+                }
 
                 # Log response if requested
                 if log_response and result is not None:
@@ -146,7 +150,7 @@ def log_file_operation(
     operation: str,
     file_param: str = "file",
     log_file_details: bool = True,
-):
+) -> Any:
     """Log file operations with consistent context and details.
 
     Args:
@@ -159,9 +163,9 @@ def log_file_operation(
 
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Any) -> Any:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.perf_counter()
             calculate_duration_ms = create_duration_calculator(start_time)
 
@@ -240,7 +244,7 @@ def _sanitize_params(
         if key.lower() in [k.lower() for k in sensitive_keys]:
             sanitized[key] = "[REDACTED]"
         elif hasattr(value, "__dict__") and not isinstance(
-            value, str | int | float | bool
+            value, (str, int, float, bool)
         ):
             # For complex objects, just log the type
             sanitized[key] = f"<{type(value).__name__}>"
@@ -295,67 +299,69 @@ class APILogger:
             correlation_id=self.correlation_id,
         )
 
-    def _log(self, level: str, action: str, **context):
+    def _log(self, level: str, action: str, **context: Any) -> None:
         """Internal helper to log with consistent formatting.
-        
+
         Args:
             level: Log level ('info', 'error', 'warning', or 'debug')
             action: Action description (e.g., 'Request received', 'Validation started')
                    Should be a complete phrase that reads well with "for {operation}"
             **context: Additional context to bind to the logger
-            
+
         Raises:
             ValueError: If level is not a valid log level
         """
         # Validate level to provide clear error messages
-        valid_levels = ('info', 'error', 'warning', 'debug')
+        valid_levels = ("info", "error", "warning", "debug")
         if level not in valid_levels:
-            raise ValueError(f"Invalid log level '{level}'. Must be one of {valid_levels}")
-        
+            raise ValueError(
+                f"Invalid log level '{level}'. Must be one of {valid_levels}"
+            )
+
         log_method = getattr(self.logger.bind(**context), level)
         log_method(f"{action} for {self.operation}")
 
-    def log_request_received(self, **context):
+    def log_request_received(self, **context: Any) -> None:
         """Log that a request has been received."""
         self._log("info", "Request received", **context)
 
-    def log_validation_start(self, **context):
+    def log_validation_start(self, **context: Any) -> None:
         """Log start of validation process."""
         self._log("info", "Validation started", **context)
 
-    def log_validation_success(self, **context):
+    def log_validation_success(self, **context: Any) -> None:
         """Log successful validation."""
         self._log("info", "Validation passed", **context)
 
-    def log_validation_error(self, error: str, **context):
+    def log_validation_error(self, error: str, **context: Any) -> None:
         """Log validation error."""
         self._log("error", "Validation failed", error=error, **context)
 
-    def log_processing_start(self, **context):
+    def log_processing_start(self, **context: Any) -> None:
         """Log start of main processing."""
         self._log("info", "Processing started", **context)
 
-    def log_processing_success(self, **context):
+    def log_processing_success(self, **context: Any) -> None:
         """Log successful processing."""
         self._log("info", "Processing completed", **context)
 
-    def log_processing_error(self, error: Exception, **context):
+    def log_processing_error(self, error: Exception, **context: Any) -> None:
         """Log processing error."""
         self._log(
-            "error", 
+            "error",
             "Processing failed",
-            error_type=type(error).__name__, 
-            error_message=str(error), 
-            **context
+            error_type=type(error).__name__,
+            error_message=str(error),
+            **context,
         )
 
-    def log_response_prepared(self, **context):
+    def log_response_prepared(self, **context: Any) -> None:
         """Log that response has been prepared."""
         self._log("info", "Response prepared", **context)
 
     def log_api_completed(
-        self, status_code: int = 200, response_size: int = 0, **context
-    ):
+        self, status_code: int = 200, response_size: int = 0, **context: Any
+    ) -> None:
         """Log that API operation has completed."""
         duration_ms = (time.perf_counter() - self.start_time) * 1000
         self._log(
@@ -368,11 +374,13 @@ class APILogger:
         )
 
     def log_file_received(
-        self, filename: str | None = None, file_size: int = 0, **context
-    ):
+        self, filename: str | None = None, file_size: int = 0, **context: Any
+    ) -> None:
         """Log that a file has been received."""
-        self._log("info", "File received", filename=filename, file_size=file_size, **context)
+        self._log(
+            "info", "File received", filename=filename, file_size=file_size, **context
+        )
 
-    def log_file_processed(self, filename: str | None = None, **context):
+    def log_file_processed(self, filename: str | None = None, **context: Any) -> None:
         """Log that a file has been processed."""
         self._log("info", "File processed", filename=filename, **context)

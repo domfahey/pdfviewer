@@ -7,15 +7,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from pydantic import BaseModel, Field, HttpUrl
 
-# Regular expression pattern to extract filename from Content-Disposition header
-FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
-
 from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
 from ..utils.http_client import fetch_with_retry
 from ..utils.validation import handle_api_errors
+
+# Regular expression pattern to extract filename from Content-Disposition header
+FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
 
 router = APIRouter()
 
@@ -57,9 +57,7 @@ async def load_pdf_from_url(
         # Get filename from URL or content-disposition
         filename = "downloaded.pdf"
         if "content-disposition" in response.headers:
-            matches = FILENAME_PATTERN.findall(
-                response.headers["content-disposition"]
-            )
+            matches = FILENAME_PATTERN.findall(response.headers["content-disposition"])
             if matches:
                 filename = matches[0]
         else:

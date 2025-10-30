@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for pdfService.
- * 
+ *
  * Tests cover PDF document loading, page rendering, cleanup,
  * caching, and error handling.
  */
@@ -148,10 +148,7 @@ describe('PDFService', () => {
 
   describe('getPage', () => {
     it('should successfully get a page from document', async () => {
-      const page = await PDFService.getPage(
-        mockDocument as PDFDocumentProxy,
-        1
-      );
+      const page = await PDFService.getPage(mockDocument as PDFDocumentProxy, 1);
 
       expect(page).toBe(mockPage);
       expect(mockDocument.getPage).toHaveBeenCalledWith(1);
@@ -163,9 +160,9 @@ describe('PDFService', () => {
         getPage: vi.fn().mockRejectedValue(new Error('Page not found')),
       };
 
-      await expect(
-        PDFService.getPage(errorDoc as PDFDocumentProxy, 999)
-      ).rejects.toThrow('Failed to load page 999');
+      await expect(PDFService.getPage(errorDoc as PDFDocumentProxy, 999)).rejects.toThrow(
+        'Failed to load page 999'
+      );
     });
 
     it('should get different pages', async () => {
@@ -174,10 +171,7 @@ describe('PDFService', () => {
 
       const doc = {
         ...mockDocument,
-        getPage: vi
-          .fn()
-          .mockResolvedValueOnce(page1)
-          .mockResolvedValueOnce(page2),
+        getPage: vi.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2),
       };
 
       const result1 = await PDFService.getPage(doc as PDFDocumentProxy, 1);
@@ -202,11 +196,7 @@ describe('PDFService', () => {
     });
 
     it('should successfully render page to canvas', async () => {
-      await PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      await PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       expect(mockPage.getViewport).toHaveBeenCalledWith({ scale: 1.0 });
       expect(mockPage.render).toHaveBeenCalled();
@@ -216,15 +206,9 @@ describe('PDFService', () => {
 
     it('should apply custom scale', async () => {
       const scaledViewport = { width: 1200, height: 1600, scale: 2.0 };
-      vi.mocked(mockPage.getViewport).mockReturnValue(
-        scaledViewport as PageViewport
-      );
+      vi.mocked(mockPage.getViewport).mockReturnValue(scaledViewport as PageViewport);
 
-      await PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        2.0
-      );
+      await PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 2.0);
 
       expect(mockPage.getViewport).toHaveBeenCalledWith({ scale: 2.0 });
       expect(canvas.width).toBe(1200);
@@ -240,18 +224,10 @@ describe('PDFService', () => {
     });
 
     it('should prevent concurrent renders on same canvas', async () => {
-      const renderPromise = PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      const renderPromise = PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       // Try to render again before first completes
-      await PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      await PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       await renderPromise;
 
@@ -262,21 +238,17 @@ describe('PDFService', () => {
     it('should cancel existing render task', async () => {
       const cancelMock = vi.fn().mockResolvedValue(undefined);
       const firstRenderTask = {
-        promise: new Promise((resolve) => setTimeout(resolve, 100)),
+        promise: new Promise(resolve => setTimeout(resolve, 100)),
         cancel: cancelMock,
       };
 
       vi.mocked(mockPage.render).mockReturnValueOnce(firstRenderTask as any);
 
       // Start first render
-      const firstRender = PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      const firstRender = PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       // Wait a bit then start second render
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // Reset the render mock for second call
       vi.mocked(mockPage.render).mockReturnValue({
@@ -284,11 +256,7 @@ describe('PDFService', () => {
         cancel: vi.fn(),
       } as any);
 
-      const secondRender = PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      const secondRender = PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       await Promise.all([firstRender, secondRender]);
 
@@ -313,11 +281,7 @@ describe('PDFService', () => {
     });
 
     it('should clear canvas before rendering', async () => {
-      await PDFService.renderPageToCanvas(
-        mockPage as PDFPageProxy,
-        canvas,
-        1.0
-      );
+      await PDFService.renderPageToCanvas(mockPage as PDFPageProxy, canvas, 1.0);
 
       // clearRect is called before dimensions are set, so uses existing dimensions
       expect(context.clearRect).toHaveBeenCalled();
@@ -336,11 +300,7 @@ describe('PDFService', () => {
 
       vi.mocked(pdfjsLib.TextLayer).mockReturnValue(mockTextLayer as any);
 
-      await PDFService.renderTextLayer(
-        mockPage as PDFPageProxy,
-        textLayerDiv,
-        1.0
-      );
+      await PDFService.renderTextLayer(mockPage as PDFPageProxy, textLayerDiv, 1.0);
 
       expect(mockPage.getTextContent).toHaveBeenCalled();
       expect(mockTextLayer.render).toHaveBeenCalled();
@@ -362,19 +322,13 @@ describe('PDFService', () => {
 
       vi.mocked(pdfjsLib.TextLayer).mockReturnValue(mockTextLayer as any);
 
-      await PDFService.renderTextLayer(
-        mockPage as PDFPageProxy,
-        textLayerDiv,
-        1.0
-      );
+      await PDFService.renderTextLayer(mockPage as PDFPageProxy, textLayerDiv, 1.0);
 
       expect(textLayerDiv.innerHTML).not.toContain('Previous content');
     });
 
     it('should not throw on text layer error', async () => {
-      vi.mocked(mockPage.getTextContent).mockRejectedValue(
-        new Error('Text extraction failed')
-      );
+      vi.mocked(mockPage.getTextContent).mockRejectedValue(new Error('Text extraction failed'));
 
       // Should not throw error
       await expect(
@@ -391,11 +345,7 @@ describe('PDFService', () => {
     });
 
     it('should render annotation layer successfully', async () => {
-      await PDFService.renderAnnotationLayer(
-        mockPage as PDFPageProxy,
-        annotationLayerDiv,
-        1.0
-      );
+      await PDFService.renderAnnotationLayer(mockPage as PDFPageProxy, annotationLayerDiv, 1.0);
 
       expect(mockPage.getAnnotations).toHaveBeenCalled();
     });
@@ -403,11 +353,7 @@ describe('PDFService', () => {
     it('should handle null annotation layer div', async () => {
       // Should not throw error
       await expect(
-        PDFService.renderAnnotationLayer(
-          mockPage as PDFPageProxy,
-          null as any,
-          1.0
-        )
+        PDFService.renderAnnotationLayer(mockPage as PDFPageProxy, null as any, 1.0)
       ).resolves.toBeUndefined();
 
       expect(mockPage.getAnnotations).not.toHaveBeenCalled();
@@ -416,11 +362,7 @@ describe('PDFService', () => {
     it('should clear previous content', async () => {
       annotationLayerDiv.innerHTML = '<div>Previous</div>';
 
-      await PDFService.renderAnnotationLayer(
-        mockPage as PDFPageProxy,
-        annotationLayerDiv,
-        1.0
-      );
+      await PDFService.renderAnnotationLayer(mockPage as PDFPageProxy, annotationLayerDiv, 1.0);
 
       expect(annotationLayerDiv.innerHTML).toBe('');
     });
@@ -431,27 +373,17 @@ describe('PDFService', () => {
         { subtype: 'Text' },
       ] as any);
 
-      await PDFService.renderAnnotationLayer(
-        mockPage as PDFPageProxy,
-        annotationLayerDiv,
-        1.0
-      );
+      await PDFService.renderAnnotationLayer(mockPage as PDFPageProxy, annotationLayerDiv, 1.0);
 
       expect(mockPage.getAnnotations).toHaveBeenCalled();
     });
 
     it('should not throw on annotation error', async () => {
-      vi.mocked(mockPage.getAnnotations).mockRejectedValue(
-        new Error('Annotation error')
-      );
+      vi.mocked(mockPage.getAnnotations).mockRejectedValue(new Error('Annotation error'));
 
       // Should not throw error
       await expect(
-        PDFService.renderAnnotationLayer(
-          mockPage as PDFPageProxy,
-          annotationLayerDiv,
-          1.0
-        )
+        PDFService.renderAnnotationLayer(mockPage as PDFPageProxy, annotationLayerDiv, 1.0)
       ).resolves.toBeUndefined();
     });
   });

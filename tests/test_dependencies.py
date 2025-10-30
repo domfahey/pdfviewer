@@ -1,13 +1,12 @@
 """Tests for the dependencies module."""
 
-import pytest
 from unittest.mock import Mock
 
 from backend.app.dependencies import (
+    create_service_dependency,
     get_pdf_service,
     init_pdf_service,
     reset_pdf_service,
-    create_service_dependency,
 )
 from backend.app.services.pdf_service import PDFService
 

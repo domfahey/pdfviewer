@@ -69,6 +69,7 @@ def non_pdf_file(temp_dir):
 @pytest.fixture
 def create_pdf_info():
     """Factory fixture for creating PDFInfo objects."""
+
     def _create_pdf_info(
         file_id: str | None = None,
         filename: str = "test.pdf",
@@ -77,7 +78,7 @@ def create_pdf_info():
     ) -> PDFInfo:
         """Create a PDFInfo object with default or custom values."""
         import uuid
-        
+
         file_id = file_id or str(uuid.uuid4())
         metadata = PDFMetadata(page_count=page_count, file_size=file_size)
         return PDFInfo(
@@ -88,6 +89,7 @@ def create_pdf_info():
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
+
     return _create_pdf_info
 
 

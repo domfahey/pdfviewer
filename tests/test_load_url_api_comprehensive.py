@@ -12,9 +12,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app.dependencies import get_pdf_service, init_pdf_service
 from backend.app.api.load_url import LoadPDFRequest
-from backend.app.services.pdf_service import PDFService
+from backend.app.dependencies import get_pdf_service, init_pdf_service
 from backend.app.models.pdf import PDFUploadResponse
 from backend.app.services.pdf_service import PDFService
 
@@ -34,8 +33,8 @@ def reset_load_url_service_state():
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.services.pdf_service import PDFService
     from backend.app.dependencies import init_pdf_service
+    from backend.app.services.pdf_service import PDFService
 
     service = PDFService(upload_dir="uploads")
     init_pdf_service(service)
@@ -495,9 +494,7 @@ class TestAPILoggingIntegration:
         from backend.app.api.load_url import load_pdf_from_url
 
         # The function should have the decorator applied
-        assert hasattr(load_pdf_from_url, "__wrapped__") or callable(
-            load_pdf_from_url
-        )
+        assert hasattr(load_pdf_from_url, "__wrapped__") or callable(load_pdf_from_url)
 
         # Make a test request to verify logging works (this tests integration)
         response = client.post("/api/load-url", json={"url": "invalid-url"})

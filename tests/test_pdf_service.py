@@ -90,7 +90,9 @@ class TestPDFServiceValidation:
         ],
         ids=["no_filename", "empty_filename"],
     )
-    def test_validate_file_missing_filename(self, pdf_service, filename, expected_error):
+    def test_validate_file_missing_filename(
+        self, pdf_service, filename, expected_error
+    ):
         """Test validation fails when filename is missing or empty."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = filename
@@ -201,7 +203,9 @@ class TestPDFServiceMetadataExtraction:
         assert metadata.page_count == 1
 
     @patch("backend.app.services.pdf_service.PdfReader")
-    def test_extract_pdf_metadata_encrypted_pdf(self, mock_pdf_reader, pdf_service, sample_pdf_file):
+    def test_extract_pdf_metadata_encrypted_pdf(
+        self, mock_pdf_reader, pdf_service, sample_pdf_file
+    ):
         """Test metadata extraction from encrypted PDF."""
         mock_reader = Mock()
         mock_reader.pages = [Mock(), Mock()]  # Two pages
@@ -219,11 +223,6 @@ class TestPDFServiceMetadataExtraction:
 
 class TestPDFServiceUpload:
     """Test PDF upload functionality."""
-        """Clean up test fixtures."""
-        if pdf_service.upload_dir.exists():
-            import shutil
-
-            shutil.rmtree(pdf_service.upload_dir, ignore_errors=True)
 
     @pytest.mark.asyncio
     async def test_upload_pdf_success(self, pdf_service, sample_pdf_content):
@@ -289,7 +288,9 @@ class TestPDFServiceUpload:
 class TestPDFServiceFileOperations:
     """Test PDF file operations (get, delete, list)."""
 
-    def test_get_pdf_path_success(self, pdf_service, sample_pdf_content, create_pdf_info):
+    def test_get_pdf_path_success(
+        self, pdf_service, sample_pdf_content, create_pdf_info
+    ):
         """Test successful PDF path retrieval."""
         # Add a file to metadata and create the actual file
         file_id = str(uuid.uuid4())

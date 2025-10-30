@@ -148,8 +148,9 @@ def test_upload_filename_validation(client: TestClient, sample_pdf_content: byte
     for filename, expected_status in test_cases:
         files = {"file": (filename, io.BytesIO(sample_pdf_content), "application/pdf")}
         response = client.post("/api/upload", files=files)
-        assert response.status_code == expected_status, \
-            f"Upload with filename '{filename}' should return {expected_status}"
+        assert (
+            response.status_code == expected_status
+        ), f"Upload with filename '{filename}' should return {expected_status}"
 
 
 def test_upload_response_timing_fields(client: TestClient, sample_pdf_content: bytes):

@@ -123,7 +123,11 @@ export const PDFMetadataPanel: React.FC<PDFMetadataPanelProps> = ({
     const bytesPerKilobyte = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const sizeUnitIndex = Math.floor(Math.log(bytes) / Math.log(bytesPerKilobyte));
-    return parseFloat((bytes / Math.pow(bytesPerKilobyte, sizeUnitIndex)).toFixed(2)) + ' ' + sizes[sizeUnitIndex];
+    return (
+      parseFloat((bytes / Math.pow(bytesPerKilobyte, sizeUnitIndex)).toFixed(2)) +
+      ' ' +
+      sizes[sizeUnitIndex]
+    );
   };
 
   const formatDate = (date: Date): string => {

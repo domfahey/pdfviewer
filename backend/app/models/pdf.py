@@ -5,7 +5,6 @@ and file information using Pydantic v2.
 """
 
 from datetime import UTC, datetime
-import re
 from typing import Annotated
 
 from pydantic import (
@@ -21,11 +20,11 @@ from pydantic import (
 
 def _validate_non_empty_string(value: str, field_name: str) -> None:
     """Helper to validate that a string is not empty or whitespace.
-    
+
     Args:
         value: The string value to validate
         field_name: Name of the field being validated (for error messages)
-        
+
     Raises:
         ValueError: If the string is empty or contains only whitespace
     """
@@ -35,13 +34,13 @@ def _validate_non_empty_string(value: str, field_name: str) -> None:
 
 def calculate_file_size_mb(file_size_bytes: int) -> float:
     """Calculate file size in megabytes from bytes.
-    
+
     This helper function eliminates duplication of the file size calculation
     logic across multiple models (PDFMetadata, PDFUploadResponse).
-    
+
     Args:
         file_size_bytes: File size in bytes
-        
+
     Returns:
         float: File size in megabytes, rounded to 2 decimal places
     """
@@ -50,13 +49,13 @@ def calculate_file_size_mb(file_size_bytes: int) -> float:
 
 def serialize_datetime_to_iso(dt: datetime | None) -> str | None:
     """Serialize datetime to ISO format with timezone awareness.
-    
+
     This helper function eliminates duplication of datetime serialization
     logic across multiple models (PDFMetadata, PDFUploadResponse, PDFInfo).
-    
+
     Args:
         dt: Datetime to serialize (can be None)
-        
+
     Returns:
         str | None: ISO format string if datetime provided, None otherwise
     """
