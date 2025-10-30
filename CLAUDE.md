@@ -1,85 +1,116 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working with this PDF Viewer POC.
-
-## Table of Contents
-
-- [Project Overview](#project-overview)
-- [Tech Stack](#tech-stack)
-- [Key Requirements](#key-requirements)
-- [Quick Reference](#quick-reference)
-- [API Decorators](#api-decorators)
-- [Development Notes](#development-notes)
-- [Git Workflow](#git-workflow)
-- [Important Files](#important-files)
+Instructions for Claude Code when working with this PDF Viewer POC.
 
 ## Project Overview
 
-PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL loading, and form extraction with ground truth comparison UI.
+PDF viewer POC built with React 19.1 and FastAPI. Core features:
+- Full-text PDF search with highlighting
+- Remote PDF loading via URL
+- Form field extraction with ground truth comparison
+- 50MB file size limit
 
 ## Tech Stack
 
-**Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
-**Backend:** FastAPI, Python 3.11+, UV, Pydantic v2  
-**Code Quality:** Modern Python syntax (X | Y unions, datetime.UTC), optimized React patterns
+**Frontend**
+- React 19.1 + TypeScript
+- Material UI v7
+- PDF.js
+- Vite
 
-## Key Requirements
+**Backend**
+- FastAPI (Python 3.11+)
+- UV package manager
+- Pydantic v2
+- System dependency: `libmagic`
 
-- **Git**: Use `main` branch (NOT `master`) for all development
-- Full-text PDF search with highlighting
-- URL loading support for remote PDFs
-- Ground truth comparison UI with accuracy metrics
-- 50MB file size limit
-- Correlation ID propagation
-- Zero linting/type errors
-- Security: Pre-commit hooks, no secrets in code
-- System dependency: libmagic (see README)
+## Code Standards
 
-## Quick Reference
+### Python (Backend)
 
-See [Technical Guide](docs/TECHNICAL.md) for:
-- Setup commands
-- Testing & quality checks
-- Project structure
-- Environment variables
+**DO:**
+- Use modern syntax: `X | Y` unions, `datetime.UTC`
+- Apply decorators for logging: `@log_api_call()`, `@log_file_operation()`
+- Use Pydantic v2 computed fields and validators
+- Maintain correlation ID propagation across requests
+- Keep all code lint-free (ruff, mypy)
 
-## API Decorators
-
+**Example API endpoint pattern:**
 ```python
-@log_api_call("operation", log_params=True, log_response=True)
+@log_api_call("operation_name", log_params=True, log_response=True)
 @log_file_operation("upload", file_param="file")
+async def endpoint_name(...):
+    # Implementation
 ```
 
-## Development Notes
+**DON'T:**
+- Use deprecated syntax (`Union[X, Y]`, `datetime.utcnow()`)
+- Skip type hints
+- Commit secrets or credentials
 
-- React 19 Strict Mode compatibility
-- Pydantic v2 computed fields and validators
-- Debug logging enabled by default
-- CORS configured for ports 5173-5176
+### TypeScript/React (Frontend)
+
+**DO:**
+- Ensure React 19 Strict Mode compatibility (handle double-renders)
+- Use TypeScript strict mode
+- Follow Material UI v7 patterns
+- Keep all code lint-free (ESLint, TypeScript compiler)
+
+**DON'T:**
+- Use deprecated React patterns
+- Skip type definitions
+- Hardcode environment-specific values
+
+### Testing & Quality
+
+**Before ANY commit:**
+1. Run backend tests: `cd backend && uv run pytest`
+2. Run frontend tests: `cd frontend && npm test`
+3. Check linting: Both backend and frontend must pass
+4. Verify zero type errors: `mypy` (backend), `tsc --noEmit` (frontend)
+
+**Pre-commit hooks are enforced** - ensure all checks pass locally.
 
 ## Git Workflow
 
-🔄 **Recommended Ongoing Process:**
-1. Create feature branch from `main`
-2. Develop and test the feature
-3. Create PR to merge into `main`
-4. Delete branch immediately after merge
-5. Repeat for next feature
+**Branch:** Always use `main` as the primary branch (GitHub default).
 
-**Branch Management:**
-- **Primary Branch**: `main` (NOT `master`) - GitHub default branch
-- Use only `main` as primary branch (consolidated from master/main in July 2025)
-- All feature branches should branch from and merge back to `main`
-- Delete merged feature branches immediately
-- Keep branch lists clean and minimal
-- Use short-lived feature branches (days/weeks, not months)
+**Standard workflow:**
+1. Create feature branch from `main`: `git checkout -b feature/description`
+2. Develop and test locally
+3. Commit with clear messages
+4. Push and create PR to `main`
+5. Delete branch after merge
 
-## Important Files
+**Branch hygiene:**
+- Keep branches short-lived (days/weeks, not months)
+- Delete merged branches immediately
+- Minimize active branch count
 
+## Key Files & Locations
+
+**Backend:**
 - `backend/app/api/load_url.py` - URL loading endpoint
+- `backend/app/decorators.py` - Logging decorators
+- `backend/app/models/` - Pydantic models
+
+**Frontend:**
 - `frontend/src/hooks/usePDFSearch.ts` - Search functionality
-- `frontend/src/components/TestPDFLoader.tsx` - Test PDF loader
+- `frontend/src/components/TestPDFLoader.tsx` - PDF loader component
 - `frontend/src/components/PDFViewer/PDFExtractedFields.tsx` - Form extraction UI
 
-Author: Dominic Fahey (domfahey@gmail.com)  
-License: MIT
+**Configuration:**
+- Debug logging enabled by default
+- CORS: ports 5173-5176
+- Environment variables: See [TECHNICAL.md](docs/TECHNICAL.md)
+
+## Additional Documentation
+
+- **Setup & Commands**: [TECHNICAL.md](docs/TECHNICAL.md)
+- **Architecture**: [TECHNICAL.md](docs/TECHNICAL.md#project-structure)
+- **API Reference**: FastAPI auto-docs at `/docs` endpoint
+
+---
+
+**Author:** Dominic Fahey (domfahey@gmail.com)
+**License:** MIT
