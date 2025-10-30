@@ -10,7 +10,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import aiofiles
-import magic
 from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
 
@@ -115,6 +114,30 @@ class PDFService:
     def _get_pdf_attr(self, pdf_info: PDFInfo | None, attr: str) -> str | None:
         """Helper to safely get PDF info attributes."""
         return getattr(pdf_info, attr, None) if pdf_info else None
+
+    def _validate_pdf_header(self, file_path: Path) -> bool:
+        """Validate that file has a valid PDF header.
+
+        Args:
+            file_path: Path to the file to validate.
+
+        Returns:
+            True if the file has a valid PDF header (%PDF-), False otherwise.
+
+        """
+        try:
+            with open(file_path, "rb") as f:
+                # Read first 5 bytes to check for PDF signature
+                header = f.read(5)
+                # PDF files must start with %PDF-
+                return header.startswith(b"%PDF-")
+        except Exception as header_exception:
+            self.logger.warning(
+                "Error reading file header during validation",
+                file_path=str(file_path),
+                error=str(header_exception),
+            )
+            return False
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
@@ -294,18 +317,17 @@ class PDFService:
                     ),
                 )
 
-                # Verify MIME type
+                # Verify PDF header
                 with PerformanceTracker(
-                    "MIME type verification", self.logger, file_id=file_id
+                    "PDF header verification", self.logger, file_id=file_id
                 ):
-                    mime_type = magic.from_file(str(file_path), mime=True)
+                    is_valid_pdf = self._validate_pdf_header(file_path)
 
-                if mime_type not in self.allowed_mime_types:
+                if not is_valid_pdf:
                     self.logger.warning(
-                        "Invalid MIME type detected, removing file",
+                        "Invalid PDF header detected, removing file",
                         file_id=file_id,
-                        detected_mime_type=mime_type,
-                        allowed_mime_types=list(self.allowed_mime_types),
+                        file_path=str(file_path),
                     )
                     os.unlink(file_path)
                     raise HTTPException(status_code=400, detail="Invalid file type")
@@ -314,6 +336,8 @@ class PDFService:
                 metadata = self._extract_pdf_metadata(file_path)
 
                 # Store file info (reuse cached file_stat)
+                # Use standard MIME type for PDFs
+                mime_type = "application/pdf"
                 pdf_info = PDFInfo(
                     file_id=file_id,
                     filename=filename,
