@@ -28,7 +28,6 @@ class TestPDFServiceInitialization:
         assert service.upload_dir == Path("uploads")
         assert service.upload_dir.exists()
         assert service.max_file_size == 50 * 1024 * 1024  # 50MB
-        assert service.allowed_mime_types == {"application/pdf"}
 
     def test_init_custom_upload_dir(self):
         """Test PDFService initialization with custom upload directory."""
@@ -71,6 +70,51 @@ def mock_pdf_file():
 
 class TestPDFServiceValidation:
     """Test file validation methods."""
+
+    def test_validate_pdf_header_valid(self, pdf_service, tmp_path):
+        """Test PDF header validation with a valid PDF file."""
+        # Create a file with valid PDF header
+        test_file = tmp_path / "valid.pdf"
+        test_file.write_bytes(b"%PDF-1.4\n%\xE2\xE3\xCF\xD3")
+        
+        result = pdf_service._validate_pdf_header(test_file)
+        assert result is True
+
+    def test_validate_pdf_header_invalid(self, pdf_service, tmp_path):
+        """Test PDF header validation with an invalid file."""
+        # Create a file without PDF header
+        test_file = tmp_path / "invalid.txt"
+        test_file.write_bytes(b"This is not a PDF file")
+        
+        result = pdf_service._validate_pdf_header(test_file)
+        assert result is False
+
+    def test_validate_pdf_header_empty_file(self, pdf_service, tmp_path):
+        """Test PDF header validation with an empty file."""
+        test_file = tmp_path / "empty.pdf"
+        test_file.write_bytes(b"")
+        
+        result = pdf_service._validate_pdf_header(test_file)
+        assert result is False
+
+    def test_validate_pdf_header_nonexistent_file(self, pdf_service, tmp_path):
+        """Test PDF header validation with a non-existent file."""
+        test_file = tmp_path / "nonexistent.pdf"
+        
+        result = pdf_service._validate_pdf_header(test_file)
+        assert result is False
+
+    def test_validate_pdf_header_different_versions(self, pdf_service, tmp_path):
+        """Test PDF header validation with different PDF versions."""
+        versions = ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]
+        
+        for version in versions:
+            test_file = tmp_path / f"pdf_{version.replace('.', '_')}.pdf"
+            header = f"%PDF-{version}\n".encode()
+            test_file.write_bytes(header)
+            
+            result = pdf_service._validate_pdf_header(test_file)
+            assert result is True, f"PDF version {version} should be valid"
 
     def test_validate_file_valid_pdf(self, pdf_service, sample_pdf_content):
         """Test validation of a valid PDF file."""
@@ -233,7 +277,7 @@ class TestPDFServiceUpload:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = Mock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="application/pdf"):
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=True):
             response = await pdf_service.upload_pdf(mock_file)
 
         assert isinstance(response, PDFUploadResponse)
@@ -255,12 +299,12 @@ class TestPDFServiceUpload:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = Mock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="text/plain"):
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=False):
             with pytest.raises(HTTPException) as exc_info:
                 await pdf_service.upload_pdf(mock_file)
 
         assert exc_info.value.status_code == 400
-        assert "Invalid file type" in exc_info.value.detail
+        assert "Invalid PDF file format" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_upload_pdf_file_write_error(self, pdf_service, sample_pdf_content):

@@ -276,7 +276,7 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", side_effect=Exception("Magic library error")):
+        with patch.object(pdf_service, "_validate_pdf_header", side_effect=Exception("Header read error")):
             with pytest.raises(HTTPException) as exc_info:
                 await pdf_service.upload_pdf(mock_file)
 
@@ -293,7 +293,7 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="application/pdf"):
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=True):
             with patch.object(pdf_service, "_extract_pdf_metadata") as mock_extract:
                 # Mock metadata extraction to return fallback metadata
                 mock_extract.return_value = PDFMetadata(
@@ -316,7 +316,7 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="text/plain"):  # Wrong MIME type
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=False):  # Invalid PDF
             with patch("os.unlink") as mock_unlink:
                 with pytest.raises(HTTPException):
                     await pdf_service.upload_pdf(mock_file)
@@ -359,7 +359,7 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="application/pdf"):
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=True):
             with patch.object(
                 pdf_service.file_logger, "upload_started"
             ) as mock_started:
@@ -724,7 +724,7 @@ class TestPDFServicePerformanceIntegration:
         mock_file.size = len(sample_pdf_content)
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
-        with patch("magic.from_file", return_value="application/pdf"):
+        with patch.object(pdf_service, "_validate_pdf_header", return_value=True):
             with patch("backend.app.utils.logger.PerformanceTracker") as mock_tracker:
                 mock_context = Mock()
                 mock_context.duration_ms = 100

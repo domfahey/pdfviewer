@@ -10,7 +10,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import aiofiles
-import magic
 from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
 
@@ -40,7 +39,6 @@ class PDFService:
         self.upload_dir = Path(upload_dir)
         self.upload_dir.mkdir(exist_ok=True)
         self.max_file_size = 50 * 1024 * 1024  # 50MB
-        self.allowed_mime_types = {"application/pdf"}
 
         # In-memory storage for file metadata (use database in production)
         self._file_metadata: dict[str, PDFInfo] = {}
@@ -54,7 +52,6 @@ class PDFService:
             "PDF service initialized",
             upload_dir=str(self.upload_dir),
             max_file_size_mb=self.max_file_size / (1024 * 1024),
-            allowed_mime_types=list(self.allowed_mime_types),
         )
 
     def _determine_upload_size(self, file: UploadFile) -> int | None:
@@ -115,6 +112,32 @@ class PDFService:
     def _get_pdf_attr(self, pdf_info: PDFInfo | None, attr: str) -> str | None:
         """Helper to safely get PDF info attributes."""
         return getattr(pdf_info, attr, None) if pdf_info else None
+
+    def _validate_pdf_header(self, file_path: Path) -> bool:
+        """Validate that file has a valid PDF header.
+        
+        PDF files must start with "%PDF-" followed by version number.
+        This is a lightweight alternative to libmagic for basic PDF validation.
+        
+        Args:
+            file_path: Path to the file to validate
+            
+        Returns:
+            True if file has valid PDF header, False otherwise
+        """
+        try:
+            with open(file_path, "rb") as f:
+                header = f.read(8)
+                # PDF files start with "%PDF-" (bytes 0x25 0x50 0x44 0x46 0x2D)
+                # followed by version like "1.4" or "1.7"
+                return header.startswith(b"%PDF-")
+        except Exception as e:
+            self.logger.warning(
+                "Failed to read file header",
+                file_path=str(file_path),
+                error=str(e),
+            )
+            return False
 
     @log_performance("PDF metadata extraction")
     def _extract_pdf_metadata(self, file_path: Path) -> PDFMetadata:
@@ -294,21 +317,20 @@ class PDFService:
                     ),
                 )
 
-                # Verify MIME type
+                # Verify PDF format using lightweight header validation
+                # This replaces libmagic dependency and is significantly faster
                 with PerformanceTracker(
-                    "MIME type verification", self.logger, file_id=file_id
+                    "PDF header verification", self.logger, file_id=file_id
                 ):
-                    mime_type = magic.from_file(str(file_path), mime=True)
+                    is_valid_pdf = self._validate_pdf_header(file_path)
 
-                if mime_type not in self.allowed_mime_types:
+                if not is_valid_pdf:
                     self.logger.warning(
-                        "Invalid MIME type detected, removing file",
+                        "Invalid PDF format detected, removing file",
                         file_id=file_id,
-                        detected_mime_type=mime_type,
-                        allowed_mime_types=list(self.allowed_mime_types),
                     )
                     os.unlink(file_path)
-                    raise HTTPException(status_code=400, detail="Invalid file type")
+                    raise HTTPException(status_code=400, detail="Invalid PDF file format")
 
                 # Extract metadata
                 metadata = self._extract_pdf_metadata(file_path)
@@ -318,7 +340,7 @@ class PDFService:
                     file_id=file_id,
                     filename=filename,
                     file_size=actual_file_size,
-                    mime_type=mime_type,
+                    mime_type="application/pdf",  # Always PDF after validation
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
                 )
@@ -330,7 +352,7 @@ class PDFService:
                     file_id,
                     filename,
                     upload_tracker.duration_ms or 0,
-                    mime_type=mime_type,
+                    mime_type="application/pdf",
                     page_count=metadata.page_count,
                     file_size_mb=round(actual_file_size / (1024 * 1024), 2),
                 )
@@ -339,7 +361,7 @@ class PDFService:
                     file_id=file_id,
                     filename=filename,
                     file_size=actual_file_size,
-                    mime_type=mime_type,
+                    mime_type="application/pdf",
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
                 )

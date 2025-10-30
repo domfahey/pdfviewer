@@ -26,6 +26,7 @@ async def fetch_with_retry(
     """Fetch a URL with automatic retry on transient failures.
 
     Implements exponential backoff for retries on network errors and timeouts.
+    Uses streaming to reduce memory usage for large files.
 
     Security Warning:
         This function fetches user-provided URLs and is susceptible to SSRF attacks.
@@ -44,7 +45,7 @@ async def fetch_with_retry(
         **kwargs: Additional arguments to pass to httpx.AsyncClient.get()
 
     Returns:
-        httpx.Response: The successful response
+        httpx.Response: The successful response (fully read into memory)
 
     Raises:
         HTTPException: If request fails after all retries
@@ -53,8 +54,9 @@ async def fetch_with_retry(
         >>> response = await fetch_with_retry("https://example.com/file.pdf")
         >>> content = response.content
     """
+    # Optimize timeout and connection pooling for better performance
     timeout_config = httpx.Timeout(timeout, connect=connect_timeout)
-    limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+    limits = httpx.Limits(max_keepalive_connections=10, max_connections=20)
 
     async with httpx.AsyncClient(
         timeout=timeout_config, limits=limits, follow_redirects=True
