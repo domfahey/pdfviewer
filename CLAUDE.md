@@ -19,8 +19,8 @@ PDF viewer POC with React 19.1/FastAPI. Features include full-text search, URL l
 
 ## Tech Stack
 
-**Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js  
-**Backend:** FastAPI, Python 3.11+, UV, Pydantic v2  
+**Frontend:** React 19.1, TypeScript, Material UI v7, PDF.js 5.3+  
+**Backend:** FastAPI, Python 3.11+ (running 3.12.3), Pydantic v2  
 **Code Quality:** Modern Python syntax (X | Y unions, datetime.UTC), optimized React patterns
 
 ## Key Requirements
@@ -68,7 +68,7 @@ See [Technical Guide](docs/TECHNICAL.md) for:
 
 **Branch Management:**
 - **Primary Branch**: `main` (NOT `master`) - GitHub default branch
-- Use only `main` as primary branch (consolidated from master/main in July 2025)
+- Use only `main` as primary branch
 - All feature branches should branch from and merge back to `main`
 - Delete merged feature branches immediately
 - Keep branch lists clean and minimal
