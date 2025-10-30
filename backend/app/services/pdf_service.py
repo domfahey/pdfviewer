@@ -121,6 +121,19 @@ class PDFService:
                     # Get document info
                     document_info = reader.metadata
 
+                    # Extract metadata attributes once to avoid repeated getattr calls
+                    if document_info:
+                        title = getattr(document_info, "title", None)
+                        author = getattr(document_info, "author", None)
+                        subject = getattr(document_info, "subject", None)
+                        creator = getattr(document_info, "creator", None)
+                        producer = getattr(document_info, "producer", None)
+                        creation_date = getattr(document_info, "creation_date", None)
+                        modification_date = getattr(document_info, "modification_date", None)
+                    else:
+                        title = author = subject = creator = producer = None
+                        creation_date = modification_date = None
+
                     # Log metadata extraction details
                     self.logger.debug(
                         "PDF metadata extracted",
@@ -128,26 +141,20 @@ class PDFService:
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
                         has_metadata=document_info is not None,
-                        title=getattr(document_info, "title", None) if document_info else None,
-                        author=getattr(document_info, "author", None) if document_info else None,
+                        title=title,
+                        author=author,
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=getattr(document_info, "title", None) if document_info else None,
-                            author=getattr(document_info, "author", None) if document_info else None,
-                            subject=getattr(document_info, "subject", None) if document_info else None,
-                            creator=getattr(document_info, "creator", None) if document_info else None,
-                            producer=getattr(document_info, "producer", None) if document_info else None,
-                            creation_date=(
-                                getattr(document_info, "creation_date", None) if document_info else None
-                            ),
-                            modification_date=(
-                                getattr(document_info, "modification_date", None)
-                                if document_info
-                                else None
-                            ),
+                            title=title,
+                            author=author,
+                            subject=subject,
+                            creator=creator,
+                            producer=producer,
+                            creation_date=creation_date,
+                            modification_date=modification_date,
                             page_count=page_count,
                             file_size=file_size,
                             encrypted=encrypted,
@@ -490,9 +497,13 @@ class PDFService:
     def get_service_stats(self) -> dict[str, int | float | str]:
         """Get service statistics for monitoring and debugging."""
         files = list(self._file_metadata.values())
-        total_size = sum(f.file_size for f in files)
-        page_counts = [f.metadata.page_count if f.metadata else 0 for f in files]
-        total_pages = sum(page_counts)
+        
+        # Use single pass through files for better performance
+        total_size = 0
+        total_pages = 0
+        for f in files:
+            total_size += f.file_size
+            total_pages += f.metadata.page_count if f.metadata else 0
 
         stats = {
             "total_files": len(files),
