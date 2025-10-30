@@ -15,6 +15,7 @@ from backend.app.utils.api_logging import (
     APILogger,
     _sanitize_params,
     _sanitize_response,
+    create_duration_calculator,
     get_logger,
     log_api_call,
     log_file_operation,
@@ -592,3 +593,67 @@ class TestLoggingIntegration:
         except Exception as e:
             logger.log_processing_error(e)
             raise
+
+
+class TestCreateDurationCalculator:
+    """Test create_duration_calculator helper function."""
+
+    def test_duration_calculator_returns_callable(self):
+        """Test that create_duration_calculator returns a callable."""
+        start_time = time.perf_counter()
+        calculator = create_duration_calculator(start_time)
+        
+        assert callable(calculator)
+
+    def test_duration_calculator_calculates_elapsed_time(self):
+        """Test that calculator returns elapsed time in milliseconds."""
+        start_time = time.perf_counter()
+        calculator = create_duration_calculator(start_time)
+        
+        # Wait a small amount of time
+        time.sleep(0.01)  # 10ms
+        
+        duration = calculator()
+        
+        # Should be at least 10ms (allowing for some variance)
+        assert duration >= 8.0
+        assert isinstance(duration, float)
+
+    def test_duration_calculator_rounds_to_two_decimals(self):
+        """Test that duration is rounded to 2 decimal places."""
+        start_time = time.perf_counter()
+        calculator = create_duration_calculator(start_time)
+        
+        duration = calculator()
+        
+        # Check that it's rounded to 2 decimal places
+        assert round(duration, 2) == duration
+
+    def test_duration_calculator_can_be_called_multiple_times(self):
+        """Test that calculator can be called multiple times with increasing durations."""
+        start_time = time.perf_counter()
+        calculator = create_duration_calculator(start_time)
+        
+        duration1 = calculator()
+        time.sleep(0.01)
+        duration2 = calculator()
+        
+        # Second call should return larger duration
+        assert duration2 > duration1
+
+    def test_duration_calculator_closure_captures_start_time(self):
+        """Test that closure correctly captures start_time."""
+        # Create two calculators with different start times
+        start1 = time.perf_counter()
+        calc1 = create_duration_calculator(start1)
+        
+        time.sleep(0.01)
+        
+        start2 = time.perf_counter()
+        calc2 = create_duration_calculator(start2)
+        
+        # First calculator should show more elapsed time
+        duration1 = calc1()
+        duration2 = calc2()
+        
+        assert duration1 > duration2

@@ -18,7 +18,7 @@ R = TypeVar("R")
 
 def create_async_sync_wrapper(
     func: Callable[P, R],
-    before_call: Callable[[tuple, dict], Any] | None = None,
+    before_call: Callable[[tuple[Any, ...], dict[str, Any]], Any] | None = None,
     after_call: Callable[[Any, float], Any] | None = None,
     on_error: Callable[[Exception, float], Any] | None = None,
 ) -> Callable[P, R]:
@@ -150,7 +150,7 @@ def performance_logger(
         # Get logger for the function's module
         func_logger = logger or structlog.get_logger(func.__module__)
 
-        def before_call(args: tuple, kwargs: dict) -> None:
+        def before_call(args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
             """Log operation start with optional arguments."""
             context: dict[str, Any] = {
                 "operation": operation,

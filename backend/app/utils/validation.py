@@ -1,13 +1,22 @@
 """Common validation utilities for API endpoints."""
 
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any
+
 from fastapi import HTTPException
+
+from .api_logging import APILogger
 
 # Public API
 __all__ = [
     "validate_file_id",
     "validate_required_string",
     "api_endpoint_handler",
+    "handle_api_errors",
 ]
+
+T = TypeVar("T")
 
 
 def validate_file_id(file_id: str) -> str:
@@ -52,11 +61,46 @@ def validate_required_string(
 
 
 @contextmanager
+def handle_api_errors(operation: str, status_code: int = 500):
+    """Context manager for consistent error handling in API endpoints.
+    
+    This eliminates duplicated try/except blocks by providing a standard
+    pattern for catching and re-raising exceptions with appropriate messages.
+    
+    Args:
+        operation: Description of the operation (e.g., "retrieve file", "delete file")
+        status_code: HTTP status code to use for non-HTTP exceptions (default: 500)
+        
+    Yields:
+        None
+        
+    Raises:
+        HTTPException: Original HTTPException or new one for generic exceptions
+        
+    Example:
+        >>> with handle_api_errors("retrieve file"):
+        ...     file_path = pdf_service.get_pdf_path(file_id)
+        ...     return FileResponse(path=str(file_path))
+    """
+    try:
+        yield
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is
+        raise
+    except Exception as error:
+        # Wrap generic exceptions in HTTPException
+        raise HTTPException(
+            status_code=status_code,
+            detail=f"Failed to {operation}: {str(error)}"
+        )
+
+
+@contextmanager
 def api_endpoint_handler(
     operation: str,
     file_id: str | None = None,
     default_error_message: str = "Operation failed",
-):
+) -> Generator[APILogger, None, None]:
     """Context manager for common API endpoint workflow.
     
     Handles the standard pattern of:
@@ -92,7 +136,7 @@ def api_endpoint_handler(
     
     # Validate file_id if provided
     if file_id:
-        validate_file_id(file_id, api_logger)
+        validate_file_id(file_id)
         api_logger.log_validation_success(**context)
     
     api_logger.log_processing_start(**context)

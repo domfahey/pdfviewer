@@ -15,6 +15,7 @@ from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
 from ..utils.http_client import fetch_with_retry
+from ..utils.validation import handle_api_errors
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ async def load_pdf_from_url(
 
     Returns file ID and metadata for the loaded PDF.
     """
-    try:
+    with handle_api_errors("load PDF from URL"):
         # Download the PDF from the URL with automatic retries
         response = await fetch_with_retry(str(request.url))
 
@@ -77,11 +78,3 @@ async def load_pdf_from_url(
         upload_response = await pdf_service.upload_pdf(file)
 
         return upload_response
-
-    except HTTPException:
-        # Re-raise HTTPExceptions as-is (including those from fetch_with_retry)
-        raise
-    except Exception as error:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load PDF from URL: {str(error)}"
-        )

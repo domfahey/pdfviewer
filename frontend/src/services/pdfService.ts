@@ -20,6 +20,22 @@ interface ExtendedHTMLCanvasElement extends HTMLCanvasElement {
 }
 
 /**
+ * Apply common layer styling to a PDF layer div element.
+ * Eliminates duplication of layer positioning and overflow styles.
+ *
+ * @param layerDiv - The div element to style
+ */
+function applyLayerBaseStyles(layerDiv: HTMLDivElement): void {
+  layerDiv.innerHTML = '';
+  layerDiv.style.position = 'absolute';
+  layerDiv.style.left = '0';
+  layerDiv.style.top = '0';
+  layerDiv.style.right = '0';
+  layerDiv.style.bottom = '0';
+  layerDiv.style.overflow = 'hidden';
+}
+
+/**
  * Service class for PDF operations using PDF.js.
  * Provides static methods for document loading, page retrieval, and rendering.
  */
@@ -221,14 +237,8 @@ export class PDFService {
       const viewport = page.getViewport({ scale });
       const textContent = await page.getTextContent();
 
-      // Clear previous content
-      textLayerDiv.innerHTML = '';
-      textLayerDiv.style.position = 'absolute';
-      textLayerDiv.style.left = '0';
-      textLayerDiv.style.top = '0';
-      textLayerDiv.style.right = '0';
-      textLayerDiv.style.bottom = '0';
-      textLayerDiv.style.overflow = 'hidden';
+      // Apply base layer styles and additional text layer specific styles
+      applyLayerBaseStyles(textLayerDiv);
       textLayerDiv.style.opacity = '0.2';
       textLayerDiv.style.lineHeight = '1.0';
 
@@ -271,14 +281,8 @@ export class PDFService {
 
       const annotations = await page.getAnnotations();
 
-      // Clear previous content
-      annotationLayerDiv.innerHTML = '';
-      annotationLayerDiv.style.position = 'absolute';
-      annotationLayerDiv.style.left = '0';
-      annotationLayerDiv.style.top = '0';
-      annotationLayerDiv.style.right = '0';
-      annotationLayerDiv.style.bottom = '0';
-      annotationLayerDiv.style.overflow = 'hidden';
+      // Apply base layer styles
+      applyLayerBaseStyles(annotationLayerDiv);
 
       // For now, just render basic annotation info
       if (annotations.length > 0) {

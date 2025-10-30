@@ -68,7 +68,7 @@ A: Use `make test` for all tests, or see [Test Guide](tests/README.md) for speci
 A: Run `make qa` to ensure all quality checks pass before committing.
 
 **Q: How do I update dependencies?**  
-A: Backend: `uv pip install -U -e ".[dev]"`, Frontend: `npm update`
+A: Backend: `pip install -U -e ".[dev]"` (or `uv pip install -U -e ".[dev]"` if UV is installed), Frontend: `npm update`
 
 ### Usage
 
