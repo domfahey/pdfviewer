@@ -293,20 +293,22 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         return body
 
+    # Pre-compile sensitive key patterns for better performance
+    _sensitive_patterns = frozenset(["password", "token", "secret", "key", "auth"])
+
     def _sanitize_json_data(self, data):
         """Recursively sanitize JSON data."""
         if isinstance(data, dict):
             sanitized = {}
             for key, value in data.items():
-                if any(
-                    sensitive in key.lower()
-                    for sensitive in ["password", "token", "secret", "key", "auth"]
-                ):
+                key_lower = key.lower()
+                if any(sensitive in key_lower for sensitive in self._sensitive_patterns):
                     sanitized[key] = "[REDACTED]"
                 else:
                     sanitized[key] = self._sanitize_json_data(value)
             return sanitized
         elif isinstance(data, list):
+            # Use generator for list comprehension (though it needs to be materialized for JSON)
             return [self._sanitize_json_data(item) for item in data]
         else:
             return data

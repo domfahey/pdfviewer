@@ -20,7 +20,7 @@ from backend.app.services.pdf_service import PDFService
 
 
 @pytest.fixture
-def temp_service():
+def pdf_service():
     """Create a temporary PDFService instance for testing."""
     with tempfile.TemporaryDirectory() as temp_dir:
         service = PDFService(upload_dir=temp_dir)
@@ -48,15 +48,15 @@ class TestPDFServiceLoggingIntegration:
                 call_args = mock_logger.info.call_args
                 assert "PDF service initialized" in call_args[0][0]
 
-    def test_file_validation_logging_debug(self, temp_service):
+    def test_file_validation_logging_debug(self, pdf_service):
         """Test debug logging during file validation."""
-        with patch.object(temp_service.logger, "debug") as mock_debug:
+        with patch.object(pdf_service.logger, "debug") as mock_debug:
             mock_file = Mock(spec=UploadFile)
             mock_file.filename = "test.pdf"
             mock_file.content_type = "application/pdf"
             mock_file.size = 1000
 
-            temp_service._validate_file(mock_file)
+            pdf_service._validate_file(mock_file)
 
             # Should log validation start and success
             assert mock_debug.call_count >= 2
@@ -64,44 +64,44 @@ class TestPDFServiceLoggingIntegration:
             assert any("Starting file validation" in call for call in calls)
             assert any("File validation passed" in call for call in calls)
 
-    def test_file_validation_logging_warning_no_filename(self, temp_service):
+    def test_file_validation_logging_warning_no_filename(self, pdf_service):
         """Test warning logging when filename is missing."""
-        with patch.object(temp_service.logger, "warning") as mock_warning:
+        with patch.object(pdf_service.logger, "warning") as mock_warning:
             mock_file = Mock(spec=UploadFile)
             mock_file.filename = None
             mock_file.content_type = "application/pdf"
             mock_file.size = 1000
 
             with pytest.raises(HTTPException):
-                temp_service._validate_file(mock_file)
+                pdf_service._validate_file(mock_file)
 
             mock_warning.assert_called_once()
             assert "no filename provided" in mock_warning.call_args[0][0]
 
-    def test_file_validation_logging_warning_invalid_extension(self, temp_service):
+    def test_file_validation_logging_warning_invalid_extension(self, pdf_service):
         """Test warning logging for invalid file extensions."""
-        with patch.object(temp_service.logger, "warning") as mock_warning:
+        with patch.object(pdf_service.logger, "warning") as mock_warning:
             mock_file = Mock(spec=UploadFile)
             mock_file.filename = "test.txt"
             mock_file.content_type = "text/plain"
             mock_file.size = 1000
 
             with pytest.raises(HTTPException):
-                temp_service._validate_file(mock_file)
+                pdf_service._validate_file(mock_file)
 
             mock_warning.assert_called_once()
             assert "invalid file extension" in mock_warning.call_args[0][0]
 
-    def test_file_validation_logging_warning_too_large(self, temp_service):
+    def test_file_validation_logging_warning_too_large(self, pdf_service):
         """Test warning logging for oversized files."""
-        with patch.object(temp_service.logger, "warning") as mock_warning:
+        with patch.object(pdf_service.logger, "warning") as mock_warning:
             mock_file = Mock(spec=UploadFile)
             mock_file.filename = "large.pdf"
             mock_file.content_type = "application/pdf"
             mock_file.size = 60 * 1024 * 1024  # 60MB
 
             with pytest.raises(HTTPException):
-                temp_service._validate_file(mock_file)
+                pdf_service._validate_file(mock_file)
 
             mock_warning.assert_called_once()
             assert "file too large" in mock_warning.call_args[0][0]
@@ -110,7 +110,7 @@ class TestPDFServiceLoggingIntegration:
 class TestPDFServiceMetadataExtractionEdgeCases:
     """Test edge cases in PDF metadata extraction."""
 
-    def test_extract_metadata_file_stat_error(self, temp_service, sample_pdf_content):
+    def test_extract_metadata_file_stat_error(self, pdf_service, sample_pdf_content):
         """Test metadata extraction when file.stat() fails."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
             temp_file.write(sample_pdf_content)
@@ -120,7 +120,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
         try:
             # Mock file.stat() to raise an exception
             with patch.object(Path, "stat", side_effect=OSError("Permission denied")):
-                metadata = temp_service._extract_pdf_metadata(temp_path)
+                metadata = pdf_service._extract_pdf_metadata(temp_path)
 
                 # Should return fallback metadata
                 assert isinstance(metadata, PDFMetadata)
@@ -130,7 +130,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
             os.unlink(temp_path)
 
     def test_extract_metadata_pypdf_exception_handling(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test exception handling in PDF metadata extraction."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -143,8 +143,8 @@ class TestPDFServiceMetadataExtractionEdgeCases:
                 "backend.app.services.pdf_service.PdfReader",
                 side_effect=Exception("PDF parsing error"),
             ):
-                with patch.object(temp_service.logger, "warning") as mock_warning:
-                    metadata = temp_service._extract_pdf_metadata(temp_path)
+                with patch.object(pdf_service.logger, "warning") as mock_warning:
+                    metadata = pdf_service._extract_pdf_metadata(temp_path)
 
                     # Should use fallback metadata
                     assert metadata.page_count == 1
@@ -162,7 +162,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
             os.unlink(temp_path)
 
     def test_extract_metadata_fallback_creation_error(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test when even fallback metadata creation fails."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -182,8 +182,8 @@ class TestPDFServiceMetadataExtractionEdgeCases:
                         PDFMetadata(page_count=1, file_size=1, encrypted=False),
                     ],
                 ):
-                    with patch.object(temp_service.logger, "error") as mock_error:
-                        metadata = temp_service._extract_pdf_metadata(temp_path)
+                    with patch.object(pdf_service.logger, "error") as mock_error:
+                        metadata = pdf_service._extract_pdf_metadata(temp_path)
 
                         # Should eventually create minimal metadata
                         assert metadata.page_count == 1
@@ -198,7 +198,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
             os.unlink(temp_path)
 
     def test_extract_metadata_with_none_pypdf_metadata(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test metadata extraction when PyPDF returns None metadata."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -216,7 +216,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
                 mock_reader.metadata = None  # No metadata
                 mock_reader_class.return_value = mock_reader
 
-                metadata = temp_service._extract_pdf_metadata(temp_path)
+                metadata = pdf_service._extract_pdf_metadata(temp_path)
 
                 assert metadata.page_count == 1
                 assert metadata.encrypted is False
@@ -225,7 +225,7 @@ class TestPDFServiceMetadataExtractionEdgeCases:
         finally:
             os.unlink(temp_path)
 
-    def test_extract_metadata_debug_logging(self, temp_service, sample_pdf_content):
+    def test_extract_metadata_debug_logging(self, pdf_service, sample_pdf_content):
         """Test debug logging during metadata extraction."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
             temp_file.write(sample_pdf_content)
@@ -233,8 +233,8 @@ class TestPDFServiceMetadataExtractionEdgeCases:
             temp_path = Path(temp_file.name)
 
         try:
-            with patch.object(temp_service.logger, "debug") as mock_debug:
-                temp_service._extract_pdf_metadata(temp_path)
+            with patch.object(pdf_service.logger, "debug") as mock_debug:
+                pdf_service._extract_pdf_metadata(temp_path)
 
                 # Should log metadata extraction details
                 mock_debug.assert_called()
@@ -249,7 +249,7 @@ class TestPDFServiceUploadEdgeCases:
 
     @pytest.mark.asyncio
     async def test_upload_pdf_aiofiles_write_error(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test upload failure during async file writing."""
         mock_file = Mock(spec=UploadFile)
@@ -260,14 +260,14 @@ class TestPDFServiceUploadEdgeCases:
 
         with patch("aiofiles.open", side_effect=OSError("Disk full")):
             with pytest.raises(HTTPException) as exc_info:
-                await temp_service.upload_pdf(mock_file)
+                await pdf_service.upload_pdf(mock_file)
 
             assert exc_info.value.status_code == 500
             assert "Failed to process file" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_upload_pdf_magic_mime_detection_error(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test upload when MIME type detection fails."""
         mock_file = Mock(spec=UploadFile)
@@ -278,13 +278,13 @@ class TestPDFServiceUploadEdgeCases:
 
         with patch("magic.from_file", side_effect=Exception("Magic library error")):
             with pytest.raises(HTTPException) as exc_info:
-                await temp_service.upload_pdf(mock_file)
+                await pdf_service.upload_pdf(mock_file)
 
             assert exc_info.value.status_code == 500
 
     @pytest.mark.asyncio
     async def test_upload_pdf_metadata_extraction_error(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test upload when metadata extraction fails but upload continues."""
         mock_file = Mock(spec=UploadFile)
@@ -294,20 +294,20 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
         with patch("magic.from_file", return_value="application/pdf"):
-            with patch.object(temp_service, "_extract_pdf_metadata") as mock_extract:
+            with patch.object(pdf_service, "_extract_pdf_metadata") as mock_extract:
                 # Mock metadata extraction to return fallback metadata
                 mock_extract.return_value = PDFMetadata(
                     page_count=1, file_size=len(sample_pdf_content), encrypted=False
                 )
 
-                response = await temp_service.upload_pdf(mock_file)
+                response = await pdf_service.upload_pdf(mock_file)
 
                 assert isinstance(response, PDFUploadResponse)
                 assert response.metadata.page_count == 1
 
     @pytest.mark.asyncio
     async def test_upload_pdf_cleanup_on_mime_type_failure(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that files are cleaned up when MIME type validation fails."""
         mock_file = Mock(spec=UploadFile)
@@ -319,14 +319,14 @@ class TestPDFServiceUploadEdgeCases:
         with patch("magic.from_file", return_value="text/plain"):  # Wrong MIME type
             with patch("os.unlink") as mock_unlink:
                 with pytest.raises(HTTPException):
-                    await temp_service.upload_pdf(mock_file)
+                    await pdf_service.upload_pdf(mock_file)
 
                 # Should have attempted to clean up the file
                 mock_unlink.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_upload_pdf_cleanup_failure_logging(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test logging when cleanup after failure also fails."""
         mock_file = Mock(spec=UploadFile)
@@ -337,9 +337,9 @@ class TestPDFServiceUploadEdgeCases:
 
         with patch.object(Path, "exists", return_value=True):
             with patch("os.unlink", side_effect=OSError("Cannot delete")):
-                with patch.object(temp_service.logger, "error") as mock_error:
+                with patch.object(pdf_service.logger, "error") as mock_error:
                     with pytest.raises(HTTPException):
-                        await temp_service.upload_pdf(mock_file)
+                        await pdf_service.upload_pdf(mock_file)
 
                     # Should log cleanup failure
                     mock_error.assert_called()
@@ -350,7 +350,7 @@ class TestPDFServiceUploadEdgeCases:
 
     @pytest.mark.asyncio
     async def test_upload_pdf_file_logger_integration(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test file logger integration during upload."""
         mock_file = Mock(spec=UploadFile)
@@ -361,12 +361,12 @@ class TestPDFServiceUploadEdgeCases:
 
         with patch("magic.from_file", return_value="application/pdf"):
             with patch.object(
-                temp_service.file_logger, "upload_started"
+                pdf_service.file_logger, "upload_started"
             ) as mock_started:
                 with patch.object(
-                    temp_service.file_logger, "upload_completed"
+                    pdf_service.file_logger, "upload_completed"
                 ) as mock_completed:
-                    response = await temp_service.upload_pdf(mock_file)
+                    response = await pdf_service.upload_pdf(mock_file)
 
                     # Should log upload lifecycle
                     mock_started.assert_called_once_with(
@@ -377,10 +377,10 @@ class TestPDFServiceUploadEdgeCases:
                     mock_completed.assert_called_once()
 
                     # Verify file was stored
-                    assert response.file_id in temp_service._file_metadata
+                    assert response.file_id in pdf_service._file_metadata
 
     @pytest.mark.asyncio
-    async def test_upload_pdf_http_exception_passthrough(self, temp_service):
+    async def test_upload_pdf_http_exception_passthrough(self, pdf_service):
         """Test that HTTPExceptions are passed through without wrapping."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.txt"  # Invalid extension
@@ -389,14 +389,14 @@ class TestPDFServiceUploadEdgeCases:
 
         # Should pass through the HTTPException from validation
         with pytest.raises(HTTPException) as exc_info:
-            await temp_service.upload_pdf(mock_file)
+            await pdf_service.upload_pdf(mock_file)
 
         assert exc_info.value.status_code == 400
         assert "PDF files" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_upload_pdf_double_filename_check(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test the secondary filename check after validation."""
         mock_file = Mock(spec=UploadFile)
@@ -406,11 +406,11 @@ class TestPDFServiceUploadEdgeCases:
         mock_file.read = AsyncMock(return_value=sample_pdf_content)
 
         # Simulate filename becoming None after validation (edge case)
-        with patch.object(temp_service, "_validate_file"):
+        with patch.object(pdf_service, "_validate_file"):
             mock_file.filename = None  # Set to None after validation
 
             with pytest.raises(HTTPException) as exc_info:
-                await temp_service.upload_pdf(mock_file)
+                await pdf_service.upload_pdf(mock_file)
 
             assert exc_info.value.status_code == 400
             assert "No filename provided" in exc_info.value.detail
@@ -419,12 +419,12 @@ class TestPDFServiceUploadEdgeCases:
 class TestPDFServiceFileOperationsEdgeCases:
     """Test edge cases in file operations (get, delete, list)."""
 
-    def test_get_pdf_path_logging_integration(self, temp_service):
+    def test_get_pdf_path_logging_integration(self, pdf_service):
         """Test logging integration in get_pdf_path."""
-        with patch.object(temp_service.logger, "debug") as mock_debug:
-            with patch.object(temp_service.logger, "warning") as mock_warning:
+        with patch.object(pdf_service.logger, "debug") as mock_debug:
+            with patch.object(pdf_service.logger, "warning") as mock_warning:
                 with pytest.raises(HTTPException):
-                    temp_service.get_pdf_path("nonexistent-id")
+                    pdf_service.get_pdf_path("nonexistent-id")
 
                 # Should log debug and warning
                 mock_debug.assert_called_once_with(
@@ -434,7 +434,7 @@ class TestPDFServiceFileOperationsEdgeCases:
                 assert "PDF file not found in metadata" in mock_warning.call_args[0][0]
 
     def test_get_pdf_path_file_missing_detailed_logging(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test detailed logging when file exists in metadata but not on disk."""
         file_id = str(uuid.uuid4())
@@ -449,11 +449,11 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.logger, "error") as mock_error:
+        with patch.object(pdf_service.logger, "error") as mock_error:
             with pytest.raises(HTTPException):
-                temp_service.get_pdf_path(file_id)
+                pdf_service.get_pdf_path(file_id)
 
             # Should log detailed error information
             mock_error.assert_called_once()
@@ -461,11 +461,11 @@ class TestPDFServiceFileOperationsEdgeCases:
             assert "PDF file not found on disk" in error_call
 
     def test_get_pdf_path_file_logger_integration(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test file logger integration for successful path retrieval."""
         file_id = str(uuid.uuid4())
-        file_path = temp_service.upload_dir / f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
         # Add to metadata
@@ -478,10 +478,10 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.file_logger, "access_logged") as mock_access:
-            temp_service.get_pdf_path(file_id)
+        with patch.object(pdf_service.file_logger, "access_logged") as mock_access:
+            pdf_service.get_pdf_path(file_id)
 
             # Should log file access
             mock_access.assert_called_once_with(
@@ -489,7 +489,7 @@ class TestPDFServiceFileOperationsEdgeCases:
             )
 
     def test_get_pdf_metadata_logging_integration(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test logging integration in get_pdf_metadata."""
         file_id = str(uuid.uuid4())
@@ -503,11 +503,11 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.logger, "debug") as mock_debug:
-            with patch.object(temp_service.file_logger, "access_logged") as mock_access:
-                result = temp_service.get_pdf_metadata(file_id)
+        with patch.object(pdf_service.logger, "debug") as mock_debug:
+            with patch.object(pdf_service.file_logger, "access_logged") as mock_access:
+                result = pdf_service.get_pdf_metadata(file_id)
 
                 # Should log debug and access
                 mock_debug.assert_called_once_with(
@@ -518,7 +518,7 @@ class TestPDFServiceFileOperationsEdgeCases:
                 assert result.page_count == 5
 
     def test_delete_pdf_missing_physical_file_logging(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test logging when physical file is missing during deletion."""
         file_id = str(uuid.uuid4())
@@ -533,11 +533,11 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.logger, "warning") as mock_warning:
-            with patch.object(temp_service.logger, "info") as mock_info:
-                result = temp_service.delete_pdf(file_id)
+        with patch.object(pdf_service.logger, "warning") as mock_warning:
+            with patch.object(pdf_service.logger, "info") as mock_info:
+                result = pdf_service.delete_pdf(file_id)
 
                 # Should still succeed but log warning about missing file
                 assert result is True
@@ -555,10 +555,10 @@ class TestPDFServiceFileOperationsEdgeCases:
                     "PDF file deleted successfully" in call for call in info_calls
                 )
 
-    def test_delete_pdf_os_error_handling(self, temp_service, sample_pdf_content):
+    def test_delete_pdf_os_error_handling(self, pdf_service, sample_pdf_content):
         """Test OS error handling during file deletion."""
         file_id = str(uuid.uuid4())
-        file_path = temp_service.upload_dir / f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
         metadata = PDFMetadata(page_count=1, file_size=len(sample_pdf_content))
@@ -570,14 +570,14 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
         with patch("os.unlink", side_effect=PermissionError("Permission denied")):
             with patch.object(
-                temp_service.file_logger, "deletion_logged"
+                pdf_service.file_logger, "deletion_logged"
             ) as mock_deletion:
                 with pytest.raises(HTTPException) as exc_info:
-                    temp_service.delete_pdf(file_id)
+                    pdf_service.delete_pdf(file_id)
 
                 assert exc_info.value.status_code == 500
                 assert "Failed to delete file" in exc_info.value.detail
@@ -587,7 +587,7 @@ class TestPDFServiceFileOperationsEdgeCases:
                 deletion_call = mock_deletion.call_args[1]
                 assert deletion_call["success"] is False
 
-    def test_list_files_logging_integration(self, temp_service, sample_pdf_content):
+    def test_list_files_logging_integration(self, pdf_service, sample_pdf_content):
         """Test logging integration in list_files."""
         # Add some files to test with
         for i in range(2):
@@ -601,11 +601,11 @@ class TestPDFServiceFileOperationsEdgeCases:
                 upload_time=datetime.now(UTC),
                 metadata=metadata,
             )
-            temp_service._file_metadata[file_id] = pdf_info
+            pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.logger, "debug") as mock_debug:
-            with patch.object(temp_service.file_logger, "access_logged") as mock_access:
-                result = temp_service.list_files()
+        with patch.object(pdf_service.logger, "debug") as mock_debug:
+            with patch.object(pdf_service.file_logger, "access_logged") as mock_access:
+                result = pdf_service.list_files()
 
                 assert len(result) == 2
 
@@ -617,9 +617,9 @@ class TestPDFServiceFileOperationsEdgeCases:
                 # Should log file access
                 mock_access.assert_called_once()
 
-    def test_get_service_stats_empty_files_handling(self, temp_service):
+    def test_get_service_stats_empty_files_handling(self, pdf_service):
         """Test service statistics with no files (division by zero prevention)."""
-        stats = temp_service.get_service_stats()
+        stats = pdf_service.get_service_stats()
 
         assert stats["total_files"] == 0
         assert stats["total_size_bytes"] == 0
@@ -630,7 +630,7 @@ class TestPDFServiceFileOperationsEdgeCases:
         assert "max_file_size_mb" in stats
 
     def test_get_service_stats_logging_integration(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test logging integration in get_service_stats."""
         # Add a file
@@ -644,10 +644,10 @@ class TestPDFServiceFileOperationsEdgeCases:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
-        with patch.object(temp_service.logger, "info") as mock_info:
-            stats = temp_service.get_service_stats()
+        with patch.object(pdf_service.logger, "info") as mock_info:
+            stats = pdf_service.get_service_stats()
 
             # Should log service statistics
             mock_info.assert_called_once()
@@ -658,7 +658,7 @@ class TestPDFServiceFileOperationsEdgeCases:
             assert stats["total_pages"] == 3
 
     def test_get_service_stats_metadata_none_handling(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test service statistics when some files have None metadata."""
         # Add files with and without metadata
@@ -677,9 +677,9 @@ class TestPDFServiceFileOperationsEdgeCases:
                 upload_time=datetime.now(UTC),
                 metadata=metadata,
             )
-            temp_service._file_metadata[file_id] = pdf_info
+            pdf_service._file_metadata[file_id] = pdf_info
 
-        stats = temp_service.get_service_stats()
+        stats = pdf_service.get_service_stats()
 
         assert stats["total_files"] == 3
         assert stats["total_pages"] == 3  # 1+2+0 (None metadata counts as 0)
@@ -690,7 +690,7 @@ class TestPDFServicePerformanceIntegration:
     """Test performance tracking integration."""
 
     def test_performance_tracker_usage_in_metadata_extraction(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that PerformanceTracker is used in metadata extraction."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -704,7 +704,7 @@ class TestPDFServicePerformanceIntegration:
                 mock_tracker.return_value.__enter__ = Mock(return_value=mock_context)
                 mock_tracker.return_value.__exit__ = Mock(return_value=None)
 
-                temp_service._extract_pdf_metadata(temp_path)
+                pdf_service._extract_pdf_metadata(temp_path)
 
                 # Should use PerformanceTracker
                 mock_tracker.assert_called()
@@ -715,7 +715,7 @@ class TestPDFServicePerformanceIntegration:
 
     @pytest.mark.asyncio
     async def test_performance_tracker_usage_in_upload(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that PerformanceTracker is used during upload."""
         mock_file = Mock(spec=UploadFile)
@@ -731,7 +731,7 @@ class TestPDFServicePerformanceIntegration:
                 mock_tracker.return_value.__enter__ = Mock(return_value=mock_context)
                 mock_tracker.return_value.__exit__ = Mock(return_value=None)
 
-                await temp_service.upload_pdf(mock_file)
+                await pdf_service.upload_pdf(mock_file)
 
                 # Should use PerformanceTracker for multiple operations
                 assert mock_tracker.call_count >= 2  # Upload and file write operations
@@ -740,11 +740,11 @@ class TestPDFServicePerformanceIntegration:
                 assert any("File write operation" in args for args in call_args_list)
 
     def test_performance_tracker_usage_in_deletion(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that PerformanceTracker is used during deletion."""
         file_id = str(uuid.uuid4())
-        file_path = temp_service.upload_dir / f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
         metadata = PDFMetadata(page_count=1, file_size=len(sample_pdf_content))
@@ -756,7 +756,7 @@ class TestPDFServicePerformanceIntegration:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
         with patch("backend.app.utils.logger.PerformanceTracker") as mock_tracker:
             mock_context = Mock()
@@ -764,7 +764,7 @@ class TestPDFServicePerformanceIntegration:
             mock_tracker.return_value.__enter__ = Mock(return_value=mock_context)
             mock_tracker.return_value.__exit__ = Mock(return_value=None)
 
-            result = temp_service.delete_pdf(file_id)
+            result = pdf_service.delete_pdf(file_id)
 
             assert result is True
             # Should use PerformanceTracker for deletion
@@ -777,7 +777,7 @@ class TestPDFServiceErrorContextLogging:
     """Test exception context logging integration."""
 
     def test_log_exception_context_in_metadata_extraction(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that log_exception_context is used in metadata extraction."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -793,7 +793,7 @@ class TestPDFServiceErrorContextLogging:
                 with patch(
                     "backend.app.utils.logger.log_exception_context"
                 ) as mock_log_exception:
-                    temp_service._extract_pdf_metadata(temp_path)
+                    pdf_service._extract_pdf_metadata(temp_path)
 
                     # Should log exception context
                     mock_log_exception.assert_called_once()
@@ -803,7 +803,7 @@ class TestPDFServiceErrorContextLogging:
             os.unlink(temp_path)
 
     @pytest.mark.asyncio
-    async def test_log_exception_context_in_upload(self, temp_service):
+    async def test_log_exception_context_in_upload(self, pdf_service):
         """Test that log_exception_context is used during upload failures."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.pdf"
@@ -815,17 +815,17 @@ class TestPDFServiceErrorContextLogging:
             "backend.app.utils.logger.log_exception_context"
         ) as mock_log_exception:
             with pytest.raises(HTTPException):
-                await temp_service.upload_pdf(mock_file)
+                await pdf_service.upload_pdf(mock_file)
 
             # Should log exception context
             mock_log_exception.assert_called_once()
             call_args = mock_log_exception.call_args[0]
             assert "PDF file upload" in call_args[1]
 
-    def test_log_exception_context_in_deletion(self, temp_service, sample_pdf_content):
+    def test_log_exception_context_in_deletion(self, pdf_service, sample_pdf_content):
         """Test that log_exception_context is used during deletion failures."""
         file_id = str(uuid.uuid4())
-        file_path = temp_service.upload_dir / f"{file_id}.pdf"
+        file_path = pdf_service.upload_dir / f"{file_id}.pdf"
         file_path.write_bytes(sample_pdf_content)
 
         metadata = PDFMetadata(page_count=1, file_size=len(sample_pdf_content))
@@ -837,14 +837,14 @@ class TestPDFServiceErrorContextLogging:
             upload_time=datetime.now(UTC),
             metadata=metadata,
         )
-        temp_service._file_metadata[file_id] = pdf_info
+        pdf_service._file_metadata[file_id] = pdf_info
 
         with patch("os.unlink", side_effect=Exception("Delete error")):
             with patch(
                 "backend.app.utils.logger.log_exception_context"
             ) as mock_log_exception:
                 with pytest.raises(HTTPException):
-                    temp_service.delete_pdf(file_id)
+                    pdf_service.delete_pdf(file_id)
 
                 # Should log exception context
                 mock_log_exception.assert_called_once()
@@ -856,7 +856,7 @@ class TestPDFServiceLogPerformanceDecorator:
     """Test @log_performance decorator integration."""
 
     def test_metadata_extraction_has_performance_decorator(
-        self, temp_service, sample_pdf_content
+        self, pdf_service, sample_pdf_content
     ):
         """Test that metadata extraction uses @log_performance decorator."""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
@@ -866,10 +866,10 @@ class TestPDFServiceLogPerformanceDecorator:
 
         try:
             # Check that the method has been decorated
-            assert hasattr(temp_service._extract_pdf_metadata, "__wrapped__")
+            assert hasattr(pdf_service._extract_pdf_metadata, "__wrapped__")
 
             # Run the method to ensure decorator works
-            metadata = temp_service._extract_pdf_metadata(temp_path)
+            metadata = pdf_service._extract_pdf_metadata(temp_path)
             assert isinstance(metadata, PDFMetadata)
         finally:
             os.unlink(temp_path)
@@ -878,7 +878,7 @@ class TestPDFServiceLogPerformanceDecorator:
 class TestPDFServiceValidationNoneSize:
     """Test file validation with None file size."""
 
-    def test_validate_file_none_size_allowed(self, temp_service):
+    def test_validate_file_none_size_allowed(self, pdf_service):
         """Test that None file size is handled gracefully."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.pdf"
@@ -886,9 +886,9 @@ class TestPDFServiceValidationNoneSize:
         mock_file.size = None  # Size not provided
 
         # Should not raise an exception (size check is skipped for None)
-        temp_service._validate_file(mock_file)
+        pdf_service._validate_file(mock_file)
 
-    def test_validate_file_zero_size_allowed(self, temp_service):
+    def test_validate_file_zero_size_allowed(self, pdf_service):
         """Test that zero file size is handled gracefully."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "empty.pdf"
@@ -896,4 +896,4 @@ class TestPDFServiceValidationNoneSize:
         mock_file.size = 0
 
         # Should not raise an exception (size check allows zero)
-        temp_service._validate_file(mock_file)
+        pdf_service._validate_file(mock_file)
