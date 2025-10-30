@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { PDFService } from '../../services/pdfService';
 import { PDFSearchHighlight } from './PDFSearchHighlight';
+import { cleanupCanvas } from '../../utils/canvasRenderer';
 
 interface PDFPageProps {
   page: PDFPageProxy;
@@ -102,27 +103,8 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     return () => {
       isMountedRef.current = false;
 
-      // Cancel any ongoing render tasks
-      interface ExtendedCanvas extends HTMLCanvasElement {
-        _pdfRenderTask?: { cancel: () => void } | null;
-        _isRendering?: boolean;
-      }
-      if (canvas) {
-        const extendedCanvas = canvas as ExtendedCanvas;
-        if (extendedCanvas._pdfRenderTask) {
-          extendedCanvas._pdfRenderTask.cancel();
-          extendedCanvas._pdfRenderTask = null;
-          extendedCanvas._isRendering = false;
-        }
-      }
-
-      // Clear canvas
-      if (canvas) {
-        const context = canvas.getContext('2d');
-        if (context) {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-        }
-      }
+      // Use shared cleanup utility for canvas
+      cleanupCanvas(canvas);
 
       // Clear text layer
       if (textLayer) {

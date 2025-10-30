@@ -10,6 +10,7 @@ import {
   Badge,
   Skeleton,
 } from '@mui/material';
+import { renderPageToCanvas } from '../../utils/canvasRenderer';
 
 interface PDFThumbnailsProps {
   pdfDocument: pdfjsLib.PDFDocumentProxy | null;
@@ -52,22 +53,9 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
 
       try {
         const page = await pdfDocument.getPage(pageNumber);
-        const viewport = page.getViewport({ scale: 0.2 }); // Small scale for thumbnails
-
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-
-        if (!context) return;
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-
-        await page.render(renderContext).promise;
+        
+        // Use shared canvas rendering utility with thumbnail scale
+        const canvas = await renderPageToCanvas(page, { scale: 0.2, createNew: true });
 
         // Cache toDataURL result to avoid repeated encoding on every render
         const dataUrl = canvas.toDataURL();

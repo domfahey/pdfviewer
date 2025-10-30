@@ -9,8 +9,8 @@ from fastapi.responses import FileResponse
 from ..dependencies import get_pdf_service
 from ..models.pdf import PDFMetadata
 from ..services.pdf_service import PDFService
-from ..utils.api_logging import APILogger, log_api_call
-from ..utils.validation import validate_file_id
+from ..utils.api_logging import log_api_call
+from ..utils.validation import api_endpoint_handler
 
 router = APIRouter()
 
@@ -26,18 +26,9 @@ async def get_pdf_file(
 
     Returns the PDF file for viewing.
     """
-    api_logger = APILogger("pdf_retrieve")
-
-    api_logger.log_request_received(file_id=file_id)
-    api_logger.log_validation_start()
-
-    # Validate file_id using shared utility
-    validate_file_id(file_id, api_logger)
-
-    api_logger.log_validation_success(file_id=file_id)
-    api_logger.log_processing_start(file_id=file_id)
-
-    try:
+    with api_endpoint_handler(
+        "pdf_retrieve", file_id=file_id, default_error_message="Failed to retrieve file"
+    ) as api_logger:
         file_path = pdf_service.get_pdf_path(file_id)
 
         api_logger.log_processing_success(
@@ -54,15 +45,6 @@ async def get_pdf_file(
 
         return response
 
-    except HTTPException as http_exception:
-        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
-        raise
-    except Exception as error:
-        api_logger.log_processing_error(error, file_id=file_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve file: {str(error)}"
-        )
-
 
 @router.get("/metadata/{file_id}", response_model=PDFMetadata)
 @log_api_call("pdf_metadata", log_params=True, log_response=True, log_timing=True)
@@ -75,18 +57,9 @@ async def get_pdf_metadata(
 
     Returns PDF metadata including page count, file size, and document properties.
     """
-    api_logger = APILogger("pdf_metadata")
-
-    api_logger.log_request_received(file_id=file_id)
-    api_logger.log_validation_start()
-
-    # Validate file_id using shared utility
-    validate_file_id(file_id, api_logger)
-
-    api_logger.log_validation_success(file_id=file_id)
-    api_logger.log_processing_start(file_id=file_id)
-
-    try:
+    with api_endpoint_handler(
+        "pdf_metadata", file_id=file_id, default_error_message="Failed to retrieve metadata"
+    ) as api_logger:
         metadata = pdf_service.get_pdf_metadata(file_id)
 
         api_logger.log_processing_success(
@@ -105,15 +78,6 @@ async def get_pdf_metadata(
 
         return metadata
 
-    except HTTPException as http_exception:
-        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
-        raise
-    except Exception as error:
-        api_logger.log_processing_error(error, file_id=file_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve metadata: {str(error)}"
-        )
-
 
 @router.delete("/pdf/{file_id}")
 @log_api_call("pdf_delete", log_params=True, log_response=True, log_timing=True)
@@ -126,18 +90,9 @@ async def delete_pdf_file(
 
     Returns confirmation of deletion.
     """
-    api_logger = APILogger("pdf_delete")
-
-    api_logger.log_request_received(file_id=file_id)
-    api_logger.log_validation_start()
-
-    # Validate file_id using shared utility
-    validate_file_id(file_id, api_logger)
-
-    api_logger.log_validation_success(file_id=file_id)
-    api_logger.log_processing_start(file_id=file_id, operation="file_deletion")
-
-    try:
+    with api_endpoint_handler(
+        "pdf_delete", file_id=file_id, default_error_message="Failed to delete file"
+    ) as api_logger:
         success = pdf_service.delete_pdf(file_id)
 
         if success:
@@ -157,10 +112,3 @@ async def delete_pdf_file(
                 deletion_successful=False,
             )
             raise HTTPException(status_code=500, detail="Failed to delete file")
-
-    except HTTPException as http_exception:
-        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
-        raise
-    except Exception as error:
-        api_logger.log_processing_error(error, file_id=file_id)
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(error)}")

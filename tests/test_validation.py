@@ -98,3 +98,69 @@ class TestValidateRequiredString:
         call_args = mock_logger.log_validation_error.call_args
         # Check the first positional argument contains the expected message
         assert "Empty test_field provided" in call_args.args[0]
+
+
+class TestApiEndpointHandler:
+    """Test api_endpoint_handler context manager."""
+
+    def test_api_endpoint_handler_success(self):
+        """Test context manager with successful operation."""
+        from backend.app.utils.validation import api_endpoint_handler
+
+        result = None
+        with api_endpoint_handler("test_operation", file_id="test-123") as logger:
+            result = "success"
+            assert logger.operation == "test_operation"
+            logger.log_processing_success(file_id="test-123", result=result)
+
+        assert result == "success"
+
+    def test_api_endpoint_handler_with_http_exception(self):
+        """Test context manager propagates HTTPException."""
+        from backend.app.utils.validation import api_endpoint_handler
+
+        with pytest.raises(HTTPException) as exc_info:
+            with api_endpoint_handler("test_operation", file_id="test-123"):
+                raise HTTPException(status_code=404, detail="Not found")
+
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail == "Not found"
+
+    def test_api_endpoint_handler_with_generic_exception(self):
+        """Test context manager converts generic exceptions to HTTPException."""
+        from backend.app.utils.validation import api_endpoint_handler
+
+        with pytest.raises(HTTPException) as exc_info:
+            with api_endpoint_handler(
+                "test_operation",
+                file_id="test-123",
+                default_error_message="Operation failed"
+            ):
+                raise ValueError("Something went wrong")
+
+        assert exc_info.value.status_code == 500
+        assert "Operation failed" in exc_info.value.detail
+        assert "Something went wrong" in exc_info.value.detail
+
+    def test_api_endpoint_handler_validates_file_id(self):
+        """Test context manager validates file_id if provided."""
+        from backend.app.utils.validation import api_endpoint_handler
+
+        # Empty file_id should raise validation error
+        with pytest.raises(HTTPException) as exc_info:
+            with api_endpoint_handler("test_operation", file_id=""):
+                pass
+
+        assert exc_info.value.status_code == 400
+        assert "File ID is required" in exc_info.value.detail
+
+    def test_api_endpoint_handler_without_file_id(self):
+        """Test context manager works without file_id validation."""
+        from backend.app.utils.validation import api_endpoint_handler
+
+        result = None
+        with api_endpoint_handler("test_operation") as logger:
+            result = "success"
+            assert logger.operation == "test_operation"
+
+        assert result == "success"
