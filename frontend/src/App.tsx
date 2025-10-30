@@ -22,13 +22,14 @@ import { PDFViewer } from './components/PDFViewer/PDFViewer';
 import { TestPDFLoader } from './components/TestPDFLoader';
 import { ApiService } from './services/api';
 import type { PDFUploadResponse } from './types/pdf.types';
+import { devLog } from './utils/devLogger';
 
 function App() {
   const [uploadedFile, setUploadedFile] = useState<PDFUploadResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleUploadSuccess = (response: PDFUploadResponse) => {
-    console.log('🎉 [App] Upload success callback triggered:', {
+    devLog('🎉 [App] Upload success callback triggered:', {
       fileId: response.file_id,
       filename: response.filename,
       timestamp: new Date().toISOString(),

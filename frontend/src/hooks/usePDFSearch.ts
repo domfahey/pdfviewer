@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { devError } from '../utils/devLogger';
 
 // Search debounce delay in milliseconds to avoid excessive processing
 const SEARCH_DEBOUNCE_DELAY_MS = 300;
@@ -109,7 +110,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         }
       } catch (error) {
         if (!signal.aborted) {
-          console.error('Error searching PDF:', error);
+          devError('Error searching PDF:', error);
           setSearchState(prev => ({
             ...prev,
             isSearching: false,

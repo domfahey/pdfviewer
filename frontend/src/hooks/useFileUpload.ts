@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ApiService } from '../services/api';
 import type { PDFUploadResponse } from '../types/pdf.types';
+import { devLog, devError } from '../utils/devLogger';
 
 interface UseFileUploadReturn {
   uploading: boolean;
@@ -31,7 +32,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
   };
 
   const uploadFile = useCallback(async (file: File): Promise<PDFUploadResponse | null> => {
-    console.log('🚀 [FileUpload] Starting upload process:', {
+    devLog('🚀 [FileUpload] Starting upload process:', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
@@ -44,12 +45,12 @@ export const useFileUpload = (): UseFileUploadReturn => {
     // Validate file
     const validationError = validateFile(file);
     if (validationError) {
-      console.error('❌ [FileUpload] Validation failed:', validationError);
+      devError('❌ [FileUpload] Validation failed:', validationError);
       setError(validationError);
       return null;
     }
 
-    console.log('✅ [FileUpload] File validation passed');
+    devLog('✅ [FileUpload] File validation passed');
     setUploading(true);
 
     try {
@@ -64,10 +65,10 @@ export const useFileUpload = (): UseFileUploadReturn => {
         });
       }, 100);
 
-      console.log('📤 [FileUpload] Calling API service...');
+      devLog('📤 [FileUpload] Calling API service...');
       const response = await ApiService.uploadPDF(file);
 
-      console.log('✅ [FileUpload] Upload successful:', {
+      devLog('✅ [FileUpload] Upload successful:', {
         fileId: response.file_id,
         filename: response.filename,
         fileSize: response.file_size,
@@ -85,7 +86,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
 
       return response;
     } catch (error) {
-      console.error('❌ [FileUpload] Upload failed:', {
+      devError('❌ [FileUpload] Upload failed:', {
         error: error,
         message: error instanceof Error ? error.message : 'Upload failed',
         stack: error instanceof Error ? error.stack : undefined,

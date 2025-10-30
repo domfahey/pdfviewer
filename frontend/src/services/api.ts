@@ -1,10 +1,11 @@
 import type { PDFUploadResponse, PDFMetadata } from '../types/pdf.types';
+import { devLog, devError } from '../utils/devLogger';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
 export class ApiService {
   static async uploadPDF(file: File): Promise<PDFUploadResponse> {
-    console.log('🌐 [ApiService] Preparing upload request:', {
+    devLog('🌐 [ApiService] Preparing upload request:', {
       url: `${API_BASE_URL}/upload`,
       fileName: file.name,
       fileSize: file.size,
@@ -14,13 +15,13 @@ export class ApiService {
     formData.append('file', file);
 
     try {
-      console.log('📡 [ApiService] Sending POST request to backend...');
+      devLog('📡 [ApiService] Sending POST request to backend...');
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
 
-      console.log('📥 [ApiService] Response received:', {
+      devLog('📥 [ApiService] Response received:', {
         status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries()),
@@ -28,7 +29,7 @@ export class ApiService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [ApiService] Upload failed with error response:', {
+        devError('❌ [ApiService] Upload failed with error response:', {
           status: response.status,
           statusText: response.statusText,
           errorBody: errorText,
@@ -43,10 +44,10 @@ export class ApiService {
       }
 
       const responseData = await response.json();
-      console.log('✅ [ApiService] Upload completed successfully:', responseData);
+      devLog('✅ [ApiService] Upload completed successfully:', responseData);
       return responseData;
     } catch (error) {
-      console.error('🚨 [ApiService] Network or parsing error:', {
+      devError('🚨 [ApiService] Network or parsing error:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
