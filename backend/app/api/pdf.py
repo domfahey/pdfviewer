@@ -54,8 +54,8 @@ async def get_pdf_file(
 
         return response
 
-    except HTTPException as http_error:
-        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
+    except HTTPException as http_exception:
+        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
         raise
     except Exception as error:
         api_logger.log_processing_error(error, file_id=file_id)
@@ -105,8 +105,8 @@ async def get_pdf_metadata(
 
         return metadata
 
-    except HTTPException as http_error:
-        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
+    except HTTPException as http_exception:
+        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
         raise
     except Exception as error:
         api_logger.log_processing_error(error, file_id=file_id)
@@ -158,8 +158,8 @@ async def delete_pdf_file(
             )
             raise HTTPException(status_code=500, detail="Failed to delete file")
 
-    except HTTPException as http_error:
-        api_logger.log_processing_error(http_error, file_id=file_id, status_code=http_error.status_code)
+    except HTTPException as http_exception:
+        api_logger.log_processing_error(http_exception, file_id=file_id, status_code=http_exception.status_code)
         raise
     except Exception as error:
         api_logger.log_processing_error(error, file_id=file_id)

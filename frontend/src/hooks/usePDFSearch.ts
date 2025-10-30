@@ -89,21 +89,16 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
           if (signal.aborted) break;
 
-          // Check if we have cached text for this page
-          let pageText = pageTextCache.current.get(pageNumber);
-          
-          if (!pageText) {
-            const page = await document.getPage(pageNumber);
-            const textContent = await page.getTextContent();
+          const page = await document.getPage(pageNumber);
+          const textContent = await page.getTextContent();
 
-            // Build array efficiently - only include items with text
-            const text_items: string[] = [];
-            
-            for (let i = 0; i < textContent.items.length; i++) {
-              const item = textContent.items[i];
-              if ('str' in item) {
-                text_items.push(item.str);
-              }
+          // Pre-allocate array for better performance
+          const extractedTextItems: string[] = new Array(textContent.items.length);
+          
+          for (let i = 0; i < textContent.items.length; i++) {
+            const item = textContent.items[i];
+            if ('str' in item) {
+              extractedTextItems[i] = item.str;
             }
 
             // Join once instead of concatenating in loop
@@ -113,17 +108,19 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             pageTextCache.current.set(pageNumber, pageText);
           }
 
+          // Join once instead of concatenating in loop
+          const pageText = extractedTextItems.join(' ');
           const normalizedPageText = pageText.toLowerCase();
           
           // Find all matches in this page
-          let current_match_position = 0;
-          while ((current_match_position = normalizedPageText.indexOf(normalizedQuery, current_match_position)) !== -1) {
+          let currentMatchPosition = 0;
+          while ((currentMatchPosition = normalizedPageText.indexOf(normalizedQuery, currentMatchPosition)) !== -1) {
             matches.push({
               pageIndex: pageNumber - 1,
               matchIndex: matches.length,
-              text: pageText.substring(current_match_position, current_match_position + query.length),
+              text: pageText.substring(currentMatchPosition, currentMatchPosition + query.length),
             });
-            current_match_position += normalizedQuery.length;
+            currentMatchPosition += normalizedQuery.length;
           }
         }
 
