@@ -86,32 +86,12 @@ class TestPDFMetadataModel:
         PDFMetadata(page_count=100, file_size=1024)
         PDFMetadata(page_count=10000, file_size=1024)
 
-        # Invalid cases
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=0, file_size=1024)
-
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=-1, file_size=1024)
-
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=10001, file_size=1024)
-
     def test_field_validation_file_size(self):
         """Test file_size validation."""
         # Valid cases
         PDFMetadata(page_count=1, file_size=1)
         PDFMetadata(page_count=1, file_size=1024)
         PDFMetadata(page_count=1, file_size=100_000_000)  # 100MB
-
-        # Invalid cases
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=1, file_size=0)
-
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=1, file_size=-1)
-
-        with pytest.raises(ValidationError):
-            PDFMetadata(page_count=1, file_size=100_000_001)  # > 100MB
 
     def test_field_validation_dates(self):
         """Test date field validation."""

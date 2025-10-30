@@ -24,7 +24,37 @@ This directory contains comprehensive tests for the PDF Viewer application follo
 
 ```
 tests/
-├── test_*.py                    # Unit tests for backend modules
+├── unit/                        # Unit tests organized by module
+│   ├── api/                     # API endpoint tests
+│   │   ├── test_health.py
+│   │   ├── test_upload.py
+│   │   ├── test_pdf_endpoints.py
+│   │   ├── test_load_url_api_comprehensive.py
+│   │   └── test_pdf_api_comprehensive.py
+│   ├── services/                # Service layer tests
+│   │   ├── test_pdf_service.py
+│   │   └── test_pdf_service_comprehensive.py
+│   ├── models/                  # Pydantic model tests
+│   │   └── test_pydantic_models.py
+│   ├── utils/                   # Utility function tests
+│   │   ├── test_validation.py
+│   │   ├── test_utils_decorators.py
+│   │   ├── test_http_client.py
+│   │   └── ...
+│   ├── middleware/              # Middleware tests
+│   │   └── test_logging_middleware.py
+│   └── edge_cases/              # Edge case tests
+│       ├── test_upload_edge_cases.py
+│       ├── test_health_edge_cases.py
+│       ├── test_pdf_service_edge_cases.py
+│       ├── test_validation_edge_cases.py
+│       └── test_pydantic_models_edge_cases.py
+├── samples/                     # Sample PDF integration tests
+│   ├── test_epa_sample.py
+│   ├── test_weblite_sample.py
+│   ├── test_princexml_sample.py
+│   ├── test_anyline_sample.py
+│   └── test_nhtsa_form.py
 ├── integration/                 # Integration tests
 │   ├── api/                     # API integration tests
 │   │   ├── test_pdf_workflow.py
@@ -57,6 +87,8 @@ make test-all
 # Run specific test suites
 make test-unit              # All unit tests
 make test-integration       # All integration tests
+make test-samples           # Sample PDF tests
+make test-edge-cases        # Edge case tests
 make test-e2e              # E2E tests (requires running servers)
 
 # Run with coverage
@@ -97,17 +129,29 @@ cd tests/e2e && npm test        # Run E2E tests
 
 ## Test Categories
 
-### 1. Unit Tests (`test_*.py`)
+### 1. Unit Tests (`unit/`)
 - Fast, isolated tests for individual components
+- Organized by module (api, services, models, utils, middleware)
 - Mock external dependencies
-- Focus on business logic and edge cases
+- Focus on business logic and typical scenarios
 
-### 2. Integration Tests (`integration/`)
+### 1a. Edge Case Tests (`unit/edge_cases/`)
+- Boundary condition tests
+- Invalid input validation
+- Error handling scenarios
+- Extreme values and unusual inputs
+
+### 2. Sample PDF Tests (`samples/`)
+- Tests with real-world sample PDF documents
+- Verify behavior with various PDF types (scanned, forms, etc.)
+- Integration tests with actual PDF processing
+
+### 3. Integration Tests (`integration/`)
 - Test API endpoints with real database/filesystem
 - Verify component interactions
-- Test error handling and edge cases
+- Test complete workflows
 
-### 3. E2E Tests (`e2e/`)
+### 4. E2E Tests (`e2e/`)
 - Full user workflows through the browser
 - Test real user interactions
 - Verify frontend-backend integration
