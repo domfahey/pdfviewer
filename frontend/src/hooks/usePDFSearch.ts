@@ -100,12 +100,6 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             if ('str' in item) {
               extractedTextItems[i] = item.str;
             }
-
-            // Join once instead of concatenating in loop
-            pageText = text_items.join(' ');
-            
-            // Cache the extracted text
-            pageTextCache.current.set(pageNumber, pageText);
           }
 
           // Join once instead of concatenating in loop

@@ -1,6 +1,12 @@
 """Common validation utilities for API endpoints."""
 
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any
+
 from fastapi import HTTPException
+
+from .api_logging import APILogger
 
 # Public API
 __all__ = [
@@ -56,7 +62,7 @@ def api_endpoint_handler(
     operation: str,
     file_id: str | None = None,
     default_error_message: str = "Operation failed",
-):
+) -> Generator[APILogger, None, None]:
     """Context manager for common API endpoint workflow.
     
     Handles the standard pattern of:
@@ -92,7 +98,7 @@ def api_endpoint_handler(
     
     # Validate file_id if provided
     if file_id:
-        validate_file_id(file_id, api_logger)
+        validate_file_id(file_id)
         api_logger.log_validation_success(**context)
     
     api_logger.log_processing_start(**context)
