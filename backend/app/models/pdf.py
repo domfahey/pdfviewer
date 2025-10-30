@@ -33,6 +33,41 @@ def _validate_non_empty_string(value: str, field_name: str) -> None:
         raise ValueError(f"{field_name} cannot be empty or whitespace")
 
 
+def calculate_file_size_mb(file_size_bytes: int) -> float:
+    """Calculate file size in megabytes from bytes.
+    
+    This helper function eliminates duplication of the file size calculation
+    logic across multiple models (PDFMetadata, PDFUploadResponse).
+    
+    Args:
+        file_size_bytes: File size in bytes
+        
+    Returns:
+        float: File size in megabytes, rounded to 2 decimal places
+    """
+    return round(file_size_bytes / (1024 * 1024), 2)
+
+
+def serialize_datetime_to_iso(dt: datetime | None) -> str | None:
+    """Serialize datetime to ISO format with timezone awareness.
+    
+    This helper function eliminates duplication of datetime serialization
+    logic across multiple models (PDFMetadata, PDFUploadResponse, PDFInfo).
+    
+    Args:
+        dt: Datetime to serialize (can be None)
+        
+    Returns:
+        str | None: ISO format string if datetime provided, None otherwise
+    """
+    if dt is None:
+        return None
+    # Ensure timezone-aware datetime is serialized consistently
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt.isoformat()
+
+
 class PDFMetadata(BaseModel):
     """PDF metadata model with enhanced validation for POC development."""
 
@@ -161,7 +196,7 @@ class PDFMetadata(BaseModel):
     @property
     def file_size_mb(self) -> float:
         """File size in megabytes, rounded to 2 decimal places."""
-        return round(self.file_size / (1024 * 1024), 2)
+        return calculate_file_size_mb(self.file_size)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -172,12 +207,7 @@ class PDFMetadata(BaseModel):
     @field_serializer("creation_date", "modification_date")
     def serialize_dates(self, value: datetime | None) -> str | None:
         """Serialize dates to ISO format for POC consistency."""
-        if value is None:
-            return None
-        # Ensure timezone-aware datetime is serialized consistently
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=UTC)
-        return value.isoformat()
+        return serialize_datetime_to_iso(value)
 
 
 class PDFUploadResponse(BaseModel):
@@ -308,15 +338,15 @@ class PDFUploadResponse(BaseModel):
     @property
     def file_size_mb(self) -> float:
         """File size in megabytes for display purposes."""
-        return round(self.file_size / (1024 * 1024), 2)
+        return calculate_file_size_mb(self.file_size)
 
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
         """Serialize upload time to ISO format."""
-        # Ensure timezone-aware datetime
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=UTC)
-        return value.isoformat()
+        result = serialize_datetime_to_iso(value)
+        # Value is always provided for upload_time, so result should never be None
+        assert result is not None, "upload_time should always be provided"
+        return result
 
 
 class PDFInfo(BaseModel):
@@ -349,9 +379,10 @@ class PDFInfo(BaseModel):
     @field_serializer("upload_time")
     def serialize_upload_time(self, value: datetime) -> str:
         """Serialize upload time consistently."""
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=UTC)
-        return value.isoformat()
+        result = serialize_datetime_to_iso(value)
+        # Value is always provided for upload_time, so result should never be None
+        assert result is not None, "upload_time should always be provided"
+        return result
 
 
 class ErrorResponse(BaseModel):

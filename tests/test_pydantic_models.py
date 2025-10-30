@@ -15,6 +15,8 @@ from backend.app.models.pdf import (
     PDFInfo,
     PDFMetadata,
     PDFUploadResponse,
+    calculate_file_size_mb,
+    serialize_datetime_to_iso,
 )
 
 
@@ -500,4 +502,67 @@ class TestPDFInfoModel:
         assert pdf_info.filename == "test.pdf"
         assert pdf_info.file_size == 1024000
         assert pdf_info.metadata == metadata
+
+
+class TestHelperFunctions:
+    """Test helper functions used in models."""
+
+    def test_calculate_file_size_mb_small_file(self):
+        """Test file size calculation for small file."""
+        # 1 KB = 1024 bytes
+        result = calculate_file_size_mb(1024)
+        assert result == 0.0  # < 0.01 MB rounds to 0.0
+
+    def test_calculate_file_size_mb_medium_file(self):
+        """Test file size calculation for medium file."""
+        # 1 MB = 1024 * 1024 bytes
+        result = calculate_file_size_mb(1024 * 1024)
+        assert result == 1.0
+
+    def test_calculate_file_size_mb_large_file(self):
+        """Test file size calculation for large file."""
+        # 50 MB
+        result = calculate_file_size_mb(50 * 1024 * 1024)
+        assert result == 50.0
+
+    def test_calculate_file_size_mb_decimal_precision(self):
+        """Test that file size is rounded to 2 decimal places."""
+        # 1.5 MB + small fraction
+        result = calculate_file_size_mb(1_572_864)  # 1.5 MB
+        assert result == 1.5
+
+    def test_serialize_datetime_to_iso_with_utc(self):
+        """Test datetime serialization with UTC timezone."""
+        dt = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
+        result = serialize_datetime_to_iso(dt)
+        
+        assert result is not None
+        assert "2025-01-15" in result
+        assert "10:30:00" in result
+        assert "+" in result or "Z" in result  # Timezone indicator
+
+    def test_serialize_datetime_to_iso_with_naive(self):
+        """Test datetime serialization with naive datetime (no timezone)."""
+        dt = datetime(2025, 1, 15, 10, 30, 0)
+        result = serialize_datetime_to_iso(dt)
+        
+        # Should add UTC timezone and serialize
+        assert result is not None
+        assert "2025-01-15" in result
+        assert "10:30:00" in result
+
+    def test_serialize_datetime_to_iso_with_none(self):
+        """Test datetime serialization with None."""
+        result = serialize_datetime_to_iso(None)
+        assert result is None
+
+    def test_serialize_datetime_to_iso_format_consistency(self):
+        """Test that serialized format is consistent across multiple calls."""
+        dt1 = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
+        dt2 = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
+        
+        result1 = serialize_datetime_to_iso(dt1)
+        result2 = serialize_datetime_to_iso(dt2)
+        
+        assert result1 == result2
 
