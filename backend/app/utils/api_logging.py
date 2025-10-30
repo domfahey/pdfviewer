@@ -43,6 +43,13 @@ def log_api_call(
         async def wrapper(*args, **kwargs):
             # Start timing
             start_time = time.perf_counter()
+            
+            def calculate_duration_ms() -> float:
+                """Calculate elapsed time in milliseconds.
+                
+                Note: This closure captures start_time from the outer scope.
+                """
+                return round((time.perf_counter() - start_time) * 1000, 2)
 
             # Extract request info if available
             request_info = {}
@@ -75,11 +82,8 @@ def log_api_call(
                 # Execute the function
                 result = await func(*args, **kwargs)
 
-                # Calculate timing
-                duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-
                 # Prepare success context
-                success_context = {"duration_ms": duration_ms, "status": "success"}
+                success_context = {"duration_ms": calculate_duration_ms(), "status": "success"}
 
                 # Log response if requested
                 if log_response and result is not None:
@@ -99,12 +103,9 @@ def log_api_call(
                 return result
 
             except Exception as exc:
-                # Calculate timing for errors
-                duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-
                 # Log error
                 error_context = {
-                    "duration_ms": duration_ms,
+                    "duration_ms": calculate_duration_ms(),
                     "status": "error",
                     "error_type": type(exc).__name__,
                     "error_message": str(exc),
@@ -143,6 +144,13 @@ def log_file_operation(
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
+            
+            def calculate_duration_ms() -> float:
+                """Calculate elapsed time in milliseconds.
+                
+                Note: This closure captures start_time from the outer scope.
+                """
+                return round((time.perf_counter() - start_time) * 1000, 2)
 
             # Extract file information
             file_info = {}
@@ -168,10 +176,8 @@ def log_file_operation(
             try:
                 result = await func(*args, **kwargs)
 
-                duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-
                 success_context = {
-                    "duration_ms": duration_ms,
+                    "duration_ms": calculate_duration_ms(),
                     "status": "success",
                 }
 
@@ -186,10 +192,8 @@ def log_file_operation(
                 return result
 
             except Exception as exc:
-                duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-
                 error_context = {
-                    "duration_ms": duration_ms,
+                    "duration_ms": calculate_duration_ms(),
                     "status": "error",
                     "error_type": type(exc).__name__,
                     "error_message": str(exc),
@@ -278,64 +282,84 @@ class APILogger:
             correlation_id=self.correlation_id,
         )
 
+    def _log(self, level: str, action: str, **context):
+        """Internal helper to log with consistent formatting.
+        
+        Args:
+            level: Log level ('info', 'error', 'warning', or 'debug')
+            action: Action description (e.g., 'Request received', 'Validation started')
+                   Should be a complete phrase that reads well with "for {operation}"
+            **context: Additional context to bind to the logger
+            
+        Raises:
+            ValueError: If level is not a valid log level
+        """
+        # Validate level to provide clear error messages
+        valid_levels = ('info', 'error', 'warning', 'debug')
+        if level not in valid_levels:
+            raise ValueError(f"Invalid log level '{level}'. Must be one of {valid_levels}")
+        
+        log_method = getattr(self.logger.bind(**context), level)
+        log_method(f"{action} for {self.operation}")
+
     def log_request_received(self, **context):
         """Log that a request has been received."""
-        self.logger.bind(**context).info(f"Request received for {self.operation}")
+        self._log("info", "Request received", **context)
 
     def log_validation_start(self, **context):
         """Log start of validation process."""
-        self.logger.bind(**context).info(f"Validation started for {self.operation}")
+        self._log("info", "Validation started", **context)
 
     def log_validation_success(self, **context):
         """Log successful validation."""
-        self.logger.bind(**context).info(f"Validation passed for {self.operation}")
+        self._log("info", "Validation passed", **context)
 
     def log_validation_error(self, error: str, **context):
         """Log validation error."""
-        self.logger.bind(error=error, **context).error(
-            f"Validation failed for {self.operation}"
-        )
+        self._log("error", "Validation failed", error=error, **context)
 
     def log_processing_start(self, **context):
         """Log start of main processing."""
-        self.logger.bind(**context).info(f"Processing started for {self.operation}")
+        self._log("info", "Processing started", **context)
 
     def log_processing_success(self, **context):
         """Log successful processing."""
-        self.logger.bind(**context).info(f"Processing completed for {self.operation}")
+        self._log("info", "Processing completed", **context)
 
     def log_processing_error(self, error: Exception, **context):
         """Log processing error."""
-        self.logger.bind(
-            error_type=type(error).__name__, error_message=str(error), **context
-        ).error(f"Processing failed for {self.operation}")
+        self._log(
+            "error", 
+            "Processing failed",
+            error_type=type(error).__name__, 
+            error_message=str(error), 
+            **context
+        )
 
     def log_response_prepared(self, **context):
         """Log that response has been prepared."""
-        self.logger.bind(**context).info(f"Response prepared for {self.operation}")
+        self._log("info", "Response prepared", **context)
 
     def log_api_completed(
         self, status_code: int = 200, response_size: int = 0, **context
     ):
         """Log that API operation has completed."""
         duration_ms = (time.perf_counter() - self.start_time) * 1000
-        self.logger.bind(
+        self._log(
+            "info",
+            "API operation completed",
             status_code=status_code,
             response_size=response_size,
             duration_ms=duration_ms,
             **context,
-        ).info(f"API operation completed for {self.operation}")
+        )
 
     def log_file_received(
         self, filename: str | None = None, file_size: int = 0, **context
     ):
         """Log that a file has been received."""
-        self.logger.bind(filename=filename, file_size=file_size, **context).info(
-            f"File received for {self.operation}"
-        )
+        self._log("info", "File received", filename=filename, file_size=file_size, **context)
 
     def log_file_processed(self, filename: str | None = None, **context):
         """Log that a file has been processed."""
-        self.logger.bind(filename=filename, **context).info(
-            f"File processed for {self.operation}"
-        )
+        self._log("info", "File processed", filename=filename, **context)

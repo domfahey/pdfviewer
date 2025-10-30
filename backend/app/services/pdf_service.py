@@ -140,21 +140,21 @@ class PDFService:
                         page_count=page_count,
                         file_size_mb=round(file_size / (1024 * 1024), 2),
                         encrypted=encrypted,
-                        has_metadata=document_info is not None,
-                        title=title,
-                        author=author,
+                        has_metadata=pdf_document_metadata is not None,
+                        title=self._get_pdf_attr(pdf_document_metadata, "title"),
+                        author=self._get_pdf_attr(pdf_document_metadata, "author"),
                     )
 
                     # Create metadata with enhanced validation
                     try:
                         metadata = PDFMetadata(
-                            title=title,
-                            author=author,
-                            subject=subject,
-                            creator=creator,
-                            producer=producer,
-                            creation_date=creation_date,
-                            modification_date=modification_date,
+                            title=self._get_pdf_attr(pdf_document_metadata, "title"),
+                            author=self._get_pdf_attr(pdf_document_metadata, "author"),
+                            subject=self._get_pdf_attr(pdf_document_metadata, "subject"),
+                            creator=self._get_pdf_attr(pdf_document_metadata, "creator"),
+                            producer=self._get_pdf_attr(pdf_document_metadata, "producer"),
+                            creation_date=self._get_pdf_attr(pdf_document_metadata, "creation_date"),
+                            modification_date=self._get_pdf_attr(pdf_document_metadata, "modification_date"),
                             page_count=page_count,
                             file_size=file_size,
                             encrypted=encrypted,
