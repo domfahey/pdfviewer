@@ -205,7 +205,7 @@ npm audit fix              # Fix security vulnerabilities
 - `frontend/package.json` - Node dependencies
 - `configs/Makefile` - Development commands
 - `.pre-commit-config.yaml` - Pre-commit hooks
-- `mypy.ini` - Type checking config
+- `configs/mypy.ini` - Type checking config (symlinked to root)
 
 ## Security Guidelines
 

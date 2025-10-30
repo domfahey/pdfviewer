@@ -9,6 +9,7 @@ import os
 import time
 import uuid
 from contextvars import ContextVar
+from typing import Any
 
 import structlog
 from fastapi import Request, Response
@@ -34,12 +35,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: Any,
         correlation_header: str = "X-Correlation-ID",
         log_request_bodies: bool | None = None,
         log_response_bodies: bool | None = None,
         max_body_size: int = 4096,  # 4KB default limit
-    ):  # type: ignore[misc]
+    ) -> None:
         """Initialize the logging middleware.
 
         Args:
@@ -82,7 +83,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "proxy-authorization",
         }
 
-    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[misc]
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
         """Process HTTP request through the logging middleware.
 
         Args:
@@ -197,7 +198,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Fallback to direct connection IP
         return request.client.host if request.client else "unknown"
 
-    def _filter_headers(self, headers: dict) -> dict:
+    def _filter_headers(self, headers: dict[str, Any]) -> dict[str, Any]:
         """Filter sensitive headers for logging."""
         filtered = {}
         for key, value in headers.items():
@@ -211,11 +212,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         self, content_type: str, content_length: str | None
     ) -> bool:
         """Determine if body content should be logged based on type and size.
-        
+
         Args:
             content_type: The content type header value
             content_length: The content length header value
-            
+
         Returns:
             True if body should be logged, False otherwise
         """
@@ -225,20 +226,23 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # Don't log binary content - use tuple for faster membership testing
         content_type_lower = content_type.lower()
-        return not any(binary_type in content_type_lower for binary_type in self._binary_content_types)
+        return not any(
+            binary_type in content_type_lower
+            for binary_type in self._binary_content_types
+        )
 
     def _should_log_body(self, request: Request) -> bool:
         """Determine if request body should be logged."""
         return self._should_log_body_content(
             request.headers.get("content-type", ""),
-            request.headers.get("content-length")
+            request.headers.get("content-length"),
         )
 
     def _should_log_response_body(self, response: Response) -> bool:
         """Determine if response body should be logged."""
         return self._should_log_body_content(
             response.headers.get("content-type", ""),
-            response.headers.get("content-length")
+            response.headers.get("content-length"),
         )
 
     async def _safe_read_body(self, request: Request) -> str | None:
@@ -295,17 +299,25 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
     # Pre-compile sensitive key patterns for better performance
     _sensitive_patterns = frozenset(["password", "token", "secret", "key", "auth"])
-    
-    # Pre-define binary content types to avoid repeated list creation
-    _binary_content_types = ("image/", "video/", "audio/", "application/pdf", "application/octet-stream")
 
-    def _sanitize_json_data(self, data):
+    # Pre-define binary content types to avoid repeated list creation
+    _binary_content_types = (
+        "image/",
+        "video/",
+        "audio/",
+        "application/pdf",
+        "application/octet-stream",
+    )
+
+    def _sanitize_json_data(self, data: Any) -> Any:
         """Recursively sanitize JSON data."""
         if isinstance(data, dict):
             sanitized = {}
             for key, value in data.items():
                 key_lower = key.lower()
-                if any(sensitive in key_lower for sensitive in self._sensitive_patterns):
+                if any(
+                    sensitive in key_lower for sensitive in self._sensitive_patterns
+                ):
                     sanitized[key] = "[REDACTED]"
                 else:
                     sanitized[key] = self._sanitize_json_data(value)
@@ -317,7 +329,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             return data
 
 
-def add_correlation_id(logger, method_name, event_dict):
+def add_correlation_id(
+    logger: Any, method_name: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
     """Structlog processor to add correlation ID to all log entries.
 
     This processor automatically adds the current correlation ID
@@ -347,8 +361,8 @@ def set_correlation_id(correlation_id: str | None) -> None:
 
 
 def log_with_correlation(
-    logger_instance: structlog.stdlib.BoundLogger, **extra_context
-):
+    logger_instance: structlog.stdlib.BoundLogger, **extra_context: Any
+) -> structlog.stdlib.BoundLogger:
     """Create a logger bound with correlation ID and extra context.
 
     Args:
@@ -364,7 +378,9 @@ def log_with_correlation(
     return logger_instance.bind(**context)
 
 
-def log_file_operation(operation: str, filename: str, file_id: str | None = None):
+def log_file_operation(
+    operation: str, filename: str, file_id: str | None = None
+) -> Any:
     """Log file operations with consistent context and tracking.
 
     Args:
@@ -377,28 +393,35 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
 
     """
 
-    def decorator(func):
+    def decorator(func: Any) -> Any:
         import asyncio
         import functools
 
-        def _log_operation(operation_logger, start_time, success, error=None):
+        def _log_operation(
+            operation_logger: Any,
+            start_time: float,
+            success: bool,
+            error: Exception | None = None,
+        ) -> None:
             """Helper to log operation result."""
             duration = time.perf_counter() - start_time
-            log_data = {
+            log_data: dict[str, Any] = {
                 "duration_ms": round(duration * 1000, 2),
                 "success": success,
             }
             if error:
-                log_data.update({
-                    "error": str(error),
-                    "error_type": type(error).__name__,
-                })
+                log_data.update(
+                    {
+                        "error": str(error),
+                        "error_type": type(error).__name__,
+                    }
+                )
                 operation_logger.error(f"Failed {operation}", **log_data)
             else:
                 operation_logger.info(f"Completed {operation}", **log_data)
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             operation_logger = log_with_correlation(
                 logger,
                 operation=operation,
@@ -418,7 +441,7 @@ def log_file_operation(operation: str, filename: str, file_id: str | None = None
                 raise
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             operation_logger = log_with_correlation(
                 logger,
                 operation=operation,

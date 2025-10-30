@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for ApiService.
- * 
+ *
  * Tests cover file upload, metadata retrieval, file deletion,
  * error handling, and health check functionality.
  */
@@ -107,9 +107,7 @@ describe('ApiService', () => {
         type: 'application/pdf',
       });
 
-      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow(
-        'File too large'
-      );
+      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow('File too large');
     });
 
     it('should handle upload failure with non-JSON error', async () => {
@@ -125,9 +123,7 @@ describe('ApiService', () => {
         type: 'application/pdf',
       });
 
-      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow(
-        'Upload failed with status 500'
-      );
+      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow('Upload failed with status 500');
     });
 
     it('should handle network error', async () => {
@@ -137,9 +133,7 @@ describe('ApiService', () => {
         type: 'application/pdf',
       });
 
-      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow(
-        'Network error'
-      );
+      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow('Network error');
     });
 
     it('should handle JSON parse error in error response', async () => {
@@ -155,9 +149,7 @@ describe('ApiService', () => {
         type: 'application/pdf',
       });
 
-      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow(
-        'Upload failed with status 400'
-      );
+      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow('Upload failed with status 400');
     });
   });
 
@@ -173,9 +165,7 @@ describe('ApiService', () => {
       const result = await ApiService.getPDFMetadata('test-file-123');
 
       expect(result).toEqual(mockMetadata);
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/metadata/test-file-123'
-      );
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8000/api/metadata/test-file-123');
     });
 
     it('should handle metadata fetch failure', async () => {
@@ -186,9 +176,9 @@ describe('ApiService', () => {
         headers: new Headers(),
       } as Response);
 
-      await expect(
-        ApiService.getPDFMetadata('nonexistent-id')
-      ).rejects.toThrow('Failed to fetch metadata');
+      await expect(ApiService.getPDFMetadata('nonexistent-id')).rejects.toThrow(
+        'Failed to fetch metadata'
+      );
     });
 
     it('should fetch metadata for different file IDs', async () => {
@@ -247,9 +237,7 @@ describe('ApiService', () => {
         headers: new Headers(),
       } as Response);
 
-      await expect(
-        ApiService.deletePDF('test-file-123')
-      ).resolves.toBeUndefined();
+      await expect(ApiService.deletePDF('test-file-123')).resolves.toBeUndefined();
 
       expect(fetch).toHaveBeenCalledWith(
         'http://localhost:8000/api/pdf/test-file-123',
@@ -267,17 +255,13 @@ describe('ApiService', () => {
         headers: new Headers(),
       } as Response);
 
-      await expect(ApiService.deletePDF('nonexistent-id')).rejects.toThrow(
-        'Failed to delete file'
-      );
+      await expect(ApiService.deletePDF('nonexistent-id')).rejects.toThrow('Failed to delete file');
     });
 
     it('should handle network error on delete', async () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
 
-      await expect(ApiService.deletePDF('test-file-123')).rejects.toThrow(
-        'Network error'
-      );
+      await expect(ApiService.deletePDF('test-file-123')).rejects.toThrow('Network error');
     });
 
     it('should delete different files', async () => {
@@ -344,9 +328,7 @@ describe('ApiService', () => {
     it('should handle health check network error', async () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Connection refused'));
 
-      await expect(ApiService.healthCheck()).rejects.toThrow(
-        'Connection refused'
-      );
+      await expect(ApiService.healthCheck()).rejects.toThrow('Connection refused');
     });
   });
 
@@ -367,10 +349,7 @@ describe('ApiService', () => {
       });
       await ApiService.uploadPDF(mockFile).catch(() => {});
 
-      expect(fetch).toHaveBeenCalledWith(
-        `${baseUrl}/upload`,
-        expect.any(Object)
-      );
+      expect(fetch).toHaveBeenCalledWith(`${baseUrl}/upload`, expect.any(Object));
 
       // Metadata
       await ApiService.getPDFMetadata('test-id').catch(() => {});
@@ -378,10 +357,7 @@ describe('ApiService', () => {
 
       // Delete
       await ApiService.deletePDF('test-id').catch(() => {});
-      expect(fetch).toHaveBeenCalledWith(
-        `${baseUrl}/pdf/test-id`,
-        expect.any(Object)
-      );
+      expect(fetch).toHaveBeenCalledWith(`${baseUrl}/pdf/test-id`, expect.any(Object));
 
       // Health
       await ApiService.healthCheck().catch(() => {});
@@ -401,15 +377,11 @@ describe('ApiService', () => {
         type: 'application/pdf',
       });
 
-      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow(
-        'Request timeout'
-      );
+      await expect(ApiService.uploadPDF(mockFile)).rejects.toThrow('Request timeout');
     });
 
     it('should handle CORS errors', async () => {
-      vi.mocked(fetch).mockRejectedValue(
-        new Error('CORS policy blocked request')
-      );
+      vi.mocked(fetch).mockRejectedValue(new Error('CORS policy blocked request'));
 
       const mockFile = new File(['test'], 'test.pdf', {
         type: 'application/pdf',

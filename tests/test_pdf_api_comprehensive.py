@@ -33,8 +33,8 @@ def reset_pdf_service_state():
 @pytest.fixture
 def shared_pdf_service():
     """Provide a shared PDF service instance for tests that need persistence."""
-    from backend.app.services.pdf_service import PDFService
     from backend.app.dependencies import init_pdf_service
+    from backend.app.services.pdf_service import PDFService
 
     # Create a service instance
     service = PDFService(upload_dir="uploads")

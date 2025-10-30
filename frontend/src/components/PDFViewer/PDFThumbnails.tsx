@@ -54,7 +54,7 @@ export const PDFThumbnails: React.FC<PDFThumbnailsProps> = ({
 
       try {
         const page = await pdfDocument.getPage(pageNumber);
-        
+
         // Use shared canvas rendering utility with thumbnail scale
         const canvas = await renderPageToCanvas(page, { scale: 0.2, createNew: true });
 

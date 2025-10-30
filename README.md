@@ -157,6 +157,7 @@ See [Test Documentation](tests/README.md) for details.
 pdfviewer/
 ├── configs/           # Configuration files
 │   ├── Makefile      # Development commands
+│   ├── mypy.ini      # Type checking config
 │   ├── pyproject.toml # Python project config
 │   └── playwright.config.ts # E2E test config
 ├── docs/             # Documentation

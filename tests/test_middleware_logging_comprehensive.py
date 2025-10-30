@@ -16,7 +16,6 @@ from fastapi.testclient import TestClient
 
 from backend.app.middleware.logging import (
     LoggingMiddleware,
-    RequestContextLogger,
     add_correlation_id,
     correlation_id_var,
     get_correlation_id,
@@ -651,46 +650,9 @@ class TestLoggerFunctions:
         assert result == mock_bound_logger
 
 
-class TestRequestContextLogger:
-    """Test RequestContextLogger context manager."""
-
-    def test_request_context_logger_enter_exit(self, mock_request):
-        """Test RequestContextLogger context manager functionality."""
-        set_correlation_id("test-context-id")
-
-        mock_logger = Mock()
-        mock_bound_logger = Mock()
-        mock_logger.bind.return_value = mock_bound_logger
-
-        context_logger = RequestContextLogger(mock_logger, mock_request)
-
-        with context_logger as log:
-            assert log == mock_bound_logger
-            mock_logger.bind.assert_called_once()
-
-            call_args = mock_logger.bind.call_args[1]
-            assert call_args["method"] == "GET"
-            assert call_args["path"] == "/test"
-            assert call_args["correlation_id"] == "test-context-id"
-
-    def test_request_context_logger_exception_handling(self, mock_request):
-        """Test RequestContextLogger exception handling."""
-        mock_logger = Mock()
-        mock_bound_logger = Mock()
-        mock_logger.bind.return_value = mock_bound_logger
-
-        context_logger = RequestContextLogger(mock_logger, mock_request)
-
-        try:
-            with context_logger:
-                raise ValueError("Test exception")
-        except ValueError:
-            pass
-
-        # Should log the exception
-        mock_bound_logger.error.assert_called_once()
-        error_call = mock_bound_logger.error.call_args
-        assert "Exception in request context" in error_call[0][0]
+# NOTE: RequestContextLogger has been removed from the codebase
+# Tests for this functionality have been removed as it's no longer implemented
+# If similar functionality is needed in the future, new tests should be written
 
 
 class TestLoggingMiddlewareIntegration:

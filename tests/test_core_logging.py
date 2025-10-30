@@ -6,8 +6,7 @@ logger factory, context management, and performance monitoring.
 """
 
 import logging
-import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import structlog
@@ -16,9 +15,9 @@ from backend.app.core.logging import (
     LogContext,
     configure_logging,
     get_logger,
-    log_performance,
     setup_uvicorn_logging,
 )
+from backend.app.utils.decorators import performance_logger as log_performance
 
 
 class TestConfigureLogging:
@@ -187,6 +186,7 @@ class TestLogContext:
             with pytest.raises(ValueError):
                 with LogContext(logger, operation="test"):
                     raise ValueError("Test error")
+            mock_error.assert_called_once()
 
     def test_log_context_normal_exit(self):
         """Test LogContext exits normally without exceptions."""

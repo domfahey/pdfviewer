@@ -35,10 +35,10 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
   const searchAbortController = useRef<AbortController | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Cache extracted text content per page to avoid re-extraction
   const pageTextCache = useRef<Map<number, string>>(new Map());
-  
+
   // Cache search results for queries
   const searchResultsCache = useRef<Map<string, SearchMatch[]>>(new Map());
 
@@ -91,7 +91,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
           // Check if we have cached text for this page
           let pageText = pageTextCache.current.get(pageNumber);
-          
+
           if (!pageText) {
             // Extract text if not cached
             const page = await document.getPage(pageNumber);
@@ -99,7 +99,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
             // Pre-allocate array for better performance
             const extractedTextItems: string[] = new Array(textContent.items.length);
-            
+
             for (let i = 0; i < textContent.items.length; i++) {
               const item = textContent.items[i];
               if ('str' in item) {
@@ -109,16 +109,21 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
             // Join once instead of concatenating in loop
             pageText = extractedTextItems.join(' ');
-            
+
             // Cache the extracted text
             pageTextCache.current.set(pageNumber, pageText);
           }
 
           const normalizedPageText = pageText.toLowerCase();
-          
+
           // Find all matches in this page
           let currentMatchPosition = 0;
-          while ((currentMatchPosition = normalizedPageText.indexOf(normalizedQuery, currentMatchPosition)) !== -1) {
+          while (
+            (currentMatchPosition = normalizedPageText.indexOf(
+              normalizedQuery,
+              currentMatchPosition
+            )) !== -1
+          ) {
             matches.push({
               pageIndex: pageNumber - 1,
               matchIndex: matches.length,
@@ -131,7 +136,7 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         if (!signal.aborted) {
           // Cache the search results
           searchResultsCache.current.set(normalizedQuery, matches);
-          
+
           setSearchState({
             query,
             matches,
@@ -192,14 +197,14 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
-    
+
     if (searchAbortController.current) {
       searchAbortController.current.abort();
     }
-    
+
     // Clear search results cache (but keep page text cache)
     searchResultsCache.current.clear();
-    
+
     setSearchState({
       query: '',
       matches: [],

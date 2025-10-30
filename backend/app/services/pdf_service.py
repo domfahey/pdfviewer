@@ -14,8 +14,9 @@ import magic
 from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
 
-from ..core.logging import get_logger, log_performance
+from ..core.logging import get_logger
 from ..models.pdf import PDFInfo, PDFMetadata, PDFUploadResponse
+from ..utils.decorators import performance_logger as log_performance
 from ..utils.logger import (
     FileOperationLogger,
     PerformanceTracker,
@@ -43,6 +44,7 @@ class PDFService:
 
         # In-memory storage for file metadata (use database in production)
         self._file_metadata: dict[str, PDFInfo] = {}
+        self._stored_files: dict[str, str] = {}
 
         # Initialize loggers
         self.logger = get_logger(__name__)
@@ -55,12 +57,26 @@ class PDFService:
             allowed_mime_types=list(self.allowed_mime_types),
         )
 
-    def _validate_file(self, file: UploadFile) -> None:
+    def _determine_upload_size(self, file: UploadFile) -> int | None:
+        """Best-effort size calculation without relying on UploadFile.size."""
+        file_obj = getattr(file, "file", None)
+        if file_obj and hasattr(file_obj, "tell") and hasattr(file_obj, "seek"):
+            try:
+                current_pos = file_obj.tell()
+                file_obj.seek(0, os.SEEK_END)
+                size = file_obj.tell()
+                file_obj.seek(current_pos)
+                return size
+            except (OSError, ValueError):
+                return None
+        return None
+
+    def _validate_file(self, file: UploadFile, file_size: int | None) -> None:
         """Validate uploaded file with detailed logging."""
         validation_context = {
             "filename": file.filename,
             "content_type": file.content_type,
-            "file_size": file.size,
+            "file_size": file_size,
         }
 
         self.logger.debug("Starting file validation", **validation_context)
@@ -79,12 +95,12 @@ class PDFService:
             )
             raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
-        if file.size and file.size > self.max_file_size:
+        if file_size and file_size > self.max_file_size:
             self.logger.warning(
                 "File validation failed: file too large",
                 **validation_context,
                 max_file_size_mb=self.max_file_size / (1024 * 1024),
-                file_size_mb=file.size / (1024 * 1024) if file.size else 0,
+                file_size_mb=file_size / (1024 * 1024),
             )
             raise HTTPException(
                 status_code=413,
@@ -96,7 +112,7 @@ class PDFService:
 
         self.logger.debug("File validation passed", **validation_context)
 
-    def _get_pdf_attr(self, pdf_info, attr: str):
+    def _get_pdf_attr(self, pdf_info: PDFInfo | None, attr: str) -> str | None:
         """Helper to safely get PDF info attributes."""
         return getattr(pdf_info, attr, None) if pdf_info else None
 
@@ -105,7 +121,7 @@ class PDFService:
         """Extract metadata from PDF file with comprehensive logging."""
         # Cache file.stat() result to avoid duplicate filesystem call
         file_stat = file_path.stat()
-        
+
         with PerformanceTracker(
             "PDF metadata extraction",
             self.logger,
@@ -132,7 +148,9 @@ class PDFService:
                         creator = getattr(document_info, "creator", None)
                         producer = getattr(document_info, "producer", None)
                         creation_date = getattr(document_info, "creation_date", None)
-                        modification_date = getattr(document_info, "modification_date", None)
+                        modification_date = getattr(
+                            document_info, "modification_date", None
+                        )
                     else:
                         title = author = subject = creator = producer = None
                         creation_date = modification_date = None
@@ -203,32 +221,38 @@ class PDFService:
 
     async def upload_pdf(self, file: UploadFile) -> PDFUploadResponse:
         """Upload and process PDF file with comprehensive logging."""
+        expected_file_size = self._determine_upload_size(file)
+
         # Start timing the entire upload operation
         with PerformanceTracker(
             "PDF file upload",
             self.logger,
             filename=file.filename,
-            file_size=file.size,
+            file_size=expected_file_size,
         ) as upload_tracker:
             # Log upload start
             self.file_logger.upload_started(
                 file.filename or "unknown",
-                file.size or 0,
+                expected_file_size or 0,
                 content_type=file.content_type,
             )
 
-            self._validate_file(file)
+            self._validate_file(file, expected_file_size)
 
             # Generate unique file ID and file path
+            # After validation, filename is guaranteed to be non-None
+            if file.filename is None:
+                raise ValueError("Filename should not be None after validation")
+            filename: str = file.filename
             file_id = str(uuid.uuid4())
-            file_extension = Path(file.filename).suffix  # type: ignore[arg-type]
+            file_extension = Path(filename).suffix
             stored_filename = f"{file_id}{file_extension}"
             file_path = self.upload_dir / stored_filename
 
             self.logger.info(
                 "Processing file upload",
                 file_id=file_id,
-                original_filename=file.filename,
+                original_filename=filename,
                 stored_filename=stored_filename,
                 target_path=str(file_path),
             )
@@ -240,8 +264,14 @@ class PDFService:
                     "File write operation",
                     self.logger,
                     file_id=file_id,
-                    file_size=file.size,
+                    file_size=expected_file_size,
                 ):
+                    try:
+                        await file.seek(0)
+                    except Exception:
+                        # Some upload backends may not support seek; proceed with current position
+                        pass
+
                     async with aiofiles.open(file_path, "wb") as pdf_file:
                         while True:
                             chunk = await file.read(self.CHUNK_SIZE)
@@ -255,9 +285,13 @@ class PDFService:
                 self.logger.debug(
                     "File written to disk",
                     file_id=file_id,
-                    expected_size=file.size,
+                    expected_size=expected_file_size,
                     actual_size=actual_file_size,
-                    size_match=file.size == actual_file_size if file.size else True,
+                    size_match=(
+                        expected_file_size == actual_file_size
+                        if expected_file_size is not None
+                        else True
+                    ),
                 )
 
                 # Verify MIME type
@@ -282,18 +316,19 @@ class PDFService:
                 # Store file info (reuse cached file_stat)
                 pdf_info = PDFInfo(
                     file_id=file_id,
-                    filename=file.filename,
+                    filename=filename,
                     file_size=actual_file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
                     metadata=metadata,
                 )
                 self._file_metadata[file_id] = pdf_info
+                self._stored_files[file_id] = stored_filename
 
                 # Log successful completion
                 self.file_logger.upload_completed(
                     file_id,
-                    file.filename,
+                    filename,
                     upload_tracker.duration_ms or 0,
                     mime_type=mime_type,
                     page_count=metadata.page_count,
@@ -302,7 +337,7 @@ class PDFService:
 
                 response = PDFUploadResponse(
                     file_id=file_id,
-                    filename=file.filename,
+                    filename=filename,
                     file_size=actual_file_size,
                     mime_type=mime_type,
                     upload_time=datetime.now(UTC),
@@ -361,7 +396,8 @@ class PDFService:
                         )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to process file: {str(upload_exception)}"
+                    status_code=500,
+                    detail=f"Failed to process file: {str(upload_exception)}",
                 )
 
     def get_pdf_path(self, file_id: str) -> Path:
@@ -372,8 +408,16 @@ class PDFService:
             self.logger.warning("PDF file not found in metadata", file_id=file_id)
             raise HTTPException(status_code=404, detail="File not found")
 
-        # Find file with this ID (assuming .pdf extension)
-        file_path = self.upload_dir / f"{file_id}.pdf"
+        stored_filename = self._stored_files.get(file_id)
+        if not stored_filename:
+            self.logger.error(
+                "Stored filename not found for file_id",
+                file_id=file_id,
+                upload_dir=str(self.upload_dir),
+            )
+            raise HTTPException(status_code=404, detail="File not found on disk")
+
+        file_path = self.upload_dir / stored_filename
         if not file_path.exists():
             self.logger.error(
                 "PDF file not found on disk",
@@ -420,7 +464,15 @@ class PDFService:
                 raise HTTPException(status_code=404, detail="File not found")
 
             file_info = self._file_metadata[file_id]
-            file_path = self.upload_dir / f"{file_id}.pdf"
+            stored_filename = self._stored_files.get(file_id)
+            if not stored_filename:
+                self.logger.warning(
+                    "Stored filename missing during deletion",
+                    file_id=file_id,
+                )
+                raise HTTPException(status_code=404, detail="File not found on disk")
+
+            file_path = self.upload_dir / stored_filename
 
             try:
                 # Delete physical file
@@ -442,6 +494,7 @@ class PDFService:
 
                 # Remove from metadata
                 del self._file_metadata[file_id]
+                self._stored_files.pop(file_id, None)
 
                 # Log successful deletion
                 self.file_logger.deletion_logged(
@@ -474,7 +527,8 @@ class PDFService:
                 )
 
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to delete file: {str(deletion_exception)}"
+                    status_code=500,
+                    detail=f"Failed to delete file: {str(deletion_exception)}",
                 )
 
     def list_files(self) -> dict[str, PDFInfo]:
@@ -500,7 +554,7 @@ class PDFService:
     def get_service_stats(self) -> dict[str, int | float | str]:
         """Get service statistics for monitoring and debugging."""
         files = list(self._file_metadata.values())
-        
+
         # Use single pass through files for better performance
         total_size = 0
         total_pages = 0

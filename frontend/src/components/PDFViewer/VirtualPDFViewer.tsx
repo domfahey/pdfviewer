@@ -114,6 +114,7 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
   // Render pages that should be visible
   useEffect(() => {
     if (!pdfDocument) return;
+    const visiblePageSet = new Set(visiblePages);
 
     const renderPage = async (pageIndex: number) => {
       const pageInfo = pageData[pageIndex];
@@ -123,10 +124,12 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
 
       try {
         const page = await pdfDocument.getPage(pageInfo.pageNumber);
-        
+
         // Use shared canvas rendering utility
         const canvas = await renderPageToCanvas(page, { scale, createNew: true });
-        
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
         // Cache the toDataURL result to avoid repeated expensive conversions
         const dataUrl = canvasToDataURL(canvas);
 
@@ -138,8 +141,8 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
                   canvas,
                   dataUrl,
                   isRendered: true,
-                  height: viewport.height,
-                  width: viewport.width,
+                  height: canvasHeight,
+                  width: canvasWidth,
                 }
               : p
           )
@@ -159,12 +162,20 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
     });
 
     // Update visibility status
-    setPageData(prev =>
-      prev.map((p, i) => ({
-        ...p,
-        isVisible: visiblePages.includes(i),
-      }))
-    );
+    setPageData(prev => {
+      let didChange = false;
+
+      const updated = prev.map((p, i) => {
+        const shouldBeVisible = visiblePageSet.has(i);
+        if (p.isVisible !== shouldBeVisible) {
+          didChange = true;
+          return { ...p, isVisible: shouldBeVisible };
+        }
+        return p;
+      });
+
+      return didChange ? updated : prev;
+    });
   }, [visiblePages, pdfDocument, scale, pageData]);
 
   // Handle scroll events
@@ -238,12 +249,12 @@ export const VirtualPDFViewer: React.FC<VirtualPDFViewerProps> = ({
   const pagePositions = useMemo(() => {
     const positions: number[] = [];
     let currentY = 20; // Initial top padding
-    
+
     for (let i = 0; i < pageData.length; i++) {
       positions.push(currentY);
       currentY += pageData[i].height + 20;
     }
-    
+
     return positions;
   }, [pageData]);
 

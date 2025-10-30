@@ -535,7 +535,7 @@ class TestHelperFunctions:
         """Test datetime serialization with UTC timezone."""
         dt = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
         result = serialize_datetime_to_iso(dt)
-        
+
         assert result is not None
         assert "2025-01-15" in result
         assert "10:30:00" in result
@@ -545,7 +545,7 @@ class TestHelperFunctions:
         """Test datetime serialization with naive datetime (no timezone)."""
         dt = datetime(2025, 1, 15, 10, 30, 0)
         result = serialize_datetime_to_iso(dt)
-        
+
         # Should add UTC timezone and serialize
         assert result is not None
         assert "2025-01-15" in result
@@ -560,9 +560,8 @@ class TestHelperFunctions:
         """Test that serialized format is consistent across multiple calls."""
         dt1 = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
         dt2 = datetime(2025, 1, 15, 10, 30, 0, tzinfo=UTC)
-        
+
         result1 = serialize_datetime_to_iso(dt1)
         result2 = serialize_datetime_to_iso(dt2)
-        
-        assert result1 == result2
 
+        assert result1 == result2

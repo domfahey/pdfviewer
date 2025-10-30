@@ -59,7 +59,7 @@ def create_async_sync_wrapper(
         result: R, start_time: float, exception: Exception | None = None
     ) -> None:
         """Execute common wrapper logic for success/error cases.
-        
+
         Args:
             result: Function result (ignored if exception is provided).
             start_time: Start time for duration calculation.
@@ -85,7 +85,7 @@ def create_async_sync_wrapper(
             before_call(args, kwargs)
 
         try:
-            result = await func(*args, **kwargs)
+            result = await func(*args, **kwargs)  # type: ignore[misc]
             _execute_wrapper_logic(result, start_time)
             return result
         except Exception as exception:
@@ -112,7 +112,7 @@ def create_async_sync_wrapper(
     if asyncio.iscoroutinefunction(func):
         return async_wrapper  # type: ignore[return-value]
     else:
-        return sync_wrapper  # type: ignore[return-value]
+        return sync_wrapper
 
 
 def performance_logger(
@@ -163,7 +163,11 @@ def performance_logger(
                     context["args"] = str(args)
                 if kwargs:
                     context["kwargs"] = {
-                        k: (str(v) if not hasattr(v, "__dict__") else f"<{type(v).__name__}>")
+                        k: (
+                            str(v)
+                            if not hasattr(v, "__dict__")
+                            else f"<{type(v).__name__}>"
+                        )
                         for k, v in kwargs.items()
                     }
 
