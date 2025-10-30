@@ -1,7 +1,6 @@
 """API endpoint for loading PDFs from URLs."""
 
 import io
-import re
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
@@ -11,11 +10,12 @@ from ..dependencies import get_pdf_service
 from ..models.pdf import PDFUploadResponse
 from ..services.pdf_service import PDFService
 from ..utils.api_logging import log_api_call
+from ..utils.content_disposition import (
+    extract_filename_from_url,
+    parse_content_disposition,
+)
 from ..utils.http_client import fetch_with_retry
 from ..utils.validation import handle_api_errors
-
-# Regular expression pattern to extract filename from Content-Disposition header
-FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
 
 router = APIRouter()
 
@@ -54,17 +54,15 @@ async def load_pdf_from_url(
                 detail=f"URL does not point to a PDF file (content-type: {content_type})",
             )
 
-        # Get filename from URL or content-disposition
-        filename = "downloaded.pdf"
+        # Get filename from Content-Disposition header or URL
+        # Uses RFC 6266 compliant parser with RFC 5987 support and filename sanitization
         if "content-disposition" in response.headers:
-            matches = FILENAME_PATTERN.findall(response.headers["content-disposition"])
-            if matches:
-                filename = matches[0]
+            filename = parse_content_disposition(
+                response.headers["content-disposition"], fallback="downloaded.pdf"
+            )
         else:
-            # Extract from URL
-            url_parts = str(request.url).split("/")
-            if url_parts[-1].endswith(".pdf"):
-                filename = url_parts[-1]
+            # Extract and sanitize filename from URL
+            filename = extract_filename_from_url(str(request.url), fallback="downloaded.pdf")
 
         # Create UploadFile from downloaded content
         file = UploadFile(
