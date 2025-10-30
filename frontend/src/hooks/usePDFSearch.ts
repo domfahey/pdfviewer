@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { devError } from '../utils/devLogger';
 
@@ -35,6 +35,12 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
 
   const searchAbortController = useRef<AbortController | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  
+  // Cache extracted text content per page to avoid re-extraction
+  const pageTextCache = useRef<Map<number, string>>(new Map());
+  
+  // Cache search results for queries
+  const searchResultsCache = useRef<Map<string, SearchMatch[]>>(new Map());
 
   const performSearch = useCallback(
     async (query: string) => {
@@ -43,6 +49,19 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
           query: '',
           matches: [],
           currentMatchIndex: -1,
+          isSearching: false,
+        });
+        return;
+      }
+
+      // Check if we have cached results for this query
+      const normalizedQuery = query.toLowerCase();
+      const cachedResults = searchResultsCache.current.get(normalizedQuery);
+      if (cachedResults) {
+        setSearchState({
+          query,
+          matches: cachedResults,
+          currentMatchIndex: cachedResults.length > 0 ? 0 : -1,
           isSearching: false,
         });
         return;
@@ -65,7 +84,6 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
       }));
 
       const matches: SearchMatch[] = [];
-      const normalizedQuery = query.toLowerCase();
 
       try {
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
@@ -82,6 +100,12 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
             if ('str' in item) {
               extractedTextItems[i] = item.str;
             }
+
+            // Join once instead of concatenating in loop
+            pageText = text_items.join(' ');
+            
+            // Cache the extracted text
+            pageTextCache.current.set(pageNumber, pageText);
           }
 
           // Join once instead of concatenating in loop
@@ -101,6 +125,9 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
         }
 
         if (!signal.aborted) {
+          // Cache the search results
+          searchResultsCache.current.set(normalizedQuery, matches);
+          
           setSearchState({
             query,
             matches,
@@ -165,12 +192,22 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     if (searchAbortController.current) {
       searchAbortController.current.abort();
     }
+    
+    // Clear search results cache (but keep page text cache)
+    searchResultsCache.current.clear();
+    
     setSearchState({
       query: '',
       matches: [],
       currentMatchIndex: -1,
       isSearching: false,
     });
+  }, []);
+
+  // Clear all caches when document changes
+  const clearAllCaches = useCallback(() => {
+    pageTextCache.current.clear();
+    searchResultsCache.current.clear();
   }, []);
 
   const getCurrentMatch = useCallback(() => {
@@ -180,6 +217,12 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     }
     return null;
   }, [searchState]);
+
+  // Effect to clear caches when document changes
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    clearAllCaches();
+  }, [document, clearAllCaches]);
 
   return {
     searchQuery: searchState.query,
