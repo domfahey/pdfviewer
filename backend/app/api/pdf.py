@@ -3,7 +3,7 @@
 This module provides endpoints for retrieving, viewing, and managing PDF files.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import FileResponse
 
 from ..dependencies import get_pdf_service
@@ -47,19 +47,28 @@ async def get_pdf_file(
 @router.get("/metadata/{file_id}", response_model=PDFMetadata)
 @log_api_call("pdf_metadata", log_params=True, log_response=True, log_timing=True)
 async def get_pdf_metadata(
-    file_id: str, pdf_service: PDFService = Depends(get_pdf_service)
+    file_id: str,
+    response: Response,
+    pdf_service: PDFService = Depends(get_pdf_service),
 ) -> PDFMetadata:
     """Get metadata for a PDF file.
 
     - **file_id**: Unique identifier of the PDF file
 
     Returns PDF metadata including page count, file size, and document properties.
+    Metadata is immutable once extracted, so it can be cached aggressively.
     """
     # Validate file_id using shared utility
     validate_file_id(file_id)
 
     with handle_api_errors("retrieve metadata"):
-        return pdf_service.get_pdf_metadata(file_id)
+        metadata = pdf_service.get_pdf_metadata(file_id)
+        
+        # Add cache headers - metadata is immutable once extracted
+        response.headers["Cache-Control"] = "public, max-age=3600, immutable"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        
+        return metadata
 
 
 @router.delete("/pdf/{file_id}")
