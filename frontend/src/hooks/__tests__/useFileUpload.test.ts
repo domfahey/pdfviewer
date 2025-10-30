@@ -6,7 +6,7 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileUpload } from '../useFileUpload';
 import { ApiService } from '../../services/api';
 import type { PDFUploadResponse } from '../../types/pdf.types';

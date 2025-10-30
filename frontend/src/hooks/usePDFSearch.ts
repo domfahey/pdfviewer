@@ -232,6 +232,18 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
     clearAllCaches();
   }, [document, clearAllCaches]);
 
+  // Cleanup on unmount - abort ongoing searches
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      if (searchAbortController.current) {
+        searchAbortController.current.abort();
+      }
+    };
+  }, []);
+
   return {
     searchQuery: searchState.query,
     searchMatches: searchState.matches,
