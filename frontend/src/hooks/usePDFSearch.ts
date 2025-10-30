@@ -223,7 +223,6 @@ export const usePDFSearch = (document: PDFDocumentProxy | null) => {
   }, [searchState]);
 
   // Effect to clear caches when document changes
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     clearAllCaches();
   }, [document, clearAllCaches]);
