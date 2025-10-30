@@ -142,7 +142,9 @@ make test-smoke
 make test-all
 
 # Specific test categories
-make test-unit        # Unit tests
+make test-unit        # All unit tests
+make test-unit-api    # API unit tests only
+make test-unit-services  # Service unit tests only
 make test-integration # Integration tests
 make test-e2e        # End-to-end tests
 
@@ -150,7 +152,9 @@ make test-e2e        # End-to-end tests
 make test-coverage
 ```
 
-See [Test Documentation](tests/README.md) for details.
+**Test Organization:** Tests are organized by module (api, services, models, utils, middleware) for better discoverability. Edge case tests are in separate `*_edge_cases.py` files for clarity.
+
+See [Test Documentation](tests/README.md) and [Test Refactoring Summary](TEST_REFACTORING_SUMMARY.md) for details.
 
 ## Project Structure
 
@@ -231,6 +235,7 @@ See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 - [Support](SUPPORT.md) - Getting help and FAQ
 - [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 - [Test Guide](tests/README.md) - Testing documentation
+- [Test Refactoring Summary](TEST_REFACTORING_SUMMARY.md) - Test suite organization
 - [Technical Debt](docs/TECHNICAL_DEBT.md) - Known issues and improvements
 - [Product Requirements](docs/PRD.md) - Detailed product specifications
 - [Changelog](CHANGELOG.md) - Version history and changes
