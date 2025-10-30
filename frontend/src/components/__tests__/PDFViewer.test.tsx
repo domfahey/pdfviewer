@@ -148,7 +148,6 @@ describe('PDFViewer', () => {
       scale: 1.0,
       loading: false,
       error: null,
-      currentPageObj: { pageNumber: 1 }, // Add currentPageObj
       loadDocument: vi.fn(),
       setCurrentPage: vi.fn(),
       setScale: vi.fn(),
@@ -180,7 +179,6 @@ describe('PDFViewer', () => {
       scale: 1.0,
       loading: false,
       error: null,
-      currentPageObj: { pageNumber: 1 }, // Add currentPageObj
       loadDocument: vi.fn(),
       setCurrentPage: vi.fn(),
       setScale: mockSetScale,
@@ -211,7 +209,6 @@ describe('PDFViewer', () => {
       scale: 1.0,
       loading: false,
       error: null,
-      currentPageObj: { pageNumber: 1 }, // Add currentPageObj
       loadDocument: vi.fn(),
       setCurrentPage: vi.fn(),
       setScale: vi.fn(),
@@ -242,7 +239,6 @@ describe('PDFViewer', () => {
       scale: 1.0,
       loading: false,
       error: null,
-      currentPageObj: { pageNumber: 1 }, // Add currentPageObj
       loadDocument: vi.fn(),
       setCurrentPage: vi.fn(),
       setScale: vi.fn(),
@@ -275,7 +271,6 @@ describe('PDFViewer', () => {
       scale: 1.0,
       loading: false,
       error: null,
-      currentPageObj: { pageNumber: 1 }, // Add currentPageObj
       loadDocument: vi.fn(),
       setCurrentPage: vi.fn(),
       setScale: vi.fn(),

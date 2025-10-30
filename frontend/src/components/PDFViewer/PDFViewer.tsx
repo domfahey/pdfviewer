@@ -68,7 +68,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     previousPage,
   } = usePDFDocument();
 
-  const [currentPageObj, setCurrentPageObj] = useState<PDFPageProxy | null>(null);
+  const [currentPageProxy, setCurrentPageProxy] = useState<PDFPageProxy | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [fitMode, setFitMode] = useState<FitMode>(initialFitMode);
@@ -130,7 +130,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           pageNumber: page.pageNumber,
           pageExists: !!page,
         });
-        setCurrentPageObj(page);
+        setCurrentPageProxy(page);
       } catch (error) {
         devError('❌ [PDFViewer] Failed to load page:', {
           currentPage,
@@ -138,7 +138,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           message: error instanceof Error ? error.message : 'Failed to load page',
         });
         setPageError(error instanceof Error ? error.message : 'Failed to load page');
-        setCurrentPageObj(null);
+        setCurrentPageProxy(null);
       } finally {
         setPageLoading(false);
       }
@@ -200,21 +200,21 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   // Recalculate fit mode when page loads or window resizes
   useEffect(() => {
-    if (currentPageObj && fitMode.mode !== 'custom') {
+    if (currentPageProxy && fitMode.mode !== 'custom') {
       const newScale = calculateFitScale(
         fitMode.mode as 'width' | 'height' | 'page',
-        currentPageObj
+        currentPageProxy
       );
       setScale(newScale);
     }
-  }, [currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+  }, [currentPageProxy, fitMode.mode, calculateFitScale, setScale]);
 
   // Recalculate fit mode when panels are toggled
   useEffect(() => {
-    if (currentPageObj && fitMode.mode !== 'custom') {
+    if (currentPageProxy && fitMode.mode !== 'custom') {
       const newScale = calculateFitScale(
         fitMode.mode as 'width' | 'height' | 'page',
-        currentPageObj
+        currentPageProxy
       );
       setScale(newScale);
     }
@@ -222,7 +222,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     showThumbnails,
     thumbnailsWidth,
     showMetadata,
-    currentPageObj,
+    currentPageProxy,
     fitMode.mode,
     calculateFitScale,
     setScale,
@@ -231,10 +231,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   // Handle window resize for fit modes
   useEffect(() => {
     const handleResize = () => {
-      if (currentPageObj && fitMode.mode !== 'custom') {
+      if (currentPageProxy && fitMode.mode !== 'custom') {
         const newScale = calculateFitScale(
           fitMode.mode as 'width' | 'height' | 'page',
-          currentPageObj
+          currentPageProxy
         );
         setScale(newScale);
       }
@@ -242,7 +242,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [currentPageObj, fitMode.mode, calculateFitScale, setScale]);
+  }, [currentPageProxy, fitMode.mode, calculateFitScale, setScale]);
 
   const handleFitModeChange = useCallback(
     (newFitMode: FitMode) => {
@@ -253,12 +253,12 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       } else if (['width', 'height', 'page'].includes(newFitMode.mode)) {
         const newScale = calculateFitScale(
           newFitMode.mode as 'width' | 'height' | 'page',
-          currentPageObj
+          currentPageProxy
         );
         setScale(newScale);
       }
     },
-    [setScale, calculateFitScale, currentPageObj]
+    [setScale, calculateFitScale, currentPageProxy]
   );
 
   const handleToggleThumbnails = useCallback(() => {
@@ -399,7 +399,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     );
   }
 
-  if (!document || !currentPageObj) {
+  if (!document || !currentPageProxy) {
     return (
       <Box
         sx={{
@@ -520,7 +520,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                           <Typography variant="body2">{pageError}</Typography>
                         </Alert>
                       </Paper>
-                    ) : currentPageObj ? (
+                    ) : currentPageProxy ? (
                       <Box
                         sx={{
                           transform: `rotate(${rotation}deg)`,
@@ -528,7 +528,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                         }}
                       >
                         <PDFPage
-                          page={currentPageObj}
+                          page={currentPageProxy}
                           scale={scale}
                           searchQuery={searchQuery}
                           isCurrentSearchPage={getCurrentMatch()?.pageIndex === currentPage - 1}
