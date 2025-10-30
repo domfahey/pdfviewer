@@ -24,13 +24,31 @@ This directory contains comprehensive tests for the PDF Viewer application follo
 
 ```
 tests/
-├── test_*.py                    # Unit tests for backend modules
+├── unit/                        # Unit tests organized by module
+│   ├── api/                     # API endpoint unit tests
+│   │   ├── test_health.py
+│   │   ├── test_upload.py
+│   │   ├── test_pdf_endpoints.py
+│   │   └── test_pdf_api_comprehensive.py
+│   ├── services/                # Service layer unit tests
+│   │   ├── test_pdf_service.py
+│   │   └── test_pdf_service_comprehensive.py
+│   ├── models/                  # Pydantic model unit tests
+│   │   └── test_pydantic_models.py
+│   ├── utils/                   # Utility function unit tests
+│   │   ├── test_validation.py
+│   │   ├── test_http_client.py
+│   │   └── test_utils_decorators.py
+│   └── middleware/              # Middleware unit tests
+│       ├── test_logging_middleware.py
+│       └── test_api_logging.py
 ├── integration/                 # Integration tests
 │   ├── api/                     # API integration tests
 │   │   ├── test_pdf_workflow.py
 │   │   ├── test_error_handling.py
 │   │   ├── test_performance.py
 │   │   └── test_load_url.py
+│   ├── test_*_sample.py         # Sample PDF integration tests
 │   ├── fixtures/                # Test data and fixtures
 │   │   ├── sample.pdf
 │   │   └── download_samples.py
@@ -64,9 +82,15 @@ make test-coverage          # Generate coverage reports
 make test-coverage-report   # Open coverage reports in browser
 
 # Run specific test categories
-make test-unit-backend      # Backend unit tests only
+make test-unit-backend      # All backend unit tests
+make test-unit-api          # API unit tests only
+make test-unit-services     # Service unit tests only
+make test-unit-models       # Model unit tests only
+make test-unit-utils        # Utils unit tests only
+make test-unit-middleware   # Middleware unit tests only
 make test-unit-frontend     # Frontend unit tests only
 make test-integration-api   # API integration tests
+make test-integration-samples  # Sample PDF integration tests
 make test-performance       # Performance tests only
 
 # Development helpers
